@@ -1,0 +1,292 @@
+# ============================================================
+#  PROJECT S-A TERMINAL — Telegram Bot
+#  Python 3.11+ | Aiogram 3.x
+#  Команда /start → кнопка-ссылка на Mini App
+# ============================================================
+
+import asyncio
+import logging
+import os
+import aiohttp
+from dotenv import load_dotenv
+
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from aiogram.filters import CommandStart, Command
+
+load_dotenv()
+
+BOT_TOKEN   = os.getenv("BOT_TOKEN")        # Токен от @BotFather
+WEBAPP_URL  = os.getenv("WEBAPP_URL")       # URL твоего фронтенда (HTTPS обязателен)
+API_PORT = os.getenv("PORT", "3000")
+API_INTERNAL_URL = os.getenv("API_INTERNAL_URL", f"http://127.0.0.1:{API_PORT}/api")
+
+if not BOT_TOKEN or not WEBAPP_URL:
+    raise RuntimeError("[b181] BOT_TOKEN или WEBAPP_URL не заданы в .env")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
+logger = logging.getLogger("SA-TERMINAL-BOT")
+
+bot = Bot(token=BOT_TOKEN)
+dp  = Dispatcher()
+
+
+async def sync_operator(user_id: int, username: str | None, first_name: str | None) -> dict | None:
+    """Синхронизация с БД и получение постоянного номера Оператора (№ 0001 / OP-0001)"""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{API_INTERNAL_URL}/operator/sync",
+                json={
+                    "telegram_id": user_id,
+                    "username": username,
+                    "first_name": first_name,
+                },
+                timeout=aiohttp.ClientTimeout(total=2.5)
+            ) as resp:
+                if resp.status == 200:
+                    json_data = await resp.json()
+                    return json_data.get("data")
+    except Exception as e:
+        logger.warning(f"[b181] Ошибка синхронизации Оператора с API: {e}")
+    return None
+
+
+# ------------------------------------------------------------
+# /start — точка входа Оператора
+# ------------------------------------------------------------
+@dp.message(CommandStart())
+async def cmd_start(message: Message):
+    operator_name = message.from_user.first_name or "Оператор"
+    admin_ids = get_admin_ids()
+    is_admin = message.from_user.id in admin_ids
+
+    # Синхронизация в БД (присваивает постоянный номер в фоне)
+    op_info = await sync_operator(
+        message.from_user.id,
+        message.from_user.username,
+        message.from_user.first_name
+    )
+
+    if is_admin:
+        # Для АДМИНИСТРАТОРА: полный вывод с системным номером и управлением
+        num_str = op_info.get('display_number', '№ 0001') if op_info else '№ 0001'
+        code_str = op_info.get('operator_code', 'OP-0001') if op_info else 'OP-0001'
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text=">> ОТКРЫТЬ ТЕРМИНАЛ", web_app=WebAppInfo(url=WEBAPP_URL))],
+            [InlineKeyboardButton(text=">> РЕЕСТР ОПЕРАТОРОВ", web_app=WebAppInfo(url=f"{WEBAPP_URL}/registry.html"))]
+        ])
+        await message.answer(
+            text=(
+                f"ИДЕНТИФИКАЦИЯ ЗАВЕРШЕНА [АДМИНИСТРАТОР]\n"
+                f"ОПЕРАТОР: {operator_name.upper()}\n"
+                f"СИСТЕМНЫЙ НОМЕР: {num_str} [{code_str}]\n"
+                f"TG-ID: {message.from_user.id}\n"
+                f"─────────────────────────\n"
+                f"СИСТЕМА: PROJECT S-A TERMINAL\n"
+                f"РЕЖИМ: ДОСТУП АДМИНИСТРАТОРА\n"
+                f"ФАЗА: 1 / MVP\n"
+                f"─────────────────────────\n"
+                f"Команды администратора:\n"
+                f"• /operators — список зарегистрированных\n"
+                f"• /status — статус контура"
+            ),
+            reply_markup=keyboard
+        )
+    else:
+        # Для ОБЫЧНОГО ПОЛЬЗОВАТЕЛЯ: чистый лаконичный интерфейс без номеров
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(
+                text=">> ОТКРЫТЬ ТЕРМИНАЛ",
+                web_app=WebAppInfo(url=WEBAPP_URL)
+            )
+        ]])
+        await message.answer(
+            text=(
+                f"ИДЕНТИФИКАЦИЯ ЗАВЕРШЕНА\n"
+                f"ОПЕРАТОР: {operator_name.upper()}\n"
+                f"TG-ID: {message.from_user.id}\n"
+                f"─────────────────────────\n"
+                f"СИСТЕМА: PROJECT S-A TERMINAL\n"
+                f"РЕЖИМ: НАБЛЮДАТЕЛЬ [READ-ONLY]\n"
+                f"ФАЗА: 1 / MVP\n"
+                f"─────────────────────────\n"
+                f"Нажми кнопку для запуска контура."
+            ),
+            reply_markup=keyboard
+        )
+
+    logger.info(f"[OPERATOR] {message.from_user.id} (@{message.from_user.username}) admin={is_admin} → /start")
+
+
+# ------------------------------------------------------------
+# /id или /profile — карточка Оператора
+# ------------------------------------------------------------
+@dp.message(Command("id", "profile", "me"))
+async def cmd_profile(message: Message):
+    admin_ids = get_admin_ids()
+    is_admin = message.from_user.id in admin_ids
+
+    op_info = await sync_operator(
+        message.from_user.id,
+        message.from_user.username,
+        message.from_user.first_name
+    )
+
+    operator_name = message.from_user.first_name or "Оператор"
+
+    if is_admin:
+        num = op_info.get('display_number', 'НЕ ОПРЕДЕЛЕН') if op_info else '---'
+        code = op_info.get('operator_code', 'НЕ ОПРЕДЕЛЕН') if op_info else '---'
+        first_seen = op_info.get('first_seen_at', '---') if op_info else '---'
+        await message.answer(
+            f"КАРТОЧКА АДМИНИСТРАТОРА\n"
+            f"─────────────────────────\n"
+            f"СИСТЕМНЫЙ НОМЕР: {num}\n"
+            f"КОД ТРАНСКРИПТА: {code}\n"
+            f"TELEGRAM ID: {message.from_user.id}\n"
+            f"ПЕРВЫЙ КОНТАКТ: {first_seen}\n"
+            f"СТАТУС: АДМИНИСТРАТОР КОНТУРА\n"
+            f"─────────────────────────"
+        )
+    else:
+        # Для обычных пользователей: без внутренних номеров и кодов
+        await message.answer(
+            f"КАРТОЧКА ОПЕРАТОРА\n"
+            f"─────────────────────────\n"
+            f"ОПЕРАТОР: {operator_name.upper()}\n"
+            f"TELEGRAM ID: {message.from_user.id}\n"
+            f"СТАТУС: БИО-ДАТЧИК ПОДКЛЮЧЕН\n"
+            f"РЕЖИМ: НАБЛЮДАТЕЛЬ [READ-ONLY]\n"
+            f"─────────────────────────"
+        )
+
+
+# ------------------------------------------------------------
+# /operators или /registry — просмотр списка зарегистрированных (ТОЛЬКО АДМИН)
+# ------------------------------------------------------------
+def get_admin_ids() -> list[int]:
+    raw = os.getenv("ADMIN_TELEGRAM_IDS", "228844325")
+    try:
+        return [int(x.strip()) for x in raw.split(",") if x.strip()]
+    except Exception:
+        return [228844325]
+
+@dp.message(Command("operators", "registry", "list"))
+async def cmd_operators_list(message: Message):
+    admin_ids = get_admin_ids()
+    if message.from_user.id not in admin_ids:
+        await message.answer(
+            "[b181] ДОСТУП ЗАПРЕЩЁН\n"
+            "─────────────────────────\n"
+            "Реестр Операторов доступен исключительно Администраторам контура.\n"
+            "Твой статус: НАБЛЮДАТЕЛЬ [ОПЕРАТОР]."
+        )
+        logger.warning(f"[b181] Неавторизованный запрос реестра от {message.from_user.id} (@{message.from_user.username})")
+        return
+
+    registry_url = f"{WEBAPP_URL}/registry.html"
+
+    operators = []
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{API_INTERNAL_URL}/operator/sync",
+                json={
+                    "telegram_id": message.from_user.id,
+                    "username": message.from_user.username,
+                    "first_name": message.from_user.first_name,
+                },
+                timeout=aiohttp.ClientTimeout(total=2.0)
+            ):
+                pass
+            async with session.get(
+                f"{API_INTERNAL_URL}/operators",
+                headers={"x-telegram-user-id": str(message.from_user.id)},
+                timeout=aiohttp.ClientTimeout(total=2.5)
+            ) as resp:
+                if resp.status == 200:
+                    json_data = await resp.json()
+                    operators = json_data.get("data", [])
+    except Exception as e:
+        logger.warning(f"[b181] Ошибка загрузки реестра: {e}")
+
+    if not operators:
+        await message.answer(
+            "РЕЕСТР ОПЕРАТОРОВ СЕТИ\n"
+            "─────────────────────────\n"
+            "В базе пока нет зарегистрированных операторов."
+        )
+        return
+
+    lines = [
+        "РЕЕСТР ОПЕРАТОРОВ КОНТУРА",
+        "─────────────────────────",
+        f"ВСЕГО В СЕТИ: {len(operators)}",
+        ""
+    ]
+
+    for op in operators:
+        name = op.get("first_name") or "Оператор"
+        user = f" (@{op.get('username')})" if op.get("username") else ""
+        num = op.get("display_number")
+        code = op.get("operator_code")
+        tid = op.get("telegram_id")
+        lines.append(f"• {num} [{code}]")
+        lines.append(f"  Позывной: {name}{user}")
+        lines.append(f"  TG-ID: {tid}")
+        lines.append(f"  Контакт: {op.get('first_seen_at', '---')}")
+        lines.append("─────────────────────────")
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(
+            text=">> ПОЛНЫЙ ДАШБОРД РЕЕСТРА",
+            web_app=WebAppInfo(url=registry_url)
+        )
+    ]])
+
+    await message.answer(
+        "\n".join(lines),
+        reply_markup=keyboard
+    )
+
+
+# ------------------------------------------------------------
+# /status — текущий статус системы
+# ------------------------------------------------------------
+@dp.message(Command("status"))
+async def cmd_status(message: Message):
+    await message.answer(
+        "СТАТУС СИСТЕМЫ\n"
+        "─────────────────────────\n"
+        "ТЕРМИНАЛ: ONLINE\n"
+        "РЕЖИМ: READ-ONLY\n"
+        "ГРИМУАР: АКТИВЕН\n"
+        "─────────────────────────\n"
+        "Инцидентов не зафиксировано."
+    )
+
+
+# ------------------------------------------------------------
+# Любое другое сообщение — системный ответ
+# ------------------------------------------------------------
+@dp.message(F.text)
+async def unknown_input(message: Message):
+    await message.answer(
+        "[b181] НЕРАСПОЗНАННАЯ КОМАНДА\n"
+        "Используй /start для открытия Терминала."
+    )
+
+
+# ------------------------------------------------------------
+# Запуск бота
+# ------------------------------------------------------------
+async def main():
+    logger.info("[TERMINAL BOT] ИНИЦИАЛИЗАЦИЯ...")
+    await dp.start_polling(bot, skip_updates=True)
+
+if __name__ == "__main__":
+    asyncio.run(main())

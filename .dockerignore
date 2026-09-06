@@ -1,0 +1,8 @@
+node_modules
+backend/node_modules
+bot/.env
+backend/.env
+terminal_db.sqlite
+backend/terminal_db.sqlite
+.git
+.gemini
