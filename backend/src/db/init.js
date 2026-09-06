@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import initSqlJs from 'sql.js';
+import { syncCardsFromFiles } from './syncCards.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -79,8 +80,7 @@ export async function initDb() {
 
     // Автоматическая синхронизация карточек из папки cards/*.txt
     try {
-      const { syncCardsFromFiles } = await import('./syncCards.js');
-      await syncCardsFromFiles(db);
+      await syncCardsFromFiles(db, { run, queryOne, persistDb });
     } catch (e) {
       console.warn('[TERMINAL] Предупреждение синхронизации карточек:', e.message);
     }
@@ -136,4 +136,5 @@ export function run(db, sql, params = []) {
 // Запуск напрямую: node src/db/init.js
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   await initDb();
+  process.exit(0);
 }
