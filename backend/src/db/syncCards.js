@@ -6,18 +6,27 @@
 import { readdirSync, readFileSync, existsSync, statSync } from 'fs';
 import { join, dirname, parse } from 'path';
 import { fileURLToPath } from 'url';
-import { getDb, run, queryOne, persistDb } from './init.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CARDS_ROOT = join(__dirname, '..', '..', '..', 'cards');
 
-export async function syncCardsFromFiles(passedDb = null) {
+export async function syncCardsFromFiles(passedDb = null, helpers = {}) {
+  let { run: runFn, queryOne: queryOneFn, persistDb: persistDbFn } = helpers;
+
+  if (!passedDb || !runFn) {
+    const initModule = await import('./init.js');
+    passedDb = passedDb || await initModule.getDb();
+    runFn = runFn || initModule.run;
+    queryOneFn = queryOneFn || initModule.queryOne;
+    persistDbFn = persistDbFn || initModule.persistDb;
+  }
+
+  const db = passedDb;
   if (!existsSync(CARDS_ROOT)) {
     console.warn(`[SYNC] Папка карточек не найдена: ${CARDS_ROOT}`);
     return;
   }
 
-  const db = passedDb || await getDb();
   console.log('[SYNC] Сканирование папки cards/ для обновления карточек...');
 
   const entries = readdirSync(CARDS_ROOT);
@@ -52,7 +61,7 @@ export async function syncCardsFromFiles(passedDb = null) {
       if (!title || !bodyText) continue;
 
       // Запись/обновление в SQLite
-      run(
+      runFn(
         db,
         `INSERT INTO cards (category_id, title, body_text, sequence_index, is_active)
          VALUES (?, ?, ?, ?, 1)
@@ -69,17 +78,17 @@ export async function syncCardsFromFiles(passedDb = null) {
 
     // Если файлы были удалены, очищаем лишние sequence_index в этой категории
     const finalCount = seqIndex - 1;
-    run(
+    runFn(
       db,
       `DELETE FROM cards WHERE category_id = ? AND sequence_index > ?`,
       [categoryId, finalCount]
     );
 
-    const catName = queryOne(db, 'SELECT title FROM categories WHERE id = ?', [categoryId])?.title || categoryId;
+    const catName = queryOneFn(db, 'SELECT title FROM categories WHERE id = ?', [categoryId])?.title || categoryId;
     console.log(`[SYNC] Категория "${catName}" (ID ${categoryId}): ${finalCount} карточек синхронизировано.`);
   }
 
-  persistDb();
+  persistDbFn();
   console.log(`[SYNC] Синхронизация завершена. Всего актуальных карточек: ${totalCardsSynced}.\n`);
   return totalCardsSynced;
 }
