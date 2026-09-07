@@ -202,7 +202,11 @@ function resolveCategoryInfo(folderName) {
   let slug = lower.replace(/[^a-z0-9_-]/g, '-');
   let title = rawName.toUpperCase().replace(/[-_]/g, ' ');
 
-  if (lower.includes('somatic') || lower.includes('соматик') || lower.includes('anomaly') || lower.includes('аномали')) {
+  if (lower.includes('basis') || lower.includes('базис')) {
+    slug = 'basis';
+    title = 'БАЗИС';
+    sortOrder = 0;
+  } else if (lower.includes('somatic') || lower.includes('соматик') || lower.includes('anomaly') || lower.includes('аномали')) {
     slug = 'somatics';
     title = 'СОМАТИКА';
     sortOrder = 1;

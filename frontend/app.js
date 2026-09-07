@@ -254,18 +254,18 @@ async function loadCategories() {
     renderCategoryTabs(STATE.categories);
 
     if (STATE.categories.length > 0) {
-      // По умолчанию активна 1-я категория или ранее выбранная
+      // По умолчанию активен раздел БАЗИС или ранее выбранная категория
       const defaultCat = STATE.currentCategory
         ? (STATE.categories.find(c => c.slug === STATE.currentCategory.slug) || STATE.categories[0])
-        : STATE.categories[0];
+        : (STATE.categories.find(c => c.slug === 'basis') || STATE.categories[0]);
       await selectCategoryTab(defaultCat);
     } else {
-      renderEmptyCards('ГРИМУАР ПУСТ. РАЗДЕЛЫ НЕ ЗАГРУЖЕНЫ.');
+      renderEmptyCards('БАЗИС ПУСТ. РАЗДЕЛЫ НЕ ЗАГРУЖЕНЫ.');
     }
 
     showView('view-categories');
   } catch (err) {
-    showError(`ГРИМУАР НЕДОСТУПЕН. ${err.message}`, loadCategories);
+    showError(`БАЗИС НЕДОСТУПЕН. ${err.message}`, loadCategories);
   }
 }
 
@@ -1557,8 +1557,11 @@ function setupBottomNav() {
       if (currentActive === targetView) {
         // Повторный клик по активной вкладке
         if (targetView === 'view-categories') {
-          // Если внутри подкатегории раздела — возвращаемся в меню подразделов
-          if (STATE.currentSubcategories && STATE.currentSubcategories.length > 0 && STATE.currentSubcategory) {
+          // Если находимся в подкатегории или другом разделе — возвращаемся в БАЗИС
+          const basisCat = STATE.categories.find(c => c.slug === 'basis') || STATE.categories[0];
+          if (basisCat && STATE.currentCategory?.slug !== 'basis') {
+            selectCategoryTab(basisCat);
+          } else if (STATE.currentSubcategories && STATE.currentSubcategories.length > 0 && STATE.currentSubcategory) {
             showSubcategoriesMenu();
           }
         }
@@ -1571,7 +1574,10 @@ function setupBottomNav() {
 
       // Инициализация контента при переходе
       if (targetView === 'view-categories') {
-        if (STATE.currentSubcategories && STATE.currentSubcategories.length > 0 && STATE.currentSubcategory) {
+        const basisCat = STATE.categories.find(c => c.slug === 'basis') || STATE.categories[0];
+        if (basisCat && STATE.currentCategory?.slug !== 'basis') {
+          selectCategoryTab(basisCat);
+        } else if (STATE.currentSubcategories && STATE.currentSubcategories.length > 0 && STATE.currentSubcategory) {
           showSubcategoriesMenu();
         }
       } else if (targetView === 'view-observations') {

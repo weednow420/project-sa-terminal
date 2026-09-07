@@ -5,6 +5,8 @@
 
 -- КАТЕГОРИИ
 INSERT OR IGNORE INTO categories (slug, title, description, sort_order) VALUES
+    ('basis',       'Базис',           'Фундаментальные понятия системы. Контур, оператор, био-датчик.', 0);
+INSERT OR IGNORE INTO categories (slug, title, description, sort_order) VALUES
     ('somatics',    'Соматика',        'Базовые определения. Природа отклонения. Точка отсчёта.', 1);
 INSERT OR IGNORE INTO categories (slug, title, description, sort_order) VALUES
     ('cognitivism', 'Когнитивистика',  'Механика взаимодействий. Принципы работы контура.', 2);
