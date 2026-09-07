@@ -178,63 +178,162 @@
 
     <!-- ИНСТРУМЕНТЫ (ИНТЕРАКТИВНЫЙ ХАБ) -->
     <section id="view-tools" class="view">
-      <nav class="breadcrumb">
+      <!-- Навигационная цепочка -->
+      <nav class="breadcrumb" id="tools-breadcrumb">
         <button class="btn-back" id="btn-back-tools" aria-label="Назад к гримуару">
           ← ГРИМУАР
         </button>
         <span class="breadcrumb-sep">/</span>
-        <span>ИНСТРУМЕНТЫ</span>
+        <button class="btn-back" id="btn-back-tools-menu" style="display:none;" aria-label="К меню инструментов">
+          ИНСТРУМЕНТЫ
+        </button>
+        <span class="breadcrumb-sep" id="tools-sub-sep" style="display:none;">/</span>
+        <span id="tools-active-title">ИНСТРУМЕНТЫ</span>
       </nav>
 
-      <div class="tools-container" id="tools-container">
-        <!-- Калькулятор талой воды -->
-        <div class="tool-card" id="tool-water-calc">
-          <div class="tool-card-header">
-            <span class="tool-title">01 // КАЛЬКУЛЯТОР ТАЛОЙ ВОДЫ</span>
-            <span class="tag-badge">[ ИНТЕРАКТИВ ]</span>
+      <!-- Горизонтальные кнопки быстрого переключения -->
+      <div class="tools-tabs-bar" id="tools-tabs-bar">
+        <button type="button" class="tool-tab-btn active" data-tool="menu">ВСЕ УТИЛИТЫ</button>
+        <button type="button" class="tool-tab-btn" data-tool="water-calc">ТАЛАЯ ВОДА</button>
+        <button type="button" class="tool-tab-btn" data-tool="tarot">РАСКЛАД ТАРО</button>
+        <button type="button" class="tool-tab-btn" data-tool="breathing">ДЫХАНИЕ (4-4-4)</button>
+        <button type="button" class="tool-tab-btn" data-tool="incident-log">ЖУРНАЛ b181</button>
+      </div>
+
+      <div class="dot-grid-divider"></div>
+
+      <!-- Главное меню кнопок инструментов -->
+      <div class="tools-menu-list" id="tools-menu-list">
+        <button type="button" class="tool-menu-btn" data-tool="water-calc">
+          <div class="tool-menu-btn-top">
+            <span class="tool-menu-btn-num">§01 // ИНТЕРАКТИВ</span>
+            <span class="tool-menu-btn-arrow">ОТКРЫТЬ →</span>
           </div>
-          <p class="tool-desc">Расчет фракционного отделения дейтериевого льда и полезного биологического выхода.</p>
-          <div class="tool-calc-form">
-            <div class="tool-input-row">
-              <label for="input-water-vol">ОБЪЁМ ВОДЫ (ЛИТРЫ):</label>
-              <input type="number" id="input-water-vol" class="terminal-input" min="0.5" max="20" step="0.5" value="2.0" />
+          <div class="tool-menu-btn-name">КАЛЬКУЛЯТОР ТАЛОЙ ВОДЫ</div>
+          <div class="tool-menu-btn-desc">Расчет фракционного отделения дейтериевого льда и полезного биологического выхода.</div>
+        </button>
+
+        <button type="button" class="tool-menu-btn" data-tool="tarot">
+          <div class="tool-menu-btn-top">
+            <span class="tool-menu-btn-num">02 // ИНТЕРАКТИВ</span>
+            <span class="tool-menu-btn-arrow">ОТКРЫТЬ →</span>
+          </div>
+          <div class="tool-menu-btn-name">УТРЕННИЙ РАСКЛАД ТАРО</div>
+          <div class="tool-menu-btn-desc">Архетипическая калибровка вектора дня и фокусировка внимания оператора.</div>
+        </button>
+
+        <button type="button" class="tool-menu-btn" data-tool="breathing">
+          <div class="tool-menu-btn-top">
+            <span class="tool-menu-btn-num">03 // ТАЙМЕР</span>
+            <span class="tool-menu-btn-arrow">ОТКРЫТЬ →</span>
+          </div>
+          <div class="tool-menu-btn-name">БИО-РИТМ ДЫХАНИЯ (4-4-4)</div>
+          <div class="tool-menu-btn-desc">Квадратный таймер калибровки вегетативной системы (вдох - задержка - выдох - пауза).</div>
+        </button>
+
+        <button type="button" class="tool-menu-btn" data-tool="incident-log">
+          <div class="tool-menu-btn-top">
+            <span class="tool-menu-btn-num">04 // ТЕЛЕМЕТРИЯ</span>
+            <span class="tool-menu-btn-arrow">ОТКРЫТЬ →</span>
+          </div>
+          <div class="tool-menu-btn-name">ЖУРНАЛ ИНЦИДЕНТОВ b181</div>
+          <div class="tool-menu-btn-desc">Автономный лог телеметрии аномальных отклонений и фиксации паттернов контура.</div>
+        </button>
+      </div>
+
+      <!-- Контейнер экранов инструментов (отображается только выбранный инструмент) -->
+      <div class="tools-panes-wrapper" id="tools-panes-wrapper">
+
+        <!-- 01. КАЛЬКУЛЯТОР ТАЛОЙ ВОДЫ -->
+        <div class="tool-pane" id="tool-pane-water-calc" style="display:none;">
+          <div class="tool-card">
+            <div class="tool-card-header">
+              <span class="tool-title">01 // КАЛЬКУЛЯТОР ТАЛОЙ ВОДЫ</span>
+              <span class="tag-badge">[ ИНТЕРАКТИВ ]</span>
             </div>
-            <button type="button" class="btn-action" id="btn-calc-water">[ РАССЧИТАТЬ ФРАКЦИИ ]</button>
-          </div>
-          <div class="tool-calc-result" id="water-calc-result">
-            <!-- JS заполняет расчет -->
-          </div>
-        </div>
-
-        <!-- Утренний расклад Таро -->
-        <div class="tool-card" id="tool-tarot">
-          <div class="tool-card-header">
-            <span class="tool-title">02 // УТРЕННИЙ РАСКЛАД ТАРО</span>
-            <span class="tag-badge">[ ИНТЕРАКТИВ ]</span>
-          </div>
-          <p class="tool-desc">Архетипическая калибровка вектора дня для оператора контура.</p>
-          <button type="button" class="btn-action" id="btn-draw-tarot">[ СКАНИРОВАТЬ АРКАН ДНЯ ]</button>
-          <div class="tarot-card-result" id="tarot-card-result" style="display:none;">
-            <!-- JS выводит аркан дня -->
+            <p class="tool-desc">Расчет фракционного отделения дейтериевого льда и полезного биологического выхода.</p>
+            <div class="tool-calc-form">
+              <div class="tool-input-row">
+                <label for="input-water-vol">ОБЪЁМ ВОДЫ (ЛИТРЫ):</label>
+                <input type="number" id="input-water-vol" class="terminal-input" min="0.5" max="20" step="0.5" value="2.0" />
+              </div>
+              <button type="button" class="btn-action" id="btn-calc-water">[ РАССЧИТАТЬ ФРАКЦИИ ]</button>
+            </div>
+            <div class="tool-calc-result" id="water-calc-result">
+              <!-- JS заполняет расчет -->
+            </div>
           </div>
         </div>
 
-        <!-- Заглушки будущих интерактивов -->
-        <div class="tool-card tool-card-stub">
-          <div class="tool-card-header">
-            <span class="tool-title">03 // БИО-РИТМ ДЫХАНИЯ (4-4-4)</span>
-            <span class="tag-badge badge-revoked">[ В РАЗРАБОТКЕ ]</span>
+        <!-- 02. УТРЕННИЙ РАСКЛАД ТАРО -->
+        <div class="tool-pane" id="tool-pane-tarot" style="display:none;">
+          <div class="tool-card">
+            <div class="tool-card-header">
+              <span class="tool-title">02 // УТРЕННИЙ РАСКЛАД ТАРО</span>
+              <span class="tag-badge">[ ИНТЕРАКТИВ ]</span>
+            </div>
+            <p class="tool-desc">Архетипическая калибровка вектора дня для оператора контура.</p>
+            <button type="button" class="btn-action" id="btn-draw-tarot">[ СКАНИРОВАТЬ АРКАН ДНЯ ]</button>
+            <div class="tarot-card-result" id="tarot-card-result" style="display:none;">
+              <!-- JS выводит аркан дня -->
+            </div>
           </div>
-          <p class="tool-desc">Таймер калибровки вегетативной системы и подавления шумов био-датчика.</p>
         </div>
 
-        <div class="tool-card tool-card-stub">
-          <div class="tool-card-header">
-            <span class="tool-title">04 // ЖУРНАЛ ИНЦИДЕНТОВ b181</span>
-            <span class="tag-badge badge-revoked">[ В РАЗРАБОТКЕ ]</span>
+        <!-- 03. БИО-РИТМ ДЫХАНИЯ (4-4-4) -->
+        <div class="tool-pane" id="tool-pane-breathing" style="display:none;">
+          <div class="tool-card">
+            <div class="tool-card-header">
+              <span class="tool-title">03 // БИО-РИТМ ДЫХАНИЯ (4-4-4)</span>
+              <span class="tag-badge">[ ТАЙМЕР ]</span>
+            </div>
+            <p class="tool-desc">Квадратное дыхание 4x4x4x4 для стабилизации вегетативного тонуса оператора.</p>
+            
+            <div class="breathing-box">
+              <div class="breathing-phase-label" id="breathing-phase-label">ФАЗА: ГОТОВНОСТЬ</div>
+              <div class="breathing-timer-display" id="breathing-timer-display">04</div>
+              <div class="breathing-progress-bar">
+                <div class="breathing-progress-fill" id="breathing-progress-fill"></div>
+              </div>
+              <div class="breathing-cycle-count" id="breathing-cycle-count">ЦИКЛОВ ВЫПОЛНЕНО: 0</div>
+            </div>
+
+            <button type="button" class="btn-action" id="btn-toggle-breathing">[ СТАРТ ЦИКЛА ДЫХАНИЯ ]</button>
           </div>
-          <p class="tool-desc">Автономный лог аномальных отклонений и фиксации паттернов контура.</p>
         </div>
+
+        <!-- 04. ЖУРНАЛ ИНЦИДЕНТОВ b181 -->
+        <div class="tool-pane" id="tool-pane-incident-log" style="display:none;">
+          <div class="tool-card">
+            <div class="tool-card-header">
+              <span class="tool-title">04 // ЖУРНАЛ ИНЦИДЕНТОВ b181</span>
+              <span class="tag-badge">[ ТЕЛЕМЕТРИЯ ]</span>
+            </div>
+            <p class="tool-desc">Автономный лог аномальных отклонений и фиксации паттернов контура.</p>
+
+            <div class="incident-status-grid">
+              <div class="incident-stat-box">
+                <span class="incident-stat-label">СЕКТОР:</span>
+                <strong class="incident-stat-val">b181 [OK]</strong>
+              </div>
+              <div class="incident-stat-box">
+                <span class="incident-stat-label">ДЖИТТЕР:</span>
+                <strong class="incident-stat-val">0.012 ms</strong>
+              </div>
+              <div class="incident-stat-box">
+                <span class="incident-stat-label">СТАТУС:</span>
+                <strong class="incident-stat-val">СИНХРОНИЗИРОВАН</strong>
+              </div>
+            </div>
+
+            <button type="button" class="btn-action" id="btn-scan-incidents">[ СКАНИРОВАТЬ КОНТУР НА АНОМАЛИИ ]</button>
+
+            <div class="incident-log-terminal" id="incident-log-terminal">
+              <!-- JS заполняет записи лога -->
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -278,6 +377,6 @@
     </div>
   </footer>
 
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
