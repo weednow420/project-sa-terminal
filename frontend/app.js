@@ -446,12 +446,26 @@ function setupBackButtons() {
 
 // ── ШЛЮЗ СИНХРОНИЗАЦИИ (ВВОД 4-ЗНАЧНОГО КОДА) ─────────────────
 const AUTH_STORAGE_KEY = 'sa_terminal_synced';
+const AUTH_VERSION_KEY = 'sa_terminal_auth_version';
 
-function isAuthorized() {
-  return localStorage.getItem(AUTH_STORAGE_KEY) === 'synced';
+function isAuthorized(serverVersion = null) {
+  const isSynced = localStorage.getItem(AUTH_STORAGE_KEY) === 'synced';
+  if (!isSynced) return false;
+
+  // Если сервер вернул версию ключа — сверяем с локальной
+  if (serverVersion !== null && serverVersion !== undefined) {
+    const localVer = Number(localStorage.getItem(AUTH_VERSION_KEY) || 0);
+    if (localVer !== Number(serverVersion)) {
+      console.log(`[AUTH] Сброс сессии: версия сервера (v${serverVersion}) отличается от локальной (v${localVer}).`);
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      localStorage.removeItem(AUTH_VERSION_KEY);
+      return false;
+    }
+  }
+  return true;
 }
 
-function showGate() {
+function showGate(serverVersion = null) {
   STATE.pinCode = '';
   STATE.pinBusy = false;
   updatePinSlots();
@@ -526,6 +540,43 @@ function setupPinGate() {
   });
 }
 
+function setupResetButtons() {
+  // 1. Локальный сброс сессии (кнопка в шапке)
+  const btnResetSession = document.getElementById('btn-reset-session');
+  if (btnResetSession) {
+    btnResetSession.addEventListener('click', () => {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      localStorage.removeItem(AUTH_VERSION_KEY);
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+      showGate();
+    });
+  }
+
+  // 2. Глобальный сброс ключа у ВСЕХ пользователей (кнопка для Администратора)
+  const btnResetAll = document.getElementById('btn-reset-all-auth');
+  if (btnResetAll) {
+    btnResetAll.addEventListener('click', async () => {
+      const ok = confirm('СБРОСИТЬ КЛЮЧ СИНХРОНИЗАЦИИ У ВСЕХ ОПЕРАТОРОВ СЕТИ?\n\nВсем пользователям (включая вас) потребуется повторно ввести 4-значный ключ.');
+      if (!ok) return;
+
+      try {
+        const res = await apiPost('/auth/reset-all', {
+          telegram_id: STATE.operator?.id || null,
+        });
+
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        localStorage.removeItem(AUTH_VERSION_KEY);
+
+        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        alert(res.message || 'СИНХРОНИЗАЦИЯ СБРОШЕНА У ВСЕХ ОПЕРАТОРОВ');
+        showGate(res.auth_version);
+      } catch (err) {
+        alert(`[${CONFIG.INCIDENT_CODE}] ОШИБКА СБРОСА: ${err.message}`);
+      }
+    });
+  }
+}
+
 function handleDigitInput(digit) {
   if (STATE.pinCode.length >= 4) return;
   STATE.pinCode += digit;
@@ -549,7 +600,11 @@ async function submitPin(code) {
 
     setGateStatus(res.message || 'СИНХРОНИЗАЦИЯ УСПЕШНА // ДОСТУП РАЗРЕШЕН', 'success');
     if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    
     localStorage.setItem(AUTH_STORAGE_KEY, 'synced');
+    if (res.auth_version) {
+      localStorage.setItem(AUTH_VERSION_KEY, String(res.auth_version));
+    }
 
     setTimeout(async () => {
       await loadCategories();
@@ -587,15 +642,27 @@ async function main() {
     renderOperatorId(STATE.operator);
   });
 
-  // 3. Настраиваем навигацию и клавиатуру шлюза
+  // 3. Настраиваем навигацию, клавиатуру шлюза и кнопки сброса
   setupBackButtons();
   setupPinGate();
+  setupResetButtons();
 
-  // 4. Проверка первичной синхронизации (авторизации)
-  if (isAuthorized()) {
+  // 4. Проверяем серверную версию ключа
+  let serverAuthVersion = 1;
+  try {
+    const status = await apiGet('/auth/status');
+    if (status && status.auth_version) {
+      serverAuthVersion = status.auth_version;
+    }
+  } catch (err) {
+    console.warn('[AUTH] Проверка auth/status не удалась:', err);
+  }
+
+  // 5. Проверка первичной синхронизации (авторизации)
+  if (isAuthorized(serverAuthVersion)) {
     await loadCategories();
   } else {
-    showGate();
+    showGate(serverAuthVersion);
   }
 }
 
