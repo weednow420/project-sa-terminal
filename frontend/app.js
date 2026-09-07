@@ -16,6 +16,8 @@ const STATE = {
   operator:        null,   // { id, username, first_name }
   currentCategory: null,   // { slug, title }
   currentCard:     null,   // { id, title, sequence_index }
+  pinCode:         '',     // введенный 4-значный ключ
+  pinBusy:         false,  // флаг процесса проверки ключа
 };
 
 // ── TELEGRAM WEB APP ИНИЦИАЛИЗАЦИЯ ───────────────────────────
@@ -151,6 +153,24 @@ async function apiGet(path) {
   }
 
   return response.json();
+}
+
+async function apiPost(path, data) {
+  const response = await fetch(`${CONFIG.API_BASE}${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+    },
+    body: JSON.stringify(data),
+  });
+
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.message || body.error || `HTTP ${response.status}`);
+  }
+
+  return body;
 }
 
 // ── РЕНДЕР КАТЕГОРИЙ ──────────────────────────────────────────
@@ -424,6 +444,134 @@ function setupBackButtons() {
     });
 }
 
+// ── ШЛЮЗ СИНХРОНИЗАЦИИ (ВВОД 4-ЗНАЧНОГО КОДА) ─────────────────
+const AUTH_STORAGE_KEY = 'sa_terminal_synced';
+
+function isAuthorized() {
+  return localStorage.getItem(AUTH_STORAGE_KEY) === 'synced';
+}
+
+function showGate() {
+  STATE.pinCode = '';
+  STATE.pinBusy = false;
+  updatePinSlots();
+  setGateStatus('ОЖИДАНИЕ ВВОДА КЛЮЧА СИНХРОНИЗАЦИИ...', 'normal');
+  showView('view-gate');
+}
+
+function setGateStatus(text, type = 'normal') {
+  const el = document.getElementById('gate-status');
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'gate-status';
+  if (type === 'error') el.classList.add('error');
+  if (type === 'success') el.classList.add('success');
+}
+
+function updatePinSlots() {
+  const slots = document.querySelectorAll('.pin-slot');
+  slots.forEach((slot, idx) => {
+    if (idx < STATE.pinCode.length) {
+      slot.classList.add('filled');
+      slot.textContent = STATE.pinCode[idx];
+    } else {
+      slot.classList.remove('filled');
+      slot.textContent = '_';
+    }
+  });
+}
+
+function setupPinGate() {
+  const keypad = document.getElementById('pin-keypad');
+  if (keypad) {
+    keypad.addEventListener('click', (e) => {
+      const btn = e.target.closest('.pin-key');
+      if (!btn || STATE.pinBusy) return;
+      const digit = btn.getAttribute('data-digit');
+      if (digit !== null) {
+        handleDigitInput(digit);
+      }
+    });
+  }
+
+  const clearBtn = document.getElementById('btn-pin-clear');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      if (STATE.pinBusy) return;
+      if (STATE.pinCode.length > 0) {
+        STATE.pinCode = STATE.pinCode.slice(0, -1);
+        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        updatePinSlots();
+        setGateStatus('ОЖИДАНИЕ ВВОДА КЛЮЧА СИНХРОНИЗАЦИИ...', 'normal');
+      }
+    });
+  }
+
+  // Поддержка физической клавиатуры (ПК / браузер)
+  window.addEventListener('keydown', (e) => {
+    const gateView = document.getElementById('view-gate');
+    if (!gateView || !gateView.classList.contains('active') || STATE.pinBusy) return;
+
+    // Клавиши 0-7, 9 (восьмерки 8 нет в раскладке)
+    if (/^[0-79]$/.test(e.key)) {
+      handleDigitInput(e.key);
+    } else if (e.key === 'Backspace') {
+      if (STATE.pinCode.length > 0) {
+        STATE.pinCode = STATE.pinCode.slice(0, -1);
+        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        updatePinSlots();
+        setGateStatus('ОЖИДАНИЕ ВВОДА КЛЮЧА СИНХРОНИЗАЦИИ...', 'normal');
+      }
+    }
+  });
+}
+
+function handleDigitInput(digit) {
+  if (STATE.pinCode.length >= 4) return;
+  STATE.pinCode += digit;
+  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+  updatePinSlots();
+
+  if (STATE.pinCode.length === 4) {
+    submitPin(STATE.pinCode);
+  }
+}
+
+async function submitPin(code) {
+  STATE.pinBusy = true;
+  setGateStatus('ПРОВЕРКА КЛЮЧА ДОСТУПА...', 'normal');
+
+  try {
+    const res = await apiPost('/auth/verify', {
+      code,
+      telegram_id: STATE.operator?.id || null,
+    });
+
+    setGateStatus(res.message || 'СИНХРОНИЗАЦИЯ УСПЕШНА // ДОСТУП РАЗРЕШЕН', 'success');
+    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    localStorage.setItem(AUTH_STORAGE_KEY, 'synced');
+
+    setTimeout(async () => {
+      await loadCategories();
+    }, 450);
+
+  } catch (err) {
+    setGateStatus(`[${CONFIG.INCIDENT_CODE}] ДОСТУП ОТКЛОНЕН // НЕВЕРНЫЙ КЛЮЧ`, 'error');
+    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+
+    const container = document.querySelector('.gate-container');
+    if (container) container.classList.add('gate-shake');
+
+    setTimeout(() => {
+      if (container) container.classList.remove('gate-shake');
+      STATE.pinCode = '';
+      STATE.pinBusy = false;
+      updatePinSlots();
+      setGateStatus('ОЖИДАНИЕ ВВОДА КЛЮЧА СИНХРОНИЗАЦИИ...', 'normal');
+    }, 850);
+  }
+}
+
 // ── ГЛАВНАЯ ТОЧКА ВХОДА ───────────────────────────────────────
 async function main() {
   // 1. Инициализируем Telegram WebApp
@@ -439,11 +587,16 @@ async function main() {
     renderOperatorId(STATE.operator);
   });
 
-  // 3. Настраиваем навигацию
+  // 3. Настраиваем навигацию и клавиатуру шлюза
   setupBackButtons();
+  setupPinGate();
 
-  // 4. Загружаем категории (первый экран)
-  await loadCategories();
+  // 4. Проверка первичной синхронизации (авторизации)
+  if (isAuthorized()) {
+    await loadCategories();
+  } else {
+    showGate();
+  }
 }
 
 // Запуск после загрузки DOM
