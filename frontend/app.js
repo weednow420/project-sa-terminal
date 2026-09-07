@@ -20,38 +20,85 @@ const STATE = {
   pinBusy:         false,  // флаг процесса проверки ключа
 };
 
+// ── ТЕМА ОФОРМЛЕНИЯ (DARK / LIGHT E-INK) ─────────────────────
+const THEME_STORAGE_KEY = 'sa_terminal_theme';
+
+function getCurrentTheme() {
+  const saved = localStorage.getItem(THEME_STORAGE_KEY);
+  if (saved === 'light' || saved === 'dark') {
+    return saved;
+  }
+  return tg?.colorScheme === 'light' ? 'light' : 'dark';
+}
+
+function applyTheme(scheme) {
+  const theme = scheme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+
+  const btn = document.getElementById('btn-theme-toggle');
+  if (btn) {
+    btn.textContent = theme === 'light' ? '[ТЕМА: СВЕТЛАЯ]' : '[ТЕМА: ТЁМНАЯ]';
+  }
+
+  // Обновляем цвет шапки Telegram
+  if (tg?.setHeaderColor) {
+    try {
+      tg.setHeaderColor(theme === 'light' ? '#f5f5f0' : '#0a0a0a');
+      tg.setBackgroundColor(theme === 'light' ? '#f5f5f0' : '#0a0a0a');
+    } catch (_) {}
+  }
+
+  // Обновляем meta theme-color для браузера
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) {
+    metaTheme.setAttribute('content', theme === 'light' ? '#f5f5f0' : '#0a0a0a');
+  }
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || getCurrentTheme();
+  const next = current === 'light' ? 'dark' : 'light';
+  localStorage.setItem(THEME_STORAGE_KEY, next);
+  applyTheme(next);
+  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+  // Сохраняем в БД предпочтение темы
+  if (STATE.operator?.id) {
+    syncOperator({ ...STATE.operator, theme_preference: next });
+  }
+}
+
+function setupThemeToggle() {
+  const btn = document.getElementById('btn-theme-toggle');
+  if (btn) {
+    btn.addEventListener('click', toggleTheme);
+  }
+}
+
 // ── TELEGRAM WEB APP ИНИЦИАЛИЗАЦИЯ ───────────────────────────
 const tg = window.Telegram?.WebApp;
 
 function initTelegram() {
   if (!tg) {
     console.warn('[TERMINAL] Telegram WebApp не найден. Режим разработки.');
-    return null;
+  } else {
+    // Сообщаем Telegram что приложение готово
+    tg.ready();
+
+    // Разворачиваем на весь экран
+    tg.expand();
+
+    // Подписка на системную смену темы (только если пользователь не выбрал вручную)
+    tg.onEvent('themeChanged', () => {
+      if (!localStorage.getItem(THEME_STORAGE_KEY)) {
+        applyTheme(tg.colorScheme);
+      }
+    });
   }
 
-  // Сообщаем Telegram что приложение готово
-  tg.ready();
-
-  // Разворачиваем на весь экран
-  tg.expand();
-
-  // Адаптируем тему: реагируем на colorScheme Telegram
-  applyTheme(tg.colorScheme);
-
-  // Подписка на смену темы (если пользователь переключит)
-  tg.onEvent('themeChanged', () => applyTheme(tg.colorScheme));
-
+  // Применяем текущую тему (из localStorage или от Telegram)
+  applyTheme(getCurrentTheme());
   return tg;
-}
-
-function applyTheme(scheme) {
-  // 'dark'  → консольная тема (по умолчанию в :root)
-  // 'light' → E-ink тема ([data-theme="light"])
-  // Монохром сохраняется в обоих случаях — только яркость меняется
-  document.documentElement.setAttribute(
-    'data-theme',
-    scheme === 'light' ? 'light' : 'dark'
-  );
 }
 
 // ── ДАННЫЕ ОПЕРАТОРА ──────────────────────────────────────────
@@ -642,10 +689,11 @@ async function main() {
     renderOperatorId(STATE.operator);
   });
 
-  // 3. Настраиваем навигацию, клавиатуру шлюза и кнопки сброса
+  // 3. Настраиваем навигацию, клавиатуру шлюза, кнопки сброса и тему
   setupBackButtons();
   setupPinGate();
   setupResetButtons();
+  setupThemeToggle();
 
   // 4. Проверяем серверную версию ключа
   let serverAuthVersion = 1;
