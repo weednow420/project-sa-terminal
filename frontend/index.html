@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=7" />
+  <link rel="stylesheet" href="style.css?v=8" />
 </head>
 <body>
 
@@ -149,8 +149,8 @@
     <!-- НАБЛЮДЕНИЯ (ВКЛАДКИ: 1 - ИСТОЧНИК, 2 - ПОСЛАНИЕ) -->
     <section id="view-observations" class="view">
       <nav class="breadcrumb">
-        <button class="btn-back" id="btn-back-observations" aria-label="Назад к гримуару">
-          ← ГРИМУАР
+        <button class="btn-back" id="btn-back-observations" aria-label="Назад к базису">
+          ← БАЗИС
         </button>
         <span class="breadcrumb-sep">/</span>
         <span>НАБЛЮДЕНИЯ</span>
@@ -224,8 +224,8 @@
     <!-- ЗАКЛАДКИ (СОХРАНЁННЫЕ КАРТОЧКИ) -->
     <section id="view-bookmarks" class="view">
       <nav class="breadcrumb">
-        <button class="btn-back" id="btn-back-bookmarks" aria-label="Назад к гримуару">
-          ← ГРИМУАР
+        <button class="btn-back" id="btn-back-bookmarks" aria-label="Назад к базису">
+          ← БАЗИС
         </button>
         <span class="breadcrumb-sep">/</span>
         <span>ЗАКЛАДКИ</span>
@@ -247,8 +247,8 @@
     <section id="view-tools" class="view">
       <!-- Навигационная цепочка -->
       <nav class="breadcrumb" id="tools-breadcrumb">
-        <button class="btn-back" id="btn-back-tools" aria-label="Назад к гримуару">
-          ← ГРИМУАР
+        <button class="btn-back" id="btn-back-tools" aria-label="Назад к базису">
+          ← БАЗИС
         </button>
         <span class="breadcrumb-sep">/</span>
         <button class="btn-back" id="btn-back-tools-menu" style="display:none;" aria-label="К меню инструментов">
@@ -444,14 +444,15 @@
        НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK)
   ══════════════════════════════════════════════ -->
   <nav class="terminal-bottom-nav" id="terminal-bottom-nav" style="display: none;">
-    <button type="button" class="bottom-nav-btn" data-view="view-observations" id="nav-btn-observations">
-      НАБЛЮДЕНИЯ
-    </button>
     <button type="button" class="bottom-nav-btn" data-view="view-bookmarks" id="nav-btn-bookmarks">
-      ЗАКЛАДКИ
+      <span>ЗАКЛАДКИ</span>
+    </button>
+    <button type="button" class="bottom-nav-btn active" data-view="view-categories" id="nav-btn-basis">
+      <span>БАЗИС</span>
+      <span class="bottom-nav-sub">ΒΑΣΙΣ</span>
     </button>
     <button type="button" class="bottom-nav-btn" data-view="view-tools" id="nav-btn-tools">
-      ИНСТРУМЕНТЫ
+      <span>ИНСТРУМЕНТЫ</span>
     </button>
   </nav>
 
@@ -466,6 +467,6 @@
     </div>
   </footer>
 
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>

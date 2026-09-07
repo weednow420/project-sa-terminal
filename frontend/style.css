@@ -926,12 +926,17 @@ body {
 }
 
 .bottom-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-align: center;
-  padding: 10px 4px;
+  padding: 7px 4px;
+  min-height: 46px;
   background-color: var(--bg-surface);
   color: var(--text-dim);
   border: 1px solid var(--border);
@@ -941,6 +946,7 @@ body {
   white-space: nowrap;
   user-select: none;
   transition: all 0.12s ease;
+  box-sizing: border-box;
 }
 
 .bottom-nav-btn:hover {
@@ -953,6 +959,20 @@ body {
   background-color: var(--text-primary);
   color: var(--bg);
   border-color: var(--text-primary);
+}
+
+.bottom-nav-sub {
+  font-size: 0.52rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  opacity: 0.75;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.bottom-nav-btn.active .bottom-nav-sub {
+  color: var(--bg);
+  opacity: 0.9;
 }
 
 /* ── КНОПКА ЗАКЛАДКИ В РИДЕРЕ КАРТОЧКИ ──────────────────────── */
