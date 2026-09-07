@@ -274,7 +274,11 @@ function renderCategoryTabs(categories) {
   if (!tabsBar) return;
   tabsBar.innerHTML = '';
 
-  categories.forEach((cat) => {
+  // В верхнем подменю отображаются только разделы: СОМАТИКА, КОГНИТИВИСТИКА, ИЗОЛЯЦИЯ.
+  // Переход в БАЗИС осуществляется исключительно через нижний док (кнопка БАЗИС / ΒΑΣΙΣ).
+  const subMenuCategories = categories.filter(cat => cat.slug !== 'basis');
+
+  subMenuCategories.forEach((cat) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'category-tab-btn';
