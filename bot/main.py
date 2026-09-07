@@ -92,6 +92,7 @@ async def cmd_start(message: Message):
                 f"─────────────────────────\n"
                 f"Команды администратора:\n"
                 f"• /operators — список зарегистрированных\n"
+                f"• /reset_auth — сбросить ключ у всех\n"
                 f"• /status — статус контура"
             ),
             reply_markup=keyboard
@@ -252,6 +253,44 @@ async def cmd_operators_list(message: Message):
         "\n".join(lines),
         reply_markup=keyboard
     )
+
+
+# ------------------------------------------------------------
+# /reset_auth — сброс ключа у всех пользователей (ТОЛЬКО АДМИН)
+# ------------------------------------------------------------
+@dp.message(Command("reset_auth", "reset_keys", "reset_key", "revoke_all"))
+async def cmd_reset_auth(message: Message):
+    admin_ids = get_admin_ids()
+    if message.from_user.id not in admin_ids:
+        await message.answer(
+            "[b181] ДОСТУП ЗАПРЕЩЁН\n"
+            "Команда доступна только Администраторам контура."
+        )
+        return
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{API_INTERNAL_URL}/auth/reset-all",
+                headers={"x-telegram-user-id": str(message.from_user.id)},
+                timeout=aiohttp.ClientTimeout(total=3.0)
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    ver = data.get("auth_version", "?")
+                    await message.answer(
+                        "СИНХРОНИЗАЦИЯ СБРОШЕНА У ВСЕХ ОПЕРАТОРОВ\n"
+                        "─────────────────────────\n"
+                        f"ВЕРСИЯ КЛЮЧА: v{ver}\n"
+                        "Все активные сессии аннулированы.\n"
+                        "При следующем открытии приложения ВСЕМ пользователям "
+                        "(включая администратора) потребуется заново ввести 4-значный ключ доступа."
+                    )
+                    return
+    except Exception as e:
+        logger.error(f"[b181] Ошибка сброса сессий: {e}")
+
+    await message.answer("[b181] Ошибка выполнения сброса сессий.")
 
 
 # ------------------------------------------------------------

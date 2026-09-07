@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=2" />
 </head>
 <body>
 
@@ -29,6 +29,7 @@
     <div class="header-bottom">
       <span class="header-mode">MODE: НАБЛЮДАТЕЛЬ [READ-ONLY]</span>
       <span class="header-operator" id="operator-id">ОПЕРАТОР: ──────</span>
+      <button type="button" class="btn-reset-session" id="btn-reset-session" title="Сбросить сессию на этом устройстве">[СБРОС]</button>
     </div>
     <div class="header-divider">════════════════════════════════════════</div>
   </header>
@@ -97,10 +98,13 @@
         <!-- JS заполняет -->
       </ul>
 
-      <!-- Переход в Реестр Операторов (ТОЛЬКО ДЛЯ АДМИНИСТРАТОРА) -->
+      <!-- Переход в Реестр Операторов / Сброс ключей (ТОЛЬКО ДЛЯ АДМИНИСТРАТОРА) -->
       <div class="terminal-section-action" id="admin-registry-section" style="display: none;">
         <button class="btn-terminal-outline" id="btn-open-registry">
           ► [ РЕЕСТР ОПЕРАТОРОВ СЕТИ (АДМИН) ]
+        </button>
+        <button class="btn-terminal-outline btn-warn" id="btn-reset-all-auth" style="margin-top: 8px;">
+          ⚠ [ СБРОСИТЬ КЛЮЧ У ВСЕХ ПОЛЬЗОВАТЕЛЕЙ ]
         </button>
       </div>
     </section>
@@ -186,6 +190,6 @@
     </div>
   </footer>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>

@@ -765,3 +765,38 @@ body {
 .gate-shake {
   animation: gateShake 0.35s ease-in-out;
 }
+
+/* ── КНОПКИ СБРОСА СЕССИИ И АДМИН-СБРОСА ────────────────────── */
+.btn-reset-session {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 1px 5px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  margin-left: auto;
+  transition: all 0.12s ease;
+}
+
+.btn-reset-session:hover,
+.btn-reset-session:active {
+  color: var(--text-primary);
+  border-color: var(--border-hard);
+  background: var(--bg-hover);
+}
+
+.btn-terminal-outline.btn-warn {
+  border-color: var(--border-hard);
+  color: var(--text-primary);
+  opacity: 0.85;
+}
+
+.btn-terminal-outline.btn-warn:hover,
+.btn-terminal-outline.btn-warn:active {
+  background: var(--text-primary);
+  color: var(--bg);
+  opacity: 1;
+}

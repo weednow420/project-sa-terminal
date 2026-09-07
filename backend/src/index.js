@@ -47,6 +47,11 @@ await fastify.register(staticFiles, {
   root:   join(__dirname, '..', '..', 'frontend'),
   prefix: '/',
   decorateReply: false,
+  setHeaders: (res, path) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  },
 });
 
 // Маршруты API
