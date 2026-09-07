@@ -122,11 +122,120 @@
         </button>
         <span class="breadcrumb-sep">/</span>
         <span id="breadcrumb-card-category">──────</span>
+        <button type="button" class="btn-card-bookmark" id="btn-card-bookmark" title="Добавить в закладки">
+          [ 🔖 В ЗАКЛАДКИ ]
+        </button>
       </nav>
       <div class="dot-grid-divider"></div>
       <article class="card-detail" id="card-detail-content">
         <!-- JS заполняет -->
       </article>
+    </section>
+
+    <!-- НАБЛЮДЕНИЯ (ВКЛАДКИ: 1 - ИСТОЧНИК, 2 - ПОСЛАНИЕ) -->
+    <section id="view-observations" class="view">
+      <nav class="breadcrumb">
+        <button class="btn-back" id="btn-back-observations" aria-label="Назад к гримуару">
+          ← ГРИМУАР
+        </button>
+        <span class="breadcrumb-sep">/</span>
+        <span>НАБЛЮДЕНИЯ</span>
+      </nav>
+
+      <div class="observations-tabs-bar" id="observations-tabs-bar">
+        <button type="button" class="obs-tab-btn active" data-subtab="source">1 - ИСТОЧНИК</button>
+        <button type="button" class="obs-tab-btn" data-subtab="message">2 - ПОСЛАНИЕ</button>
+      </div>
+
+      <div class="dot-grid-divider"></div>
+
+      <div class="observations-content" id="observations-content">
+        <!-- JS заполняет -->
+      </div>
+    </section>
+
+    <!-- ЗАКЛАДКИ (СОХРАНЁННЫЕ КАРТОЧКИ) -->
+    <section id="view-bookmarks" class="view">
+      <nav class="breadcrumb">
+        <button class="btn-back" id="btn-back-bookmarks" aria-label="Назад к гримуару">
+          ← ГРИМУАР
+        </button>
+        <span class="breadcrumb-sep">/</span>
+        <span>ЗАКЛАДКИ</span>
+      </nav>
+
+      <div class="bookmarks-meta-bar">
+        <span class="category-meta-title">СОХРАНЁННЫЕ КАРТОЧКИ</span>
+        <span class="category-meta-count" id="bookmarks-count">ВСЕГО: 0</span>
+      </div>
+
+      <div class="dot-grid-divider"></div>
+
+      <ul class="card-list" id="bookmarks-cards-list">
+        <!-- JS заполняет -->
+      </ul>
+    </section>
+
+    <!-- ИНСТРУМЕНТЫ (ИНТЕРАКТИВНЫЙ ХАБ) -->
+    <section id="view-tools" class="view">
+      <nav class="breadcrumb">
+        <button class="btn-back" id="btn-back-tools" aria-label="Назад к гримуару">
+          ← ГРИМУАР
+        </button>
+        <span class="breadcrumb-sep">/</span>
+        <span>ИНСТРУМЕНТЫ</span>
+      </nav>
+
+      <div class="tools-container" id="tools-container">
+        <!-- Калькулятор талой воды -->
+        <div class="tool-card" id="tool-water-calc">
+          <div class="tool-card-header">
+            <span class="tool-title">01 // КАЛЬКУЛЯТОР ТАЛОЙ ВОДЫ</span>
+            <span class="tag-badge">[ ИНТЕРАКТИВ ]</span>
+          </div>
+          <p class="tool-desc">Расчет фракционного отделения дейтериевого льда и полезного биологического выхода.</p>
+          <div class="tool-calc-form">
+            <div class="tool-input-row">
+              <label for="input-water-vol">ОБЪЁМ ВОДЫ (ЛИТРЫ):</label>
+              <input type="number" id="input-water-vol" class="terminal-input" min="0.5" max="20" step="0.5" value="2.0" />
+            </div>
+            <button type="button" class="btn-action" id="btn-calc-water">[ РАССЧИТАТЬ ФРАКЦИИ ]</button>
+          </div>
+          <div class="tool-calc-result" id="water-calc-result">
+            <!-- JS заполняет расчет -->
+          </div>
+        </div>
+
+        <!-- Утренний расклад Таро -->
+        <div class="tool-card" id="tool-tarot">
+          <div class="tool-card-header">
+            <span class="tool-title">02 // УТРЕННИЙ РАСКЛАД ТАРО</span>
+            <span class="tag-badge">[ ИНТЕРАКТИВ ]</span>
+          </div>
+          <p class="tool-desc">Архетипическая калибровка вектора дня для оператора контура.</p>
+          <button type="button" class="btn-action" id="btn-draw-tarot">[ СКАНИРОВАТЬ АРКАН ДНЯ ]</button>
+          <div class="tarot-card-result" id="tarot-card-result" style="display:none;">
+            <!-- JS выводит аркан дня -->
+          </div>
+        </div>
+
+        <!-- Заглушки будущих интерактивов -->
+        <div class="tool-card tool-card-stub">
+          <div class="tool-card-header">
+            <span class="tool-title">03 // БИО-РИТМ ДЫХАНИЯ (4-4-4)</span>
+            <span class="tag-badge badge-revoked">[ В РАЗРАБОТКЕ ]</span>
+          </div>
+          <p class="tool-desc">Таймер калибровки вегетативной системы и подавления шумов био-датчика.</p>
+        </div>
+
+        <div class="tool-card tool-card-stub">
+          <div class="tool-card-header">
+            <span class="tool-title">04 // ЖУРНАЛ ИНЦИДЕНТОВ b181</span>
+            <span class="tag-badge badge-revoked">[ В РАЗРАБОТКЕ ]</span>
+          </div>
+          <p class="tool-desc">Автономный лог аномальных отклонений и фиксации паттернов контура.</p>
+        </div>
+      </div>
     </section>
 
     <!-- ЭКРАН ОШИБКИ b181 -->
@@ -144,6 +253,21 @@
   </main>
 
   <!-- ══════════════════════════════════════════════
+       НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK)
+  ══════════════════════════════════════════════ -->
+  <nav class="terminal-bottom-nav" id="terminal-bottom-nav" style="display: none;">
+    <button type="button" class="bottom-nav-btn" data-view="view-observations" id="nav-btn-observations">
+      НАБЛЮДЕНИЯ
+    </button>
+    <button type="button" class="bottom-nav-btn" data-view="view-bookmarks" id="nav-btn-bookmarks">
+      ЗАКЛАДКИ
+    </button>
+    <button type="button" class="bottom-nav-btn" data-view="view-tools" id="nav-btn-tools">
+      ИНСТРУМЕНТЫ
+    </button>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════
        ПОДВАЛ ТЕРМИНАЛА
   ══════════════════════════════════════════════ -->
   <footer class="terminal-footer">
@@ -154,6 +278,6 @@
     </div>
   </footer>
 
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

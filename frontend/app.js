@@ -179,8 +179,28 @@ function showView(viewId) {
   const target = document.getElementById(viewId);
   if (target) {
     target.classList.add('active');
-    document.querySelector('.terminal-main').scrollTop = 0;
+    const mainEl = document.querySelector('.terminal-main');
+    if (mainEl) mainEl.scrollTop = 0;
   }
+
+  // Управление нижней панелью навигации (скрыта на экране авторизации/загрузки/ошибки)
+  const bottomNav = document.getElementById('terminal-bottom-nav');
+  if (bottomNav) {
+    if (viewId === 'view-gate' || viewId === 'view-loading' || viewId === 'view-error') {
+      bottomNav.style.display = 'none';
+    } else {
+      bottomNav.style.display = 'grid';
+    }
+  }
+
+  // Обновляем состояние кнопок нижнего меню
+  document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+    if (btn.getAttribute('data-view') === viewId) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
 }
 
 // ── API ЗАПРОСЫ ───────────────────────────────────────────────
@@ -368,6 +388,7 @@ function openCard(card) {
   }
 
   showView('view-card-detail');
+  updateCardBookmarkButton(card.id);
 }
 
 // ── ЭКРАН ОШИБКИ b181 ─────────────────────────────────────────
@@ -397,6 +418,27 @@ function setupBackButtons() {
   const btnBack = document.getElementById('btn-back-to-tab');
   if (btnBack) {
     btnBack.addEventListener('click', () => {
+      showView('view-categories');
+    });
+  }
+
+  const btnBackObs = document.getElementById('btn-back-observations');
+  if (btnBackObs) {
+    btnBackObs.addEventListener('click', () => {
+      showView('view-categories');
+    });
+  }
+
+  const btnBackBms = document.getElementById('btn-back-bookmarks');
+  if (btnBackBms) {
+    btnBackBms.addEventListener('click', () => {
+      showView('view-categories');
+    });
+  }
+
+  const btnBackTools = document.getElementById('btn-back-tools');
+  if (btnBackTools) {
+    btnBackTools.addEventListener('click', () => {
       showView('view-categories');
     });
   }
@@ -561,6 +603,385 @@ async function submitPin(code) {
   }
 }
 
+// ── ЗАКЛАДКИ (СОХРАНЕНИЕ КАРТОЧЕК В ПАМЯТЬ ТЕРМИНАЛА) ────────
+const BOOKMARKS_STORAGE_KEY = 'sa_terminal_bookmarks';
+
+function getBookmarks() {
+  try {
+    const raw = localStorage.getItem(BOOKMARKS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveBookmarks(bookmarks) {
+  try {
+    localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(bookmarks));
+  } catch (e) {
+    console.error('[BOOKMARKS] Ошибка записи в localStorage:', e);
+  }
+}
+
+function isCardBookmarked(cardId) {
+  if (!cardId) return false;
+  const list = getBookmarks();
+  return list.some(b => String(b.id) === String(cardId));
+}
+
+function toggleBookmarkForCurrentCard() {
+  if (!STATE.currentCard) return;
+  const card = STATE.currentCard;
+  let list = getBookmarks();
+  const exists = list.some(b => String(b.id) === String(card.id));
+
+  if (exists) {
+    list = list.filter(b => String(b.id) !== String(card.id));
+  } else {
+    list.unshift({
+      id: card.id,
+      sequence_index: card.sequence_index,
+      title: card.title,
+      body_text: card.body_text,
+      category_slug: STATE.currentCategory?.slug || '',
+      category_title: STATE.currentCategory?.title || 'ГРИМУАР',
+      saved_at: new Date().toISOString(),
+    });
+  }
+
+  saveBookmarks(list);
+  updateCardBookmarkButton(card.id);
+  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+}
+
+function updateCardBookmarkButton(cardId) {
+  const btn = document.getElementById('btn-card-bookmark');
+  if (!btn) return;
+  const bookmarked = isCardBookmarked(cardId);
+  if (bookmarked) {
+    btn.classList.add('bookmarked');
+    btn.textContent = '[ ★ В ЗАКЛАДКАХ ]';
+  } else {
+    btn.classList.remove('bookmarked');
+    btn.textContent = '[ 🔖 В ЗАКЛАДКИ ]';
+  }
+}
+
+function setupBookmarkButton() {
+  const btn = document.getElementById('btn-card-bookmark');
+  if (btn) {
+    btn.addEventListener('click', toggleBookmarkForCurrentCard);
+  }
+}
+
+function renderBookmarks() {
+  const list = getBookmarks();
+  const countEl = document.getElementById('bookmarks-count');
+  if (countEl) {
+    countEl.textContent = `ВСЕГО: ${list.length}`;
+  }
+
+  const listEl = document.getElementById('bookmarks-cards-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  if (list.length === 0) {
+    listEl.innerHTML = `
+      <li class="card-item">
+        <div style="padding: 24px; text-align: center; color: var(--text-dim); font-size: 0.75rem; line-height: 1.6;">
+          НЕТ СОХРАНЁННЫХ КАРТОЧЕК.<br/>
+          ОТКРОЙТЕ ЛЮБУЮ КАРТОЧКУ В ГРИМУАРЕ И НАЖМИТЕ [ 🔖 В ЗАКЛАДКИ ].
+        </div>
+      </li>`;
+    return;
+  }
+
+  list.forEach(item => {
+    const li = document.createElement('li');
+    li.className = 'card-item';
+    li.innerHTML = `
+      <button aria-label="Закладка §${item.sequence_index}: ${item.title}">
+        <span class="card-seq">§${String(item.sequence_index).padStart(2, '0')}</span>
+        <span class="card-title-preview">${escHtml(item.title)}</span>
+      </button>`;
+    li.querySelector('button').addEventListener('click', () => {
+      STATE.currentCategory = {
+        slug: item.category_slug,
+        title: item.category_title || 'ГРИМУАР',
+      };
+      openCard(item);
+    });
+    listEl.appendChild(li);
+  });
+}
+
+// ── НАБЛЮДЕНИЯ (ВКЛАДКИ: 1 - ИСТОЧНИК, 2 - ПОСЛАНИЕ) ───────────
+const OBSERVATIONS_DATA = {
+  source: [
+    {
+      code: 'SRC-01',
+      title: 'ПЕРВИЧНАЯ ТОПОЛОГИЯ ИСТОЧНИКА',
+      status: 'СТАБИЛЕН',
+      body: `Фиксация опорной частоты контура.\nМодуляция сигнала не зависит от внешних ретрансляторов.\n\nПри сканировании фонового поля оператором обнаружено резонансное плато. Источник не производит прямого акустического давления, но регистрируется био-сенсором в диапазоне альфа-ритма (7.83–8.2 Гц). Рекомендуется регулярная калибровка через талую воду.`,
+    },
+    {
+      code: 'SRC-02',
+      title: 'ВЕКТОР ПРИЕМА И ДЕВИАЦИЯ',
+      status: 'В НОРМЕ',
+      body: `Отношение сигнал/шум превышает критический порог 3.4 dB.\nУтечки пакетов в узле связи не зафиксировано.\n\nЛюбое искажение восприятия оператора (соматическая усталость, когнитивный шум) приводит к фазовому сдвигу. Для компенсации применяйте дыхательный паттерн и депривацию сенсорного потока.`,
+    },
+    {
+      code: 'SRC-03',
+      title: 'ЭНЕРГЕТИЧЕСКИЙ ГРАДИЕНТ',
+      status: 'АКТИВЕН',
+      body: `Показатели проводимости био-поля оператора соответствуют рабочему протоколу.\nРегулярная синхронизация сохраняет непрерывность наблюдательного слоя.`,
+    },
+  ],
+  message: [
+    {
+      code: 'MSG-001',
+      title: 'ДЕКОДИРОВАННЫЙ ТРАНСКРИПТ // ПЕРВЫЙ СЛОЙ',
+      status: 'РАСШИФРОВАНО',
+      body: `«Форма сосуда определяет геометрию жидкости.\nОсвобождение контура начинается с чистоты кристаллической решетки.»\n\nТрансляция зафиксирована в секторе b181. Сообщение ориентирует на поэтапное выведение дейтериевого балласта из организма и фиксацию внимания на внутренней тишине.`,
+    },
+    {
+      code: 'MSG-002',
+      title: 'ДЕКОДИРОВАННЫЙ ТРАНСКРИПТ // ВТОРОЙ СЛОЙ',
+      status: 'ПРИЕМ',
+      body: `«Наблюдатель не отделен от наблюдаемого.\nВсякий акт измерения меняет фазу принимаемого сигнала.»\n\nКонтур реагирует на каждое состояние оператора. Не пытайтесь форсировать интерпретацию символов — позвольте гримуару структурироваться естественным темпом.`,
+    },
+    {
+      code: 'MSG-003',
+      title: 'СИСТЕМНЫЙ СИГНАЛ // ТРЕТИЙ СЛОЙ',
+      status: 'АРХИВ',
+      body: `«Каждое утро восстанавливайте точку опоры.\nСинхронизируйте вектор воли с ритмом внешних циклов.»`,
+    },
+  ],
+};
+
+function renderObservations(subtab = 'source') {
+  document.querySelectorAll('.obs-tab-btn').forEach(btn => {
+    if (btn.getAttribute('data-subtab') === subtab) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  const container = document.getElementById('observations-content');
+  if (!container) return;
+
+  const items = OBSERVATIONS_DATA[subtab] || [];
+  if (items.length === 0) {
+    container.innerHTML = `<div style="padding:20px; color:var(--text-dim); text-align:center;">ДАННЫЕ ДАННОГО СЛОЯ НЕ НАЙДЕНЫ</div>`;
+    return;
+  }
+
+  container.innerHTML = items.map(item => `
+    <div class="obs-card">
+      <div class="obs-card-header">
+        <span class="obs-card-code">[ ${escHtml(item.code)} ]</span>
+        <span class="tag-badge">[ ${escHtml(item.status)} ]</span>
+      </div>
+      <h3 class="obs-card-title">${escHtml(item.title)}</h3>
+      <div class="obs-card-body">${escHtml(item.body)}</div>
+    </div>
+  `).join('');
+}
+
+function setupObservations() {
+  const tabs = document.querySelectorAll('.obs-tab-btn');
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const subtab = btn.getAttribute('data-subtab');
+      renderObservations(subtab);
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+  });
+}
+
+// ── ИНСТРУМЕНТЫ (КАЛЬКУЛЯТОР ТАЛОЙ ВОДЫ, ТАРО) ────────────────
+function calcMeltWater() {
+  const input = document.getElementById('input-water-vol');
+  const result = document.getElementById('water-calc-result');
+  if (!input || !result) return;
+
+  const vol = parseFloat(input.value);
+  if (isNaN(vol) || vol <= 0) {
+    result.innerHTML = `<span style="color:var(--text-warn);">ВВЕДИТЕ КОРРЕКТНЫЙ ОБЪЁМ ВОДЫ (ОТ 0.5 ДО 20 Л)</span>`;
+    return;
+  }
+
+  // Расчет фракций:
+  // 1. Дейтерий (тяжелая вода) ~5%
+  // 2. Биологический полезный выход (чистый талый лед) ~72%
+  // 3. Мутный рассол / примеси (сердцевина) ~23%
+  const f1 = vol * 0.05;
+  const f2 = vol * 0.72;
+  const f3 = vol * 0.23;
+
+  const tDeuteriumHours = (1.2 * Math.sqrt(vol)).toFixed(1);
+  const tFullHours = (4.8 * Math.sqrt(vol)).toFixed(1);
+
+  result.innerHTML = `
+    <div style="font-weight:700; margin-bottom:8px; letter-spacing:0.06em;">
+      РЕЗУЛЬТАТ РАСЧЕТА ДЛЯ ${vol.toFixed(1)} ЛИТРОВ:
+    </div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+      <span style="color:var(--text-dim);">1. СБРОС ДЕЙТЕРИЯ (ПЕРВЫЙ ЛЕД, +3.8°C):</span>
+      <strong style="color:var(--text-warn);">${f1.toFixed(2)} Л (~5%)</strong>
+    </div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+      <span>2. ПОЛЕЗНЫЙ ТАЛЫЙ ВЫХОД (ЖИВОЙ ЛЕД):</span>
+      <strong>${f2.toFixed(2)} Л (~72%)</strong>
+    </div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+      <span style="color:var(--text-dim);">3. СЕРДЦЕВИНА С ПРИМЕСЯМИ (МУТНЫЙ РАССОЛ):</span>
+      <strong style="color:var(--text-warn);">${f3.toFixed(2)} Л (~23%)</strong>
+    </div>
+    <div style="border-top:1px dashed var(--border); padding-top:6px; margin-top:6px; font-size:0.68rem; color:var(--text-dim); line-height:1.5;">
+      • До первой дейтериевой пленки: ~${tDeuteriumHours} ч (снять и выбросить)<br/>
+      • До замерзания 75% объема: ~${tFullHours} ч (слить жидкую сердцевину)<br/>
+      • Оставшийся кристалл растопить при комнатной температуре.
+    </div>
+  `;
+}
+
+const TAROT_CARDS = [
+  {
+    arcana: '0',
+    name: 'ДУРАК // ИСХОДНЫЙ НУЛЬ',
+    energy: 'НАЧАЛО ЦИКЛА',
+    text: 'Чистый лист сознания. Сбросьте накопленные суждения, ожидания и ментальный шум. Доверьтесь первичному импульсу и шагните в неизведанное.',
+  },
+  {
+    arcana: 'I',
+    name: 'МАГ // ФОКУС ВОЛИ',
+    energy: 'АКТИВНОЕ ДЕЙСТВИЕ',
+    text: 'Все необходимые инструменты уже находятся в вашем распоряжении. Время структурировать окружающий хаос в четкий вектор направленного намерения.',
+  },
+  {
+    arcana: 'II',
+    name: 'ЖРИЦА // СЕНСОР ТИШИНЫ',
+    energy: 'ИНТУИЦИЯ И ПАУЗА',
+    text: 'Не предпринимайте резких внешних движений. Ответ находится глубже уровня вербализации. Внимайте скрытым сигналам и фоновому шуму.',
+  },
+  {
+    arcana: 'IV',
+    name: 'ИМПЕРАТОР // КАРКАС КОНТУРА',
+    energy: 'ДИСЦИПЛИНА И СТРУКТУРА',
+    text: 'Наведите порядок в биоритме, расписании и границах внимания. Четкие правила защищают энергию оператора от энтропии.',
+  },
+  {
+    arcana: 'VII',
+    name: 'КОЛЕСНИЦА // ВЕКТОР ПРОРЫВА',
+    energy: 'УПРАВЛЕНИЕ СИЛАМИ',
+    text: 'Две противоположные силы требуют балансировки. Удерживайте фокус на главной цели дня, не позволяя эмоциям сбить траекторию.',
+  },
+  {
+    arcana: 'IX',
+    name: 'ОТШЕЛЬНИК // ДЕПРИВАЦИЯ',
+    energy: 'ВНУТРЕННИЙ СВЕТ',
+    text: 'Ограничьте избыточный социальный и цифровой поток. Время глубокого погружения в собственную суть, самонаблюдения и тишины.',
+  },
+  {
+    arcana: 'X',
+    name: 'КОЛЕСО СУДЬБЫ // ЦИКЛ СИНХРОНИИ',
+    energy: 'ДИНАМИЧЕСКИЙ СДВИГ',
+    text: 'Не сопротивляйтесь изменениям обстоятельств. Контур разворачивается по большему фрактальному закону. Ловите волну момента.',
+  },
+  {
+    arcana: 'XI',
+    name: 'СПРАВЕДЛИВОСТЬ // БАЛАНС СИСТЕМЫ',
+    energy: 'ПРИЧИНА И СЛЕДСТВИЕ',
+    text: 'Каждое ваше действие и мысль отзываются в ткани контура. Принимайте решения с предельной честностью и взвешенностью.',
+  },
+  {
+    arcana: 'XIV',
+    name: 'УМЕРЕННОСТЬ // АЛХИМИЯ ТАЛОЙ ВОДЫ',
+    energy: 'СИНТЕЗ И ТЕРПЕНИЕ',
+    text: 'Соединение противоположностей, плавное протекание процессов. Не форсируйте результаты: внутренний кристалл формируется в покое.',
+  },
+  {
+    arcana: 'XVII',
+    name: 'ЗВЕЗДА // СВЕТ ОРИЕНТИРА',
+    energy: 'ЯСНОСТЬ И НАДЕЖДА',
+    text: 'Канал связи чист. Долгосрочный маяк сияет перед вами. Продолжайте движение в выбранном направлении без сомнений.',
+  },
+  {
+    arcana: 'XXI',
+    name: 'МИР // ИНТЕГРАЦИЯ КОНТУРА',
+    energy: 'ЦЕЛОСТНОСТЬ',
+    text: 'Гармоничное завершение цикла. Все разрозненные элементы складываются в единую картину. Вы находитесь в правильной точке времени.',
+  },
+];
+
+function drawTarotCard() {
+  const result = document.getElementById('tarot-card-result');
+  if (!result) return;
+
+  const card = TAROT_CARDS[Math.floor(Math.random() * TAROT_CARDS.length)];
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+  result.style.display = 'block';
+  result.innerHTML = `
+    <div class="tarot-card-name">${escHtml(card.name)}</div>
+    <div class="tarot-card-archetype">АРКАН [ ${escHtml(card.arcana)} ] // ФОКУС: ${escHtml(card.energy)} [${timeStr}]</div>
+    <div class="obs-card-divider" style="margin:6px 0; color:var(--border);">────────────────────────────────</div>
+    <div class="tarot-card-text">${escHtml(card.text)}</div>
+  `;
+
+  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+}
+
+function setupTools() {
+  const btnCalc = document.getElementById('btn-calc-water');
+  if (btnCalc) {
+    btnCalc.addEventListener('click', () => {
+      calcMeltWater();
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+  }
+
+  const btnTarot = document.getElementById('btn-draw-tarot');
+  if (btnTarot) {
+    btnTarot.addEventListener('click', drawTarotCard);
+  }
+
+  // Предварительный расчет калькулятора по умолчанию
+  calcMeltWater();
+}
+
+// ── НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK) ───────────────────────────
+function setupBottomNav() {
+  const navBtns = document.querySelectorAll('.bottom-nav-btn');
+  navBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetView = btn.getAttribute('data-view');
+      const currentActive = document.querySelector('.view.active')?.id;
+
+      if (currentActive === targetView) {
+        // Повторный клик по активной вкладке возвращает в гримуар
+        showView('view-categories');
+        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        return;
+      }
+
+      showView(targetView);
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+      // Инициализация контента при переходе
+      if (targetView === 'view-observations') {
+        const activeObsTab = document.querySelector('.obs-tab-btn.active')?.getAttribute('data-subtab') || 'source';
+        renderObservations(activeObsTab);
+      } else if (targetView === 'view-bookmarks') {
+        renderBookmarks();
+      }
+    });
+  });
+}
+
 // ── ГЛАВНАЯ ТОЧКА ВХОДА ───────────────────────────────────────
 async function main() {
   // 1. Инициализируем Telegram WebApp
@@ -581,6 +1002,10 @@ async function main() {
   setupPinGate();
   setupResetButtons();
   setupThemeToggle();
+  setupBottomNav();
+  setupBookmarkButton();
+  setupObservations();
+  setupTools();
 
   // 4. Проверяем серверную версию ключа
   let serverAuthVersion = 1;
