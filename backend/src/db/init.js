@@ -98,6 +98,34 @@ export async function initDb() {
       created_at   TEXT NOT NULL DEFAULT (datetime('now'))
     );`);
 
+    // Миграция: поддержка подкатегорий в cards (subcategory, subcategory_title)
+    const cardCols = queryAll(db, "PRAGMA table_info(cards)").map(c => c.name);
+    if (cardCols.length > 0 && !cardCols.includes('subcategory')) {
+      console.log('[TERMINAL] Миграция: обновление таблицы cards для поддержки subcategory...');
+      const oldCards = queryAll(db, "SELECT * FROM cards");
+      db.run("DROP TABLE IF EXISTS cards;");
+      db.run(`CREATE TABLE IF NOT EXISTS cards (
+        id                INTEGER PRIMARY KEY AUTOINCREMENT,
+        category_id       INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+        title             TEXT    NOT NULL,
+        body_text         TEXT    NOT NULL,
+        sequence_index    INTEGER NOT NULL DEFAULT 1,
+        subcategory       TEXT    NOT NULL DEFAULT '',
+        subcategory_title TEXT    NOT NULL DEFAULT '',
+        is_active         INTEGER NOT NULL DEFAULT 1,
+        created_at        TEXT    NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(category_id, subcategory, sequence_index)
+      );`);
+      for (const card of oldCards) {
+        db.run(
+          `INSERT INTO cards (id, category_id, title, body_text, sequence_index, subcategory, subcategory_title, is_active, created_at)
+           VALUES (?, ?, ?, ?, ?, '', '', ?, ?)`,
+          [card.id, card.category_id, card.title, card.body_text, card.sequence_index, card.is_active ?? 1, card.created_at || new Date().toISOString()]
+        );
+      }
+      console.log(`[TERMINAL] Миграция cards завершена. Перенесено ${oldCards.length} записей.`);
+    }
+
     // Автоматическая синхронизация карточек из папки cards/*.txt
     try {
       await syncCardsFromFiles(db, { run, queryOne, persistDb });
