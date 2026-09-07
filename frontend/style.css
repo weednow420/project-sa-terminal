@@ -89,8 +89,35 @@ body {
 .header-top {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   margin-bottom: var(--spacing-xs);
+}
+
+.header-top-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.btn-theme-toggle {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 2px 6px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  user-select: none;
+  transition: all 0.12s ease;
+}
+
+.btn-theme-toggle:hover,
+.btn-theme-toggle:active {
+  color: var(--text-primary);
+  border-color: var(--border-hard);
+  background: var(--bg-hover);
 }
 
 .header-label {

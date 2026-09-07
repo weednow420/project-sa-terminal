@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=2" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
 
@@ -24,7 +24,10 @@
   <header class="terminal-header">
     <div class="header-top">
       <span class="header-label">PROJECT S-A</span>
-      <span class="header-status" id="status-indicator">■ ONLINE</span>
+      <div class="header-top-right">
+        <button type="button" class="btn-theme-toggle" id="btn-theme-toggle" title="Переключить тему (ТЁМНАЯ / СВЕТЛАЯ)">[ТЕМА: ТЁМНАЯ]</button>
+        <span class="header-status" id="status-indicator">■ ONLINE</span>
+      </div>
     </div>
     <div class="header-bottom">
       <span class="header-mode">MODE: НАБЛЮДАТЕЛЬ [READ-ONLY]</span>
@@ -190,6 +193,6 @@
     </div>
   </footer>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
