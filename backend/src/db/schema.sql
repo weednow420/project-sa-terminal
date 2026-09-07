@@ -69,6 +69,20 @@ CREATE TABLE IF NOT EXISTS incident_log (
     occurred_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+-- ------------------------------------------------------------
+-- [5] ПОСЛАНИЯ ОПЕРАТОРОВ (MESSAGES)
+-- Заметки и сообщения операторов, отправленные на сервер.
+-- Логируются и доступны для выгрузки администратором.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS messages (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    operator_id  INTEGER REFERENCES operators(telegram_id) ON DELETE SET NULL,
+    username     TEXT,
+    first_name   TEXT,
+    message_text TEXT NOT NULL,
+    created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ============================================================
 -- ЗАГЛУШКИ ДЛЯ БУДУЩИХ ФАЗ (закомментированы)
 -- ============================================================

@@ -88,6 +88,16 @@ export async function initDb() {
       console.log('[TERMINAL] Столбец auth_version добавлен в operators.');
     }
 
+    // Создаем таблицу messages при необходимости
+    db.run(`CREATE TABLE IF NOT EXISTS messages (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      operator_id  INTEGER REFERENCES operators(telegram_id) ON DELETE SET NULL,
+      username     TEXT,
+      first_name   TEXT,
+      message_text TEXT NOT NULL,
+      created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+    );`);
+
     // Автоматическая синхронизация карточек из папки cards/*.txt
     try {
       await syncCardsFromFiles(db, { run, queryOne, persistDb });
