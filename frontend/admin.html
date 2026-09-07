@@ -1,0 +1,619 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>PROJECT S-A // АДМИНИСТРАТОР</title>
+
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Monowidth fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css?v=4" />
+
+  <style>
+    .admin-container {
+      max-width: 950px;
+      margin: 0 auto;
+      padding: var(--spacing-sm) 0;
+    }
+    .admin-panel-card {
+      border: 1px solid var(--border);
+      background-color: var(--bg-surface);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+    .card-heading {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: var(--spacing-sm);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+    }
+    .metric-cell {
+      border: 1px solid var(--border);
+      background-color: var(--bg-surface);
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+    .metric-cell .label {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+    .metric-cell .val {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-top: 4px;
+      letter-spacing: 0.05em;
+    }
+    .key-controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--spacing-md);
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-label {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+    .inline-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn-action {
+      background: transparent;
+      border: 1px solid var(--border-hard);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 6px 12px;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      border-radius: 0 !important;
+      transition: all 0.12s ease;
+      white-space: nowrap;
+    }
+    .btn-action:hover {
+      background-color: var(--bg-hover);
+      border-color: var(--text-primary);
+    }
+    .btn-action.btn-danger {
+      border-color: var(--text-warn);
+      color: var(--text-warn);
+    }
+    .btn-action.btn-danger:hover {
+      background-color: var(--text-warn);
+      color: var(--bg);
+    }
+    .btn-action-sm {
+      padding: 3px 8px;
+      font-size: 0.65rem;
+    }
+    .table-wrapper {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      background-color: var(--bg-surface);
+      margin-top: var(--spacing-sm);
+    }
+    table.registry-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.72rem;
+      letter-spacing: 0.03em;
+      text-align: left;
+    }
+    table.registry-table th {
+      background-color: var(--bg);
+      border-bottom: 2px solid var(--border-hard);
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    table.registry-table td {
+      border-bottom: 1px dotted var(--border);
+      padding: var(--spacing-sm) var(--spacing-md);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    table.registry-table tr:hover {
+      background-color: var(--bg-hover);
+    }
+    .tag-badge {
+      display: inline-block;
+      border: 1px solid var(--border-hard);
+      padding: 1px 5px;
+      font-size: 0.68rem;
+    }
+    .badge-admin {
+      background-color: var(--text-primary);
+      color: var(--bg);
+      font-weight: 700;
+      border-color: var(--text-primary);
+    }
+    .badge-revoked {
+      border-color: var(--text-warn);
+      color: var(--text-warn);
+    }
+    .notification-banner {
+      display: none;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--border-hard);
+      margin-bottom: var(--spacing-md);
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    .notification-banner.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ШАПКА АДМИНКИ -->
+  <header class="terminal-header">
+    <div class="header-top">
+      <span class="header-label">PROJECT S-A // АДМИН-КОНСОЛЬ</span>
+      <div class="header-top-right">
+        <button type="button" class="btn-theme-toggle" id="btn-theme-toggle" title="Переключить тему">[ТЕМА: ТЁМНАЯ]</button>
+        <span class="header-status">■ СИСТЕМНЫЙ ДОСТУП</span>
+      </div>
+    </div>
+    <div class="header-bottom">
+      <span class="header-mode">ПУЛЬТ УПРАВЛЕНИЯ КОНТУРОМ</span>
+      <div class="header-bottom-right">
+        <a href="index.html" class="btn-action btn-action-sm" style="text-decoration:none;">◄ [ ТЕРМИНАЛ ]</a>
+      </div>
+    </div>
+    <div class="header-divider">════════════════════════════════════════════════════════════════════════</div>
+  </header>
+
+  <main class="terminal-main">
+    <div class="admin-container">
+
+      <div id="status-banner" class="notification-banner"></div>
+
+      <!-- МЕТРИКИ СЕТИ -->
+      <div class="metrics-bar">
+        <div class="metric-cell">
+          <div class="label">ОПЕРАТОРОВ В СЕТИ</div>
+          <div class="val" id="total-count">0</div>
+        </div>
+        <div class="metric-cell">
+          <div class="label">ТЕКУЩИЙ КЛЮЧ ВХОДА</div>
+          <div class="val" id="current-key-display">••••</div>
+        </div>
+        <div class="metric-cell">
+          <div class="label">ВЕРСИЯ АВТОРИЗАЦИИ</div>
+          <div class="val" id="auth-version-display">v1</div>
+        </div>
+      </div>
+
+      <!-- УПРАВЛЕНИЕ КЛЮЧАМИ СИНХРОНИЗАЦИИ -->
+      <div class="admin-panel-card">
+        <div class="card-heading">
+          <span>[ УПРАВЛЕНИЕ КЛЮЧАМИ СИНХРОНИЗАЦИИ ]</span>
+          <span style="font-size:0.65rem; color:var(--text-dim);">ПРОТОКОЛ S-A</span>
+        </div>
+
+        <div class="key-controls-grid">
+          <!-- СМЕНИТЬ КЛЮЧ -->
+          <div class="form-group">
+            <label class="form-label">СМЕНИТЬ 4-ЗНАЧНЫЙ КЛЮЧ (ЦИФРЫ 0-9, БЕЗ 8):</label>
+            <div class="inline-row">
+              <input type="text" id="input-new-code" class="terminal-input" maxlength="4" placeholder="Например: 1974" style="max-width:140px;" />
+              <button type="button" class="btn-action" id="btn-save-code">[ СОХРАНИТЬ КЛЮЧ ]</button>
+            </div>
+            <label style="font-size:0.65rem; color:var(--text-dim); margin-top:4px; display:flex; align-items:center; gap:6px;">
+              <input type="checkbox" id="check-reset-on-change" checked />
+              Аннулировать сессии всех операторов при смене
+            </label>
+          </div>
+
+          <!-- ОБЩИЙ СБРОС -->
+          <div class="form-group">
+            <label class="form-label">ГЛОБАЛЬНЫЙ СБРОС СЕССИЙ У ВСЕХ ОПЕРАТОРОВ:</label>
+            <div>
+              <button type="button" class="btn-action btn-danger" id="btn-reset-all-keys">
+                ⚠ [ СБРОСИТЬ КЛЮЧ У ВСЕХ ОПЕРАТОРОВ ]
+              </button>
+            </div>
+            <span style="font-size:0.65rem; color:var(--text-dim); margin-top:4px;">
+              Всем операторам потребуется повторно ввести ключ для входа.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- РЕЕСТР ОПЕРАТОРОВ И ИНДИВИДУАЛЬНОЕ УПРАВЛЕНИЕ -->
+      <div class="admin-panel-card">
+        <div class="card-heading">
+          <span>[ РЕЕСТР ОПЕРАТОРОВ // ДЕЙСТВИЯ ]</span>
+          <div class="inline-row" style="margin-bottom:0;">
+            <button type="button" class="btn-action btn-action-sm" id="btn-refresh">[ ⟳ ОБНОВИТЬ ]</button>
+            <button type="button" class="btn-action btn-action-sm" id="btn-export-json">[ JSON ]</button>
+            <button type="button" class="btn-action btn-action-sm" id="btn-export-csv">[ CSV ]</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: var(--spacing-sm);">
+          <input type="text" id="search-input" class="terminal-input" placeholder="ПОИСК ПО РЕЕСТРУ: НОМЕР / @USER / TG-ID / ИМЯ..." />
+        </div>
+
+        <div class="table-wrapper">
+          <table class="registry-table">
+            <thead>
+              <tr>
+                <th>НОМЕР</th>
+                <th>КОД</th>
+                <th>ОПЕРАТОР</th>
+                <th>TELEGRAM ID</th>
+                <th>СТАТУС</th>
+                <th>ДЕЙСТВИЯ</th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+              <tr>
+                <td colspan="6" style="text-align:center; padding:24px; color:var(--text-dim);">
+                  СКАНИРОВАНИЕ БАЗЫ ДАННЫХ...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="terminal-footer">
+    <div class="footer-divider">════════════════════════════════════════════════════════════════════════</div>
+    <div class="footer-content">
+      <span>КОНТУР: PROJECT S-A // СИСТЕМНЫЙ АДМИНИСТРАТОР</span>
+      <span>СИСТЕМНЫЙ СБОЙ: b181</span>
+    </div>
+  </footer>
+
+  <script>
+    const API_BASE = `${window.location.origin}/api`;
+    let cachedOperators = [];
+
+    // Telegram WebApp SDK
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      const initialTheme = localStorage.getItem('sa_terminal_theme') || tg.colorScheme;
+      applyTheme(initialTheme);
+    }
+
+    function applyTheme(theme) {
+      const t = theme === 'light' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+      const btn = document.getElementById('btn-theme-toggle');
+      if (btn) btn.textContent = t === 'light' ? '[ТЕМА: СВЕТЛАЯ]' : '[ТЕМА: ТЁМНАЯ]';
+    }
+
+    document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'light' ? 'dark' : 'light';
+      localStorage.setItem('sa_terminal_theme', next);
+      applyTheme(next);
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+
+    let currentAdminId = localStorage.getItem('sa_admin_id') || '';
+
+    function showBanner(text, isError = false) {
+      const banner = document.getElementById('status-banner');
+      banner.textContent = text;
+      banner.style.color = isError ? 'var(--text-warn)' : 'var(--text-primary)';
+      banner.style.borderColor = isError ? 'var(--text-warn)' : 'var(--border-hard)';
+      banner.classList.add('active');
+      setTimeout(() => banner.classList.remove('active'), 5000);
+    }
+
+    async function fetchAdmin(path, options = {}) {
+      const callerId = tg?.initDataUnsafe?.user?.id || currentAdminId || '';
+      const headers = {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+        'x-telegram-user-id': String(callerId),
+        ...(options.headers || {})
+      };
+      return fetch(`${API_BASE}${path}`, { ...options, headers });
+    }
+
+    // Загрузка информации о ключе
+    async function loadKeyInfo() {
+      try {
+        const res = await fetchAdmin('/auth/current-code');
+        if (res.ok) {
+          const json = await res.json();
+          document.getElementById('current-key-display').textContent = json.current_code || '••••';
+          document.getElementById('auth-version-display').textContent = `v${json.auth_version || 1}`;
+        }
+      } catch (_) {}
+    }
+
+    // Загрузка реестра операторов
+    async function loadOperators() {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-dim);">ЗАГРУЗКА РЕЕСТРА...</td></tr>`;
+
+      try {
+        const res = await fetchAdmin('/operators');
+
+        if (res.status === 403) {
+          document.getElementById('total-count').textContent = '—';
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" style="text-align:center; padding:32px; color:var(--text-primary);">
+                <div style="font-size:0.95rem; font-weight:700; margin-bottom:8px;">[b181] ДОСТУП ОГРАНИЧЕН</div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:16px;">Панель доступна только Администраторам контура.</div>
+                <div style="display:inline-flex; gap:8px; max-width:360px; margin:0 auto; text-align:left;">
+                  <input type="text" id="admin-id-input" class="terminal-input" placeholder="Telegram ID Администратора" value="${escapeHtml(currentAdminId)}" />
+                  <button class="btn-action" id="btn-submit-admin-id">[ ВОЙТИ ]</button>
+                </div>
+              </td>
+            </tr>`;
+          const btn = document.getElementById('btn-submit-admin-id');
+          if (btn) {
+            btn.addEventListener('click', () => {
+              const val = document.getElementById('admin-id-input')?.value.trim();
+              if (val) {
+                currentAdminId = val;
+                localStorage.setItem('sa_admin_id', val);
+                loadOperators();
+                loadKeyInfo();
+              }
+            });
+          }
+          return;
+        }
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { data } = await res.json();
+        cachedOperators = data || [];
+        document.getElementById('total-count').textContent = cachedOperators.length;
+        renderTable(cachedOperators);
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-warn);">[b181] ОШИБКА ЗАГРУЗКИ: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderTable(operators) {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+
+      if (operators.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-dim);">НЕТ ЗАРЕГИСТРИРОВАННЫХ ОПЕРАТОРОВ</td></tr>`;
+        return;
+      }
+
+      operators.forEach(op => {
+        const tr = document.createElement('tr');
+        const userTag = op.username ? `@${op.username}` : '—';
+        const opName = op.first_name || 'ОПЕРАТОР';
+
+        const adminBadge = op.is_admin
+          ? `<span class="tag-badge badge-admin">АДМИН</span>`
+          : `<span class="tag-badge">ОПЕРАТОР</span>`;
+
+        const authStatus = op.auth_revoked
+          ? `<span class="tag-badge badge-revoked">СБРОШЕН</span>`
+          : `<span class="tag-badge">АКТИВЕН</span>`;
+
+        const toggleAdminBtnText = op.is_admin ? '[ - СНЯТЬ АДМИНА ]' : '[ + ВЫДАТЬ АДМИНА ]';
+
+        tr.innerHTML = `
+          <td><strong>${op.display_number}</strong></td>
+          <td><span class="tag-badge">${op.operator_code}</span></td>
+          <td>
+            <div><strong>${escapeHtml(opName)}</strong></div>
+            <div style="color:var(--text-dim); font-size:0.65rem;">${escapeHtml(userTag)}</div>
+          </td>
+          <td>${op.telegram_id}</td>
+          <td>${adminBadge} ${authStatus}</td>
+          <td>
+            <div class="inline-row" style="gap:4px;">
+              <button type="button" class="btn-action btn-action-sm btn-reset-op" data-tid="${op.telegram_id}">
+                [ ⌫ СБРОСИТЬ КЛЮЧ ]
+              </button>
+              <button type="button" class="btn-action btn-action-sm btn-toggle-admin" data-tid="${op.telegram_id}">
+                ${toggleAdminBtnText}
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Навешиваем слушатели на кнопки действий
+      tbody.querySelectorAll('.btn-reset-op').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tid = btn.getAttribute('data-tid');
+          resetOperatorAuth(tid);
+        });
+      });
+
+      tbody.querySelectorAll('.btn-toggle-admin').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tid = btn.getAttribute('data-tid');
+          toggleOperatorAdmin(tid);
+        });
+      });
+    }
+
+    // Сбросить ключ оператора
+    async function resetOperatorAuth(telegramId) {
+      if (!confirm(`Аннулировать ключ оператора ID ${telegramId}? При следующем входе потребуется заново ввести код.`)) return;
+      try {
+        const res = await fetchAdmin(`/operators/${telegramId}/reset-auth`, { method: 'POST' });
+        const json = await res.json();
+        if (res.ok) {
+          showBanner(json.message || 'КЛЮЧ ОПЕРАТОРА СБРОШЕН');
+          loadOperators();
+        } else {
+          showBanner(`[b181] ${json.message || json.error}`, true);
+        }
+      } catch (err) {
+        showBanner(`[b181] ОШИБКА: ${err.message}`, true);
+      }
+    }
+
+    // Выдать / снять статус администратора
+    async function toggleOperatorAdmin(telegramId) {
+      if (!confirm(`Изменить статус Администратора для пользователя ID ${telegramId}?`)) return;
+      try {
+        const res = await fetchAdmin(`/operators/${telegramId}/toggle-admin`, { method: 'POST' });
+        const json = await res.json();
+        if (res.ok) {
+          showBanner(json.message || 'СТАТУС ИЗМЕНЁН');
+          loadOperators();
+        } else {
+          showBanner(`[b181] ${json.message || json.error}`, true);
+        }
+      } catch (err) {
+        showBanner(`[b181] ОШИБКА: ${err.message}`, true);
+      }
+    }
+
+    // Смена ключа доступа
+    document.getElementById('btn-save-code').addEventListener('click', async () => {
+      const codeInput = document.getElementById('input-new-code');
+      const newCode = codeInput.value.trim();
+      const resetAll = document.getElementById('check-reset-on-change').checked;
+
+      if (!newCode || newCode.length !== 4 || !/^\d{4}$/.test(newCode)) {
+        showBanner('Ключ должен состоять ровно из 4 цифр!', true);
+        return;
+      }
+      if (newCode.includes('8')) {
+        showBanner('Цифра 8 недопустима в протоколе синхронизации!', true);
+        return;
+      }
+
+      if (!confirm(`Установить новый ключ синхронизации "${newCode}"?`)) return;
+
+      try {
+        const res = await fetchAdmin('/auth/change-code', {
+          method: 'POST',
+          body: JSON.stringify({ new_code: newCode, reset_all: resetAll })
+        });
+        const json = await res.json();
+        if (res.ok) {
+          showBanner(json.message || 'КЛЮЧ УСПЕШНО ИЗМЕНЁН');
+          codeInput.value = '';
+          loadKeyInfo();
+          loadOperators();
+        } else {
+          showBanner(`[b181] ${json.message || json.error}`, true);
+        }
+      } catch (err) {
+        showBanner(`[b181] ОШИБКА: ${err.message}`, true);
+      }
+    });
+
+    // Глобальный сброс сессий
+    document.getElementById('btn-reset-all-keys').addEventListener('click', async () => {
+      if (!confirm('СБРОСИТЬ КЛЮЧ У ВСЕХ ОПЕРАТОРОВ СЕТИ?\n\nВсем пользователям потребуется заново ввести 4-значный ключ.')) return;
+      try {
+        const res = await fetchAdmin('/auth/reset-all', { method: 'POST' });
+        const json = await res.json();
+        if (res.ok) {
+          showBanner(json.message || 'СИНХРОНИЗАЦИЯ СБРОШЕНА У ВСЕХ');
+          loadKeyInfo();
+          loadOperators();
+        } else {
+          showBanner(`[b181] ${json.message || json.error}`, true);
+        }
+      } catch (err) {
+        showBanner(`[b181] ОШИБКА: ${err.message}`, true);
+      }
+    });
+
+    // Живой поиск
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      if (!q) {
+        renderTable(cachedOperators);
+        return;
+      }
+      const filtered = cachedOperators.filter(op => {
+        return (
+          (op.display_number && op.display_number.toLowerCase().includes(q)) ||
+          (op.operator_code && op.operator_code.toLowerCase().includes(q)) ||
+          (op.username && op.username.toLowerCase().includes(q)) ||
+          (op.first_name && op.first_name.toLowerCase().includes(q)) ||
+          (String(op.telegram_id).includes(q))
+        );
+      });
+      renderTable(filtered);
+    });
+
+    document.getElementById('btn-refresh').addEventListener('click', () => {
+      loadKeyInfo();
+      loadOperators();
+    });
+
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      downloadFile(JSON.stringify(cachedOperators, null, 2), 'operators.json', 'application/json');
+    });
+
+    document.getElementById('btn-export-csv').addEventListener('click', () => {
+      let csv = 'operator_number,operator_code,telegram_id,username,first_name,is_admin,first_seen_at\n';
+      cachedOperators.forEach(o => {
+        csv += `"${o.operator_number}","${o.operator_code}","${o.telegram_id}","${o.username || ''}","${(o.first_name || '').replace(/"/g, '""')}","${o.is_admin ? 1 : 0}","${o.first_seen_at}"\n`;
+      });
+      downloadFile(csv, 'operators.csv', 'text/csv');
+    });
+
+    function downloadFile(content, fileName, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Инициализация
+    loadKeyInfo();
+    loadOperators();
+  </script>
+</body>
+</html>

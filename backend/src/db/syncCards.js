@@ -36,11 +36,30 @@ export async function syncCardsFromFiles(passedDb = null, helpers = {}) {
     const fullPath = join(CARDS_ROOT, entry);
     if (!statSync(fullPath).isDirectory()) continue;
 
-    const categoryId = resolveCategoryId(entry);
-    if (!categoryId) {
+    const catInfo = resolveCategoryInfo(entry);
+    if (!catInfo) {
       console.warn(`[SYNC] Не удалось сопоставить категорию для папки: ${entry}`);
       continue;
     }
+
+    // Проверяем или создаем категорию в БД
+    let catRow = queryOneFn(db, 'SELECT id, title FROM categories WHERE slug = ?', [catInfo.slug]);
+    if (!catRow) {
+      // Проверяем по sort_order (для старых баз со старыми слагами)
+      catRow = queryOneFn(db, 'SELECT id, title FROM categories WHERE sort_order = ?', [catInfo.sortOrder]);
+      if (catRow) {
+        runFn(db, 'UPDATE categories SET slug = ?, title = ?, is_active = 1 WHERE id = ?', [catInfo.slug, catInfo.title, catRow.id]);
+      } else {
+        runFn(db, 'INSERT INTO categories (slug, title, description, sort_order, is_active) VALUES (?, ?, ?, ?, 1)',
+          [catInfo.slug, catInfo.title, '', catInfo.sortOrder]);
+        catRow = queryOneFn(db, 'SELECT id, title FROM categories WHERE slug = ?', [catInfo.slug]);
+      }
+    } else {
+      runFn(db, 'UPDATE categories SET title = ?, sort_order = ?, is_active = 1 WHERE id = ?',
+        [catInfo.title, catInfo.sortOrder, catRow.id]);
+    }
+
+    const categoryId = catRow.id;
 
     // Читаем все .txt файлы в папке категории
     const files = readdirSync(fullPath)
@@ -85,7 +104,7 @@ export async function syncCardsFromFiles(passedDb = null, helpers = {}) {
     );
 
     const catName = queryOneFn(db, 'SELECT title FROM categories WHERE id = ?', [categoryId])?.title || categoryId;
-    console.log(`[SYNC] Категория "${catName}" (ID ${categoryId}): ${finalCount} карточек синхронизировано.`);
+    console.log(`[SYNC] Вкладка/Категория "${catName}" (slug: ${catInfo.slug}, ID: ${categoryId}): ${finalCount} карточек.`);
   }
 
   persistDbFn();
@@ -93,18 +112,35 @@ export async function syncCardsFromFiles(passedDb = null, helpers = {}) {
   return totalCardsSynced;
 }
 
-function resolveCategoryId(folderName) {
-  const name = folderName.toLowerCase();
-  if (name.startsWith('1') || name.includes('anomaly') || name.includes('аномали')) {
-    return 1;
+function resolveCategoryInfo(folderName) {
+  const clean = folderName.trim();
+  const match = clean.match(/^(\d+)_(.+)$/);
+  let sortOrder = 99;
+  let rawName = clean;
+  if (match) {
+    sortOrder = parseInt(match[1], 10);
+    rawName = match[2];
   }
-  if (name.startsWith('2') || name.includes('physics') || name.includes('физик') || name.includes('процесс')) {
-    return 2;
+
+  const lower = rawName.toLowerCase();
+  let slug = lower.replace(/[^a-z0-9_-]/g, '-');
+  let title = rawName.toUpperCase().replace(/[-_]/g, ' ');
+
+  if (lower.includes('somatic') || lower.includes('соматик') || lower.includes('anomaly') || lower.includes('аномали')) {
+    slug = 'somatics';
+    title = 'СОМАТИКА';
+    sortOrder = 1;
+  } else if (lower.includes('cognitiv') || lower.includes('когнитив') || lower.includes('physics') || lower.includes('физик')) {
+    slug = 'cognitivism';
+    title = 'КОГНИТИВИСТИКА';
+    sortOrder = 2;
+  } else if (lower.includes('isolation') || lower.includes('изоляц') || lower.includes('protocol') || lower.includes('протокол')) {
+    slug = 'isolation';
+    title = 'ИЗОЛЯЦИЯ';
+    sortOrder = 3;
   }
-  if (name.startsWith('3') || name.includes('protocol') || name.includes('протокол')) {
-    return 3;
-  }
-  return null;
+
+  return { sortOrder, slug, title };
 }
 
 // Прямой запуск из консоли (node src/db/syncCards.js)
