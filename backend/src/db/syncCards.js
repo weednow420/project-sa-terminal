@@ -143,6 +143,13 @@ export async function syncCardsFromFiles(passedDb = null, helpers = {}) {
 
     // Читаем также одиночные файлы в корне папки (если есть)
     if (rootFiles.length > 0 || subDirs.length === 0) {
+      if (subDirs.length === 0) {
+        runFn(
+          db,
+          `DELETE FROM cards WHERE category_id = ? AND subcategory != '' AND subcategory IS NOT NULL`,
+          [categoryId]
+        );
+      }
       let rootSeqIndex = 1;
       for (const file of rootFiles) {
         const filePath = join(fullPath, file);
