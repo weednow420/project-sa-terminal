@@ -1,5 +1,6 @@
 // ============================================================
 //  syncCards.js — Автоматическая синхронизация карточек из папки cards/
+//  Поддержка разделов и вложенных подкатегорий (папок)
 //  Имя .txt файла  → Название карточки (title)
 //  Текст файла     → Содержимое карточки (body_text)
 // ============================================================
@@ -24,7 +25,7 @@ export async function syncCardsFromFiles(passedDb = null, helpers = {}) {
   const db = passedDb;
   if (!existsSync(CARDS_ROOT)) {
     console.warn(`[SYNC] Папка карточек не найдена: ${CARDS_ROOT}`);
-    return;
+    return 0;
   }
 
   console.log('[SYNC] Сканирование папки cards/ для обновления карточек...');
@@ -45,7 +46,6 @@ export async function syncCardsFromFiles(passedDb = null, helpers = {}) {
     // Проверяем или создаем категорию в БД
     let catRow = queryOneFn(db, 'SELECT id, title FROM categories WHERE slug = ?', [catInfo.slug]);
     if (!catRow) {
-      // Проверяем по sort_order (для старых баз со старыми слагами)
       catRow = queryOneFn(db, 'SELECT id, title FROM categories WHERE sort_order = ?', [catInfo.sortOrder]);
       if (catRow) {
         runFn(db, 'UPDATE categories SET slug = ?, title = ?, is_active = 1 WHERE id = ?', [catInfo.slug, catInfo.title, catRow.id]);
@@ -60,51 +60,127 @@ export async function syncCardsFromFiles(passedDb = null, helpers = {}) {
     }
 
     const categoryId = catRow.id;
+    const catName = catRow.title || catInfo.title;
 
-    // Читаем все .txt файлы в папке категории
-    const files = readdirSync(fullPath)
-      .filter(f => f.toLowerCase().endsWith('.txt') && !f.startsWith('.'))
+    // Проверяем элементы внутри папки категории: есть ли подпапки (подкатегории)?
+    const subEntries = readdirSync(fullPath);
+    const subDirs = subEntries
+      .filter(s => statSync(join(fullPath, s)).isDirectory() && !s.startsWith('.'))
       .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
-    let seqIndex = 1;
-    for (const file of files) {
-      const filePath = join(fullPath, file);
-      const parsed = parse(file);
+    const rootFiles = subEntries
+      .filter(f => statSync(join(fullPath, f)).isFile() && f.toLowerCase().endsWith('.txt') && !f.startsWith('.'))
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
-      // Имя карточки берётся ИЗ ИМЕНИ ФАЙЛА (без расширения .txt)
-      const title = parsed.name.trim();
+    const activeSubcatsInDb = new Set();
 
-      // Текст карточки берётся ИЗ СОДЕРЖИМОГО ФАЙЛА
-      const bodyText = readFileSync(filePath, 'utf8').trim();
+    if (subDirs.length > 0) {
+      // ── СЛУЧАЙ А: Раздел содержит подкатегории (подпапки) ─────
+      for (const subDir of subDirs) {
+        const subPath = join(fullPath, subDir);
+        const subInfo = resolveSubcategoryInfo(subDir);
+        activeSubcatsInDb.add(subInfo.slug);
 
-      if (!title || !bodyText) continue;
+        const files = readdirSync(subPath)
+          .filter(f => f.toLowerCase().endsWith('.txt') && !f.startsWith('.'))
+          .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
-      // Запись/обновление в SQLite
-      runFn(
-        db,
-        `INSERT INTO cards (category_id, title, body_text, sequence_index, is_active)
-         VALUES (?, ?, ?, ?, 1)
-         ON CONFLICT(category_id, sequence_index) DO UPDATE SET
-           title = excluded.title,
-           body_text = excluded.body_text,
-           is_active = 1`,
-        [categoryId, title, bodyText, seqIndex]
-      );
+        let seqIndex = 1;
+        for (const file of files) {
+          const filePath = join(subPath, file);
+          const parsed = parse(file);
+          const title = parsed.name.trim();
+          const bodyText = readFileSync(filePath, 'utf8').trim();
 
-      seqIndex++;
-      totalCardsSynced++;
+          if (!title || !bodyText) continue;
+
+          runFn(
+            db,
+            `INSERT INTO cards (category_id, title, body_text, sequence_index, subcategory, subcategory_title, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, 1)
+             ON CONFLICT(category_id, subcategory, sequence_index) DO UPDATE SET
+               title = excluded.title,
+               body_text = excluded.body_text,
+               subcategory_title = excluded.subcategory_title,
+               is_active = 1`,
+            [categoryId, title, bodyText, seqIndex, subInfo.slug, subInfo.title]
+          );
+
+          seqIndex++;
+          totalCardsSynced++;
+        }
+
+        const finalSubCount = seqIndex - 1;
+        runFn(
+          db,
+          `DELETE FROM cards WHERE category_id = ? AND subcategory = ? AND sequence_index > ?`,
+          [categoryId, subInfo.slug, finalSubCount]
+        );
+
+        console.log(`[SYNC]   ├─ Подкатегория "${subInfo.title}" (${subInfo.slug}): ${finalSubCount} карточек.`);
+      }
+
+      // Удаляем карточки подкатегорий, которых больше нет на диске
+      const subSlugsArr = Array.from(activeSubcatsInDb);
+      if (subSlugsArr.length > 0) {
+        const placeholders = subSlugsArr.map(() => '?').join(',');
+        runFn(
+          db,
+          `DELETE FROM cards WHERE category_id = ? AND subcategory != '' AND subcategory NOT IN (${placeholders})`,
+          [categoryId, ...subSlugsArr]
+        );
+      }
+
+      // Если в корне раздела больше нет файлов, очищаем старые корневые карточки
+      if (rootFiles.length === 0) {
+        runFn(
+          db,
+          `DELETE FROM cards WHERE category_id = ? AND (subcategory = '' OR subcategory IS NULL)`,
+          [categoryId]
+        );
+      }
     }
 
-    // Если файлы были удалены, очищаем лишние sequence_index в этой категории
-    const finalCount = seqIndex - 1;
-    runFn(
-      db,
-      `DELETE FROM cards WHERE category_id = ? AND sequence_index > ?`,
-      [categoryId, finalCount]
-    );
+    // Читаем также одиночные файлы в корне папки (если есть)
+    if (rootFiles.length > 0 || subDirs.length === 0) {
+      let rootSeqIndex = 1;
+      for (const file of rootFiles) {
+        const filePath = join(fullPath, file);
+        const parsed = parse(file);
+        const title = parsed.name.trim();
+        const bodyText = readFileSync(filePath, 'utf8').trim();
 
-    const catName = queryOneFn(db, 'SELECT title FROM categories WHERE id = ?', [categoryId])?.title || categoryId;
-    console.log(`[SYNC] Вкладка/Категория "${catName}" (slug: ${catInfo.slug}, ID: ${categoryId}): ${finalCount} карточек.`);
+        if (!title || !bodyText) continue;
+
+        runFn(
+          db,
+          `INSERT INTO cards (category_id, title, body_text, sequence_index, subcategory, subcategory_title, is_active)
+           VALUES (?, ?, ?, ?, '', '', 1)
+           ON CONFLICT(category_id, subcategory, sequence_index) DO UPDATE SET
+             title = excluded.title,
+             body_text = excluded.body_text,
+             subcategory_title = excluded.subcategory_title,
+             is_active = 1`,
+          [categoryId, title, bodyText, rootSeqIndex]
+        );
+
+        rootSeqIndex++;
+        totalCardsSynced++;
+      }
+
+      const finalRootCount = rootSeqIndex - 1;
+      runFn(
+        db,
+        `DELETE FROM cards WHERE category_id = ? AND subcategory = '' AND sequence_index > ?`,
+        [categoryId, finalRootCount]
+      );
+
+      if (rootFiles.length > 0) {
+        console.log(`[SYNC]   └─ Корневые карточки: ${finalRootCount}.`);
+      }
+    }
+
+    console.log(`[SYNC] Раздел "${catName}" (slug: ${catInfo.slug}) синхронизирован.`);
   }
 
   persistDbFn();
@@ -141,6 +217,32 @@ function resolveCategoryInfo(folderName) {
   }
 
   return { sortOrder, slug, title };
+}
+
+function resolveSubcategoryInfo(folderName) {
+  const clean = folderName.trim();
+  const match = clean.match(/^(\d+)_(.+)$/);
+  let rawName = clean;
+  if (match) {
+    rawName = match[2];
+  }
+
+  const lower = rawName.toLowerCase();
+  let slug = lower.replace(/[^a-z0-9_-]/g, '-');
+  let title = rawName.toUpperCase().replace(/[-_]/g, ' ');
+
+  if (lower.includes('classic') || lower.includes('класс')) {
+    slug = 'classic';
+    title = 'КЛАССИКА';
+  } else if (lower.includes('esoteric') || lower.includes('эзотер')) {
+    slug = 'esoterics';
+    title = 'ЭЗОТЕРИКА';
+  } else if (lower.includes('quantum') || lower.includes('квант')) {
+    slug = 'quantum';
+    title = 'КВАНТОВАЯ';
+  }
+
+  return { slug, title };
 }
 
 // Прямой запуск из консоли (node src/db/syncCards.js)

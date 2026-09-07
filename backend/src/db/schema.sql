@@ -27,14 +27,16 @@ CREATE TABLE IF NOT EXISTS categories (
 --                 пропустить строки калибровки (начало с 1).
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS cards (
-    id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    category_id    INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
-    title          TEXT    NOT NULL,
-    body_text      TEXT    NOT NULL,               -- основное содержимое карточки
-    sequence_index INTEGER NOT NULL DEFAULT 1,     -- СТАРТ ВСЕГДА С 1, без пропусков
-    is_active      INTEGER NOT NULL DEFAULT 1,
-    created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
-    UNIQUE(category_id, sequence_index)            -- уникальный порядок внутри категории
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    category_id       INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+    title             TEXT    NOT NULL,
+    body_text         TEXT    NOT NULL,               -- основное содержимое карточки
+    sequence_index    INTEGER NOT NULL DEFAULT 1,     -- СТАРТ ВСЕГДА С 1, без пропусков
+    subcategory       TEXT    NOT NULL DEFAULT '',    -- машинный slug подкатегории (e.g. 'classic', 'quantum')
+    subcategory_title TEXT    NOT NULL DEFAULT '',    -- отображаемое название (e.g. 'КЛАССИКА', 'КВАНТОВАЯ')
+    is_active         INTEGER NOT NULL DEFAULT 1,
+    created_at        TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(category_id, subcategory, sequence_index)  -- уникальный порядок внутри категории и подкатегории
 );
 
 -- ------------------------------------------------------------

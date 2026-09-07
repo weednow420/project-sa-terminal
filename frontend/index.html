@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=4" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
 
@@ -100,15 +100,29 @@
         <!-- JS динамически заполняет вкладки -->
       </nav>
 
-      <!-- Информационная полоса текущего раздела -->
+      <!-- Хлебные крошки внутри подкатегории (отображаются при просмотре карточек подкатегории) -->
+      <nav class="breadcrumb" id="subcat-breadcrumb" style="display:none;">
+        <button type="button" class="btn-back" id="btn-back-to-subcats" aria-label="Назад к списку подкатегорий">
+          ← РАЗДЕЛ
+        </button>
+        <span class="breadcrumb-sep">/</span>
+        <span id="breadcrumb-subcat-title">──────</span>
+      </nav>
+
+      <!-- Информационная полоса текущего раздела / подкатегории -->
       <div class="category-meta-bar">
         <span class="category-meta-title" id="current-tab-label">РАЗДЕЛ // СОМАТИКА</span>
-        <span class="category-meta-count" id="current-tab-count">КАРТОЧЕК: 0</span>
+        <span class="category-meta-count" id="current-tab-count">ПОДРАЗДЕЛОВ: 0</span>
       </div>
 
       <div class="dot-grid-divider"></div>
 
-      <!-- Список карточек активной вкладки -->
+      <!-- Меню подкатегорий раздела (КЛАССИКА, ЭЗОТЕРИКА, КВАНТОВАЯ) -->
+      <div class="subcat-menu-list" id="category-subcats-menu" style="display:none;">
+        <!-- JS заполняет кнопки подкатегорий -->
+      </div>
+
+      <!-- Список карточек активной вкладки / подкатегории -->
       <ul class="card-list" id="category-cards-list">
         <!-- JS заполняет -->
       </ul>
@@ -430,6 +444,6 @@
     </div>
   </footer>
 
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

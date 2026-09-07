@@ -1496,3 +1496,79 @@ body {
 .incident-log-text {
   color: var(--text-primary);
 }
+
+/* ── МЕНЮ ПОДРАЗДЕЛОВ (КЛАССИКА, ЭЗОТЕРИКА, КВАНТОВАЯ) ──────── */
+.subcat-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.subcat-menu-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: none;
+  border-radius: 0 !important;
+  width: 100%;
+}
+
+.subcat-menu-btn:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-hard);
+}
+
+.subcat-menu-btn:active {
+  background-color: var(--text-primary);
+  color: var(--bg);
+}
+
+.subcat-menu-btn:active .subcat-menu-btn-name,
+.subcat-menu-btn:active .subcat-menu-btn-num,
+.subcat-menu-btn:active .subcat-menu-btn-arrow,
+.subcat-menu-btn:active .subcat-menu-btn-desc {
+  color: var(--bg) !important;
+}
+
+.subcat-menu-btn-top {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.subcat-menu-btn-num {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.subcat-menu-btn-arrow {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+}
+
+.subcat-menu-btn-name {
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.subcat-menu-btn-desc {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+

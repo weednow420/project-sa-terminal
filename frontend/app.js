@@ -13,11 +13,15 @@ const CONFIG = {
 
 // ── СОСТОЯНИЕ ПРИЛОЖЕНИЯ ──────────────────────────────────────
 const STATE = {
-  operator:        null,   // { id, username, first_name }
-  currentCategory: null,   // { slug, title }
-  currentCard:     null,   // { id, title, sequence_index }
-  pinCode:         '',     // введенный 4-значный ключ
-  pinBusy:         false,  // флаг процесса проверки ключа
+  operator:              null,   // { id, username, first_name }
+  categories:            [],
+  currentCategory:       null,   // { slug, title }
+  currentCategoryCards:  [],     // все карточки текущего раздела
+  currentSubcategories:  [],     // доступные подкатегории текущего раздела
+  currentSubcategory:    null,   // выбранная подкатегория
+  currentCard:           null,   // { id, title, sequence_index }
+  pinCode:               '',     // введенный 4-значный ключ
+  pinBusy:               false,  // флаг процесса проверки ключа
 };
 
 // ── ТЕМА ОФОРМЛЕНИЯ (DARK / LIGHT E-INK) ─────────────────────
@@ -286,6 +290,7 @@ function renderCategoryTabs(categories) {
 
 async function selectCategoryTab(category) {
   STATE.currentCategory = category;
+  STATE.currentSubcategory = null;
 
   // Обновляем активный класс на кнопках вкладок
   const tabBtns = document.querySelectorAll('.category-tab-btn');
@@ -297,6 +302,10 @@ async function selectCategoryTab(category) {
     }
   });
 
+  // Скрываем breadcrumb подкатегории
+  const subcatBc = document.getElementById('subcat-breadcrumb');
+  if (subcatBc) subcatBc.style.display = 'none';
+
   // Заголовок раздела и статус загрузки
   const titleEl = document.getElementById('current-tab-label');
   const countEl = document.getElementById('current-tab-count');
@@ -304,22 +313,113 @@ async function selectCategoryTab(category) {
   if (countEl) countEl.textContent = 'ЗАГРУЗКА...';
 
   // Индикация загрузки карточек
+  const subcatsMenu = document.getElementById('category-subcats-menu');
   const list = document.getElementById('category-cards-list');
+  if (subcatsMenu) subcatsMenu.style.display = 'none';
   if (list) {
+    list.style.display = 'flex';
     list.innerHTML = `
       <li class="card-item">
         <div style="padding:14px; color:var(--text-dim); font-size:0.75rem;">
-          СКАНИРОВАНИЕ КАРТОЧЕК...
+          СКАНИРОВАНИЕ КОНТУРА...
         </div>
       </li>`;
   }
 
   try {
-    const { data: cards } = await apiGet(`/categories/${category.slug}/cards`);
-    renderCardsForCurrentTab(cards || []);
+    const res = await apiGet(`/categories/${category.slug}/cards`);
+    STATE.currentCategoryCards = res.data || [];
+    STATE.currentSubcategories = res.subcategories || [];
+
+    if (STATE.currentSubcategories.length > 0) {
+      // ── СЛУЧАЙ 1: Раздел содержит подкатегории (например, СОМАТИКА) ──
+      // Показываем МЕНЮ ПОДРАЗДЕЛОВ (Классика, Эзотерика, Квантовая)
+      showSubcategoriesMenu();
+    } else {
+      // ── СЛУЧАЙ 2: Раздел без подкатегорий (прямой список карточек) ────
+      if (subcatsMenu) subcatsMenu.style.display = 'none';
+      if (list) list.style.display = 'flex';
+      renderCardsForCurrentTab(STATE.currentCategoryCards);
+    }
   } catch (err) {
     renderEmptyCards(`[b181] СБОЙ ЗАГРУЗКИ КАРТОЧЕК: ${err.message}`);
   }
+}
+
+function showSubcategoriesMenu() {
+  STATE.currentSubcategory = null;
+
+  const subcatBc = document.getElementById('subcat-breadcrumb');
+  if (subcatBc) subcatBc.style.display = 'none';
+
+  const titleEl = document.getElementById('current-tab-label');
+  const countEl = document.getElementById('current-tab-count');
+  if (titleEl) titleEl.textContent = `РАЗДЕЛ // ${STATE.currentCategory?.title?.toUpperCase() || ''}`;
+  if (countEl) countEl.textContent = `ПОДРАЗДЕЛОВ: ${STATE.currentSubcategories.length}`;
+
+  const cardsList = document.getElementById('category-cards-list');
+  if (cardsList) cardsList.style.display = 'none';
+
+  const subcatsMenu = document.getElementById('category-subcats-menu');
+  if (!subcatsMenu) return;
+  subcatsMenu.style.display = 'flex';
+  subcatsMenu.innerHTML = '';
+
+  const subcatDescriptions = {
+    'classic': 'Базовые соматические определения, нулевая точка калибровки и фиксация паттерна.',
+    'esoterics': 'Эфирный каркас, тонкий сигнал в тишине и фазовая очистка памяти водного сосуда.',
+    'quantum': 'Суперпозиция био-датчика, квантовая связность контура и эффект наблюдателя.',
+  };
+
+  STATE.currentSubcategories.forEach((sub, idx) => {
+    const num = String(idx + 1).padStart(2, '0');
+    const desc = subcatDescriptions[sub.subcategory] || `Карточек протокола: ${sub.count}`;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'subcat-menu-btn';
+    btn.setAttribute('data-subcat', sub.subcategory);
+    btn.innerHTML = `
+      <div class="subcat-menu-btn-top">
+        <span class="subcat-menu-btn-num">§${num} // ПОДРАЗДЕЛ</span>
+        <span class="subcat-menu-btn-arrow">${sub.count} КАРТОЧЕК →</span>
+      </div>
+      <div class="subcat-menu-btn-name">${escHtml(sub.subcategory_title || sub.subcategory)}</div>
+      <div class="subcat-menu-btn-desc">${escHtml(desc)}</div>
+    `;
+
+    btn.addEventListener('click', () => {
+      selectSubcategory(sub);
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+
+    subcatsMenu.appendChild(btn);
+  });
+}
+
+function selectSubcategory(sub) {
+  STATE.currentSubcategory = sub;
+
+  // Настройка хлебных крошек
+  const subcatBc = document.getElementById('subcat-breadcrumb');
+  const btnBack = document.getElementById('btn-back-to-subcats');
+  const bcTitle = document.getElementById('breadcrumb-subcat-title');
+  if (subcatBc) subcatBc.style.display = 'flex';
+  if (btnBack) btnBack.textContent = `← ${STATE.currentCategory?.title?.toUpperCase() || 'РАЗДЕЛ'}`;
+  if (bcTitle) bcTitle.textContent = (sub.subcategory_title || sub.subcategory).toUpperCase();
+
+  // Заголовок
+  const titleEl = document.getElementById('current-tab-label');
+  if (titleEl) titleEl.textContent = `ПОДРАЗДЕЛ // ${(sub.subcategory_title || sub.subcategory).toUpperCase()}`;
+
+  // Скрываем меню, показываем карточки
+  const subcatsMenu = document.getElementById('category-subcats-menu');
+  if (subcatsMenu) subcatsMenu.style.display = 'none';
+
+  const cardsList = document.getElementById('category-cards-list');
+  if (cardsList) cardsList.style.display = 'flex';
+
+  const filteredCards = (STATE.currentCategoryCards || []).filter(c => c.subcategory === sub.subcategory);
+  renderCardsForCurrentTab(filteredCards);
 }
 
 function renderCardsForCurrentTab(cards) {
@@ -368,18 +468,23 @@ function openCard(card) {
   // Breadcrumb
   const bc = document.getElementById('breadcrumb-card-category');
   if (bc) {
-    bc.textContent = STATE.currentCategory?.title?.toUpperCase() || 'РАЗДЕЛ';
+    if (card.subcategory_title) {
+      bc.textContent = `${STATE.currentCategory?.title?.toUpperCase()} / ${card.subcategory_title.toUpperCase()}`;
+    } else {
+      bc.textContent = STATE.currentCategory?.title?.toUpperCase() || 'РАЗДЕЛ';
+    }
   }
 
   // Контент карточки
   const content = document.getElementById('card-detail-content');
   if (content) {
+    const subcatPart = card.subcategory_title ? ` // ${escHtml(card.subcategory_title.toUpperCase())}` : '';
     content.innerHTML = `
       <div class="card-detail-header">
         <div class="card-detail-seq">
           ПОСЛЕДОВАТЕЛЬНОСТЬ: §${String(card.sequence_index).padStart(2, '0')}
           &nbsp;&nbsp;|&nbsp;&nbsp;
-          РАЗДЕЛ: ${escHtml(STATE.currentCategory?.title || '')}
+          РАЗДЕЛ: ${escHtml(STATE.currentCategory?.title || '')}${subcatPart}
         </div>
         <h1 class="card-detail-title">${escHtml(card.title)}</h1>
       </div>
@@ -419,6 +524,14 @@ function setupBackButtons() {
   if (btnBack) {
     btnBack.addEventListener('click', () => {
       showView('view-categories');
+    });
+  }
+
+  const btnBackSubcats = document.getElementById('btn-back-to-subcats');
+  if (btnBackSubcats) {
+    btnBackSubcats.addEventListener('click', () => {
+      showSubcategoriesMenu();
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     });
   }
 
