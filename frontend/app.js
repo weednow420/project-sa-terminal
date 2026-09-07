@@ -199,7 +199,8 @@ function showView(viewId) {
 
   // Обновляем состояние кнопок нижнего меню
   document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
-    if (btn.getAttribute('data-view') === viewId) {
+    const btnTarget = btn.getAttribute('data-view');
+    if (btnTarget === viewId || (btnTarget === 'view-categories' && (viewId === 'view-categories' || viewId === 'view-card-detail'))) {
       btn.classList.add('active');
     } else {
       btn.classList.remove('active');
@@ -1554,8 +1555,13 @@ function setupBottomNav() {
       const currentActive = document.querySelector('.view.active')?.id;
 
       if (currentActive === targetView) {
-        // Повторный клик по активной вкладке возвращает в гримуар
-        showView('view-categories');
+        // Повторный клик по активной вкладке
+        if (targetView === 'view-categories') {
+          // Если внутри подкатегории раздела — возвращаемся в меню подразделов
+          if (STATE.currentSubcategories && STATE.currentSubcategories.length > 0 && STATE.currentSubcategory) {
+            showSubcategoriesMenu();
+          }
+        }
         if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         return;
       }
@@ -1564,7 +1570,11 @@ function setupBottomNav() {
       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 
       // Инициализация контента при переходе
-      if (targetView === 'view-observations') {
+      if (targetView === 'view-categories') {
+        if (STATE.currentSubcategories && STATE.currentSubcategories.length > 0 && STATE.currentSubcategory) {
+          showSubcategoriesMenu();
+        }
+      } else if (targetView === 'view-observations') {
         const activeObsTab = document.querySelector('.obs-tab-btn.active')?.getAttribute('data-subtab') || 'source';
         switchObservationsSubtab(activeObsTab);
       } else if (targetView === 'view-bookmarks') {
