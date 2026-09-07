@@ -244,23 +244,29 @@ body {
   border-top: 1px dotted var(--border);
 }
 
-/* ── ГОРИЗОНТАЛЬНЫЕ ВКЛАДКИ РАЗДЕЛОВ (СОМАТИКА, КОГНИТИВИСТИКА, ИЗОЛЯЦИЯ) ── */
+/* ── ГОРИЗОНТАЛЬНЫЕ ВКЛАДКИ РАЗДЕЛОВ (БАЗИС, СОМАТИКА, КОГНИТИВИСТИКА, ИЗОЛЯЦИЯ) ── */
 .category-tabs-bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+  display: flex;
   gap: 4px;
   margin-bottom: var(--spacing-sm);
   overflow-x: auto;
+  scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+
+.category-tabs-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .category-tab-btn {
+  flex: 1 0 auto;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.70rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-align: center;
-  padding: 9px 4px;
+  padding: 8px 10px;
   background-color: var(--bg-surface);
   color: var(--text-dim);
   border: 1px solid var(--border);
