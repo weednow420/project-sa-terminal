@@ -77,7 +77,7 @@ async def cmd_start(message: Message):
         code_str = op_info.get('operator_code', 'OP-0001') if op_info else 'OP-0001'
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text=">> ОТКРЫТЬ ТЕРМИНАЛ", web_app=WebAppInfo(url=WEBAPP_URL))],
-            [InlineKeyboardButton(text=">> РЕЕСТР ОПЕРАТОРОВ", web_app=WebAppInfo(url=f"{WEBAPP_URL}/registry.html"))]
+            [InlineKeyboardButton(text=">> ⚙️ АДМИН-ПАНЕЛЬ", web_app=WebAppInfo(url=f"{WEBAPP_URL}/admin.html"))]
         ])
         await message.answer(
             text=(
@@ -91,6 +91,7 @@ async def cmd_start(message: Message):
                 f"ФАЗА: 1 / MVP\n"
                 f"─────────────────────────\n"
                 f"Команды администратора:\n"
+                f"• /admin — панель управления (ключи и операторы)\n"
                 f"• /operators — список зарегистрированных\n"
                 f"• /reset_auth — сбросить ключ у всех\n"
                 f"• /status — статус контура"
@@ -189,7 +190,7 @@ async def cmd_operators_list(message: Message):
         logger.warning(f"[b181] Неавторизованный запрос реестра от {message.from_user.id} (@{message.from_user.username})")
         return
 
-    registry_url = f"{WEBAPP_URL}/registry.html"
+    admin_url = f"{WEBAPP_URL}/admin.html"
 
     operators = []
     try:
@@ -244,13 +245,47 @@ async def cmd_operators_list(message: Message):
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(
-            text=">> ПОЛНЫЙ ДАШБОРД РЕЕСТРА",
-            web_app=WebAppInfo(url=registry_url)
+            text=">> ПОЛНАЯ АДМИН-ПАНЕЛЬ",
+            web_app=WebAppInfo(url=admin_url)
         )
     ]])
 
     await message.answer(
         "\n".join(lines),
+        reply_markup=keyboard
+    )
+
+
+# ------------------------------------------------------------
+# /admin — вызов консоли Администратора
+# ------------------------------------------------------------
+@dp.message(Command("admin", "panel", "control"))
+async def cmd_admin(message: Message):
+    admin_ids = get_admin_ids()
+    if message.from_user.id not in admin_ids:
+        await message.answer(
+            "[b181] ДОСТУП ЗАПРЕЩЁН\n"
+            "Команда доступна исключительно Администраторам контура."
+        )
+        return
+
+    admin_url = f"{WEBAPP_URL}/admin.html"
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=">> ⚙️ ОТКРЫТЬ АДМИН-ПАНЕЛЬ", web_app=WebAppInfo(url=admin_url))],
+        [InlineKeyboardButton(text=">> ТЕРМИНАЛ НАБЛЮДАТЕЛЯ", web_app=WebAppInfo(url=WEBAPP_URL))]
+    ])
+
+    await message.answer(
+        "КОНСОЛЬ АДМИНИСТРАТОРА // PROJECT S-A\n"
+        "─────────────────────────\n"
+        "Возможности пульта управления:\n"
+        "• Реестр операторов сети\n"
+        "• Сброс ключа конкретному оператору\n"
+        "• Выдача / отзыв статуса Администратора\n"
+        "• Смена 4-значного ключа входа (без 8)\n"
+        "• Глобальный сброс сессий всех операторов\n"
+        "─────────────────────────\n"
+        "Нажмите кнопку ниже для запуска админ-панели:",
         reply_markup=keyboard
     )
 

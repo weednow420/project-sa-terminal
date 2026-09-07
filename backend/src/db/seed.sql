@@ -5,11 +5,11 @@
 
 -- КАТЕГОРИИ
 INSERT OR IGNORE INTO categories (slug, title, description, sort_order) VALUES
-    ('anomaly-core',    'Ядро аномалии',    'Базовые определения. Природа отклонения. Точка отсчёта.', 1);
+    ('somatics',    'Соматика',        'Базовые определения. Природа отклонения. Точка отсчёта.', 1);
 INSERT OR IGNORE INTO categories (slug, title, description, sort_order) VALUES
-    ('process-physics', 'Физика процесса',  'Механика взаимодействий. Принципы работы контура.', 2);
+    ('cognitivism', 'Когнитивистика',  'Механика взаимодействий. Принципы работы контура.', 2);
 INSERT OR IGNORE INTO categories (slug, title, description, sort_order) VALUES
-    ('protocol',        'Протокол',         'Операционные инструкции. Последовательности действий.', 3);
+    ('isolation',   'Изоляция',        'Операционные инструкции. Последовательности действий.', 3);
 
 -- ── КАРТОЧКИ: Ядро аномалии ───────────────────────────────────
 INSERT INTO cards (category_id, title, body_text, sequence_index)

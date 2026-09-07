@@ -142,7 +142,15 @@ async function syncOperator(operator) {
       const json = await res.json();
       if (json.data) {
         const synced = { ...operator, ...json.data };
-        updateAdminUI(synced.is_admin);
+        
+        // Если сервер запросил ввод ключа (сброс сессии пользователя или глобальный)
+        if (synced.auth_required) {
+          console.log('[AUTH] Сервер запросил повторный ввод ключа.');
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+          localStorage.removeItem(AUTH_VERSION_KEY);
+          showGate(synced.auth_version);
+        }
+
         return synced;
       }
     }
@@ -152,19 +160,11 @@ async function syncOperator(operator) {
   return operator;
 }
 
-function updateAdminUI(isAdmin) {
-  const adminSec = document.getElementById('admin-registry-section');
-  if (adminSec) {
-    adminSec.style.display = isAdmin ? 'block' : 'none';
-  }
-}
-
 function renderOperatorId(operator) {
   const el = document.getElementById('operator-id');
   if (!el) return;
   const tag = operator.username ? `@${operator.username}` : `ID:${operator.id}`;
 
-  // Номер Оператора отображается ТОЛЬКО у Администратора
   if (operator.is_admin) {
     const num = operator.display_number || (operator.operator_number ? `№ ${String(operator.operator_number).padStart(4, '0')}` : '№ 0001');
     el.textContent = `[АДМИН] ${num} [${tag}]`.toUpperCase();
@@ -179,7 +179,6 @@ function showView(viewId) {
   const target = document.getElementById(viewId);
   if (target) {
     target.classList.add('active');
-    // Скролл наверх при смене вида
     document.querySelector('.terminal-main').scrollTop = 0;
   }
 }
@@ -220,95 +219,107 @@ async function apiPost(path, data) {
   return body;
 }
 
-// ── РЕНДЕР КАТЕГОРИЙ ──────────────────────────────────────────
+// ── РЕНДЕР ГОРИЗОНТАЛЬНЫХ ВКЛАДОК И КАРТОЧЕК ──────────────────
 async function loadCategories() {
   showView('view-loading');
 
   try {
     const { data: categories } = await apiGet('/categories');
-    renderCategories(categories);
+    STATE.categories = categories || [];
+    renderCategoryTabs(STATE.categories);
+
+    if (STATE.categories.length > 0) {
+      // По умолчанию активна 1-я категория или ранее выбранная
+      const defaultCat = STATE.currentCategory
+        ? (STATE.categories.find(c => c.slug === STATE.currentCategory.slug) || STATE.categories[0])
+        : STATE.categories[0];
+      await selectCategoryTab(defaultCat);
+    } else {
+      renderEmptyCards('ГРИМУАР ПУСТ. РАЗДЕЛЫ НЕ ЗАГРУЖЕНЫ.');
+    }
+
     showView('view-categories');
   } catch (err) {
     showError(`ГРИМУАР НЕДОСТУПЕН. ${err.message}`, loadCategories);
   }
 }
 
-function renderCategories(categories) {
-  const list = document.getElementById('category-list');
-  list.innerHTML = '';
+function renderCategoryTabs(categories) {
+  const tabsBar = document.getElementById('category-tabs-bar');
+  if (!tabsBar) return;
+  tabsBar.innerHTML = '';
 
-  if (!categories || categories.length === 0) {
-    list.innerHTML = `
-      <li class="category-item">
-        <div style="padding:16px;color:var(--text-dim);font-size:0.75rem;">
-          ГРИМУАР ПУСТ. КОНТЕНТ НЕ ЗАГРУЖЕН.
-        </div>
-      </li>`;
-    return;
-  }
-
-  categories.forEach((cat, idx) => {
-    const li = document.createElement('li');
-    li.className = 'category-item';
-    li.innerHTML = `
-      <button aria-label="Открыть раздел ${cat.title}">
-        <span class="category-index">${String(idx + 1).padStart(2, '0')}</span>
-        <span>
-          <span class="category-title">
-            <span class="category-arrow">→</span>
-            ${escHtml(cat.title)}
-          </span>
-          ${cat.description
-            ? `<span class="category-desc">${escHtml(cat.description)}</span>`
-            : ''}
-        </span>
-      </button>`;
-    li.querySelector('button').addEventListener('click', () => {
-      openCategory(cat);
+  categories.forEach((cat) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'category-tab-btn';
+    btn.setAttribute('data-slug', cat.slug);
+    btn.textContent = cat.title.toUpperCase();
+    btn.addEventListener('click', () => {
+      if (STATE.currentCategory?.slug === cat.slug) return;
+      selectCategoryTab(cat);
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     });
-    list.appendChild(li);
+    tabsBar.appendChild(btn);
   });
 }
 
-// ── РЕНДЕР КАРТОЧЕК В КАТЕГОРИИ ───────────────────────────────
-async function openCategory(category) {
+async function selectCategoryTab(category) {
   STATE.currentCategory = category;
-  showView('view-loading');
+
+  // Обновляем активный класс на кнопках вкладок
+  const tabBtns = document.querySelectorAll('.category-tab-btn');
+  tabBtns.forEach(btn => {
+    if (btn.getAttribute('data-slug') === category.slug) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // Заголовок раздела и статус загрузки
+  const titleEl = document.getElementById('current-tab-label');
+  const countEl = document.getElementById('current-tab-count');
+  if (titleEl) titleEl.textContent = `РАЗДЕЛ // ${category.title.toUpperCase()}`;
+  if (countEl) countEl.textContent = 'ЗАГРУЗКА...';
+
+  // Индикация загрузки карточек
+  const list = document.getElementById('category-cards-list');
+  if (list) {
+    list.innerHTML = `
+      <li class="card-item">
+        <div style="padding:14px; color:var(--text-dim); font-size:0.75rem;">
+          СКАНИРОВАНИЕ КАРТОЧЕК...
+        </div>
+      </li>`;
+  }
 
   try {
     const { data: cards } = await apiGet(`/categories/${category.slug}/cards`);
-    renderCards(category, cards);
-    showView('view-cards');
+    renderCardsForCurrentTab(cards || []);
   } catch (err) {
-    showError(`РАЗДЕЛ НЕДОСТУПЕН. ${err.message}`, loadCategories);
+    renderEmptyCards(`[b181] СБОЙ ЗАГРУЗКИ КАРТОЧЕК: ${err.message}`);
   }
 }
 
-function renderCards(category, cards) {
-  // Breadcrumb
-  document.getElementById('breadcrumb-category').textContent =
-    category.title.toUpperCase();
+function renderCardsForCurrentTab(cards) {
+  const countEl = document.getElementById('current-tab-count');
+  if (countEl) countEl.textContent = `КАРТОЧЕК: ${cards.length}`;
 
-  const list = document.getElementById('card-list');
+  const list = document.getElementById('category-cards-list');
+  if (!list) return;
   list.innerHTML = '';
 
   if (!cards || cards.length === 0) {
-    list.innerHTML = `
-      <li class="card-item">
-        <div style="padding:12px 16px;color:var(--text-dim);font-size:0.75rem;">
-          КАРТОЧКИ НЕ НАЙДЕНЫ.
-        </div>
-      </li>`;
+    renderEmptyCards('В ДАННОМ РАЗДЕЛЕ НЕТ КАРТОЧЕК.');
     return;
   }
 
-  // СТРОГО по sequence_index — сервер уже отдаёт в порядке
-  // Визуально нумерация с 1 (принудительно)
   cards.forEach((card) => {
     const li = document.createElement('li');
     li.className = 'card-item';
     li.innerHTML = `
-      <button aria-label="Карточка ${card.sequence_index}: ${card.title}">
+      <button aria-label="Карточка §${card.sequence_index}: ${card.title}">
         <span class="card-seq">§${String(card.sequence_index).padStart(2, '0')}</span>
         <span class="card-title-preview">${escHtml(card.title)}</span>
       </button>`;
@@ -319,27 +330,42 @@ function renderCards(category, cards) {
   });
 }
 
+function renderEmptyCards(message) {
+  const list = document.getElementById('category-cards-list');
+  if (!list) return;
+  list.innerHTML = `
+    <li class="card-item">
+      <div style="padding:16px; color:var(--text-dim); font-size:0.75rem; text-align:center;">
+        ${escHtml(message)}
+      </div>
+    </li>`;
+}
+
 // ── РЕНДЕР ОДНОЙ КАРТОЧКИ ─────────────────────────────────────
 function openCard(card) {
   STATE.currentCard = card;
 
   // Breadcrumb
-  document.getElementById('breadcrumb-card-category').textContent =
-    STATE.currentCategory?.title?.toUpperCase() || '──────';
+  const bc = document.getElementById('breadcrumb-card-category');
+  if (bc) {
+    bc.textContent = STATE.currentCategory?.title?.toUpperCase() || 'РАЗДЕЛ';
+  }
 
   // Контент карточки
   const content = document.getElementById('card-detail-content');
-  content.innerHTML = `
-    <div class="card-detail-header">
-      <div class="card-detail-seq">
-        ПОСЛЕДОВАТЕЛЬНОСТЬ: §${String(card.sequence_index).padStart(2, '0')}
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        РАЗДЕЛ: ${escHtml(STATE.currentCategory?.title || '')}
+  if (content) {
+    content.innerHTML = `
+      <div class="card-detail-header">
+        <div class="card-detail-seq">
+          ПОСЛЕДОВАТЕЛЬНОСТЬ: §${String(card.sequence_index).padStart(2, '0')}
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          РАЗДЕЛ: ${escHtml(STATE.currentCategory?.title || '')}
+        </div>
+        <h1 class="card-detail-title">${escHtml(card.title)}</h1>
       </div>
-      <h1 class="card-detail-title">${escHtml(card.title)}</h1>
-    </div>
-    <div class="dot-grid-divider"></div>
-    <pre class="card-detail-body">${escHtml(card.body_text)}</pre>`;
+      <div class="dot-grid-divider"></div>
+      <pre class="card-detail-body">${escHtml(card.body_text)}</pre>`;
+  }
 
   showView('view-card-detail');
 }
@@ -349,7 +375,6 @@ function showError(message, retryFn) {
   document.getElementById('error-message').textContent = message;
   const retryBtn = document.getElementById('btn-retry');
 
-  // Удаляем предыдущий обработчик
   const newBtn = retryBtn.cloneNode(true);
   retryBtn.parentNode.replaceChild(newBtn, retryBtn);
   newBtn.addEventListener('click', retryFn);
@@ -367,128 +392,14 @@ function escHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-// ── РЕЕСТР ОПЕРАТОРОВ ─────────────────────────────────────────
-let cachedOperatorsList = [];
-
-async function loadRegistry() {
-  if (!STATE.operator?.is_admin) {
-    showError('[b181] ДОСТУП ЗАПРЕЩЁН. Раздел реестра доступен исключительно Администраторам.', loadCategories);
-    return;
-  }
-
-  showView('view-loading');
-  try {
-    const res = await fetch(`${CONFIG.API_BASE}/operators`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
-        'x-telegram-user-id': String(STATE.operator?.id || ''),
-      },
-    });
-
-    if (res.status === 403) {
-      showError('[b181] ДОСТУП ЗАПРЕЩЁН. Требуются права Администратора.', loadCategories);
-      return;
-    }
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const { data } = await res.json();
-    cachedOperatorsList = data || [];
-    renderRegistry(cachedOperatorsList);
-    showView('view-registry');
-  } catch (err) {
-    showError(`СБОЙ ЗАГРУЗКИ РЕЕСТРА: ${err.message}`, loadRegistry);
-  }
-}
-
-function renderRegistry(operators) {
-  const countEl = document.getElementById('registry-count');
-  if (countEl) {
-    countEl.textContent = `АКТИВНЫЕ БИО-ДАТЧИКИ: ${operators.length}`;
-  }
-
-  const list = document.getElementById('operator-list');
-  if (!list) return;
-  list.innerHTML = '';
-
-  if (!operators || operators.length === 0) {
-    list.innerHTML = `
-      <li class="operator-card" style="text-align:center; padding:16px; color:var(--text-dim);">
-        РЕЕСТР ПУСТ. НЕТ ЗАРЕГИСТРИРОВАННЫХ ОПЕРАТОРОВ.
-      </li>`;
-    return;
-  }
-
-  operators.forEach((op) => {
-    const li = document.createElement('li');
-    li.className = 'operator-card';
-    const userTag = op.username ? `@${op.username}` : 'НЕ УКАЗАН';
-    const opName = op.first_name || 'ОПЕРАТОР';
-
-    li.innerHTML = `
-      <div class="operator-card-header">
-        <span class="operator-num">${op.display_number}</span>
-        <span class="operator-code-badge">${op.operator_code}</span>
-      </div>
-      <div class="operator-grid">
-        <span class="operator-grid-label">ПОЗЫВНОЙ:</span>
-        <span class="operator-grid-val"><strong>${escHtml(opName)}</strong></span>
-        <span class="operator-grid-label">TELEGRAM:</span>
-        <span class="operator-grid-val">${escHtml(userTag)}</span>
-        <span class="operator-grid-label">TG-ID:</span>
-        <span class="operator-grid-val">${op.telegram_id}</span>
-        <span class="operator-grid-label">КОНТАКТ:</span>
-        <span class="operator-grid-val" style="color:var(--text-dim);">${op.first_seen_at || '—'}</span>
-      </div>`;
-    list.appendChild(li);
-  });
-}
-
 // ── НАВИГАЦИЯ «НАЗАД» ─────────────────────────────────────────
 function setupBackButtons() {
-  document.getElementById('btn-back-to-categories')
-    .addEventListener('click', loadCategories);
-
-  const btnBackToGrimoire = document.getElementById('btn-back-to-grimoire');
-  if (btnBackToGrimoire) {
-    btnBackToGrimoire.addEventListener('click', loadCategories);
-  }
-
-  const btnOpenRegistry = document.getElementById('btn-open-registry');
-  if (btnOpenRegistry) {
-    btnOpenRegistry.addEventListener('click', loadRegistry);
-  }
-
-  const registrySearch = document.getElementById('registry-search-input');
-  if (registrySearch) {
-    registrySearch.addEventListener('input', (e) => {
-      const q = e.target.value.trim().toLowerCase();
-      if (!q) {
-        renderRegistry(cachedOperatorsList);
-        return;
-      }
-      const filtered = cachedOperatorsList.filter(op => {
-        return (
-          (op.display_number && op.display_number.toLowerCase().includes(q)) ||
-          (op.operator_code && op.operator_code.toLowerCase().includes(q)) ||
-          (op.username && op.username.toLowerCase().includes(q)) ||
-          (op.first_name && op.first_name.toLowerCase().includes(q)) ||
-          (String(op.telegram_id).includes(q))
-        );
-      });
-      renderRegistry(filtered);
+  const btnBack = document.getElementById('btn-back-to-tab');
+  if (btnBack) {
+    btnBack.addEventListener('click', () => {
+      showView('view-categories');
     });
   }
-
-  document.getElementById('btn-back-to-cards')
-    .addEventListener('click', () => {
-      if (STATE.currentCategory) {
-        openCategory(STATE.currentCategory);
-      } else {
-        loadCategories();
-      }
-    });
 }
 
 // ── ШЛЮЗ СИНХРОНИЗАЦИИ (ВВОД 4-ЗНАЧНОГО КОДА) ─────────────────
@@ -588,7 +499,7 @@ function setupPinGate() {
 }
 
 function setupResetButtons() {
-  // 1. Локальный сброс сессии (кнопка в шапке)
+  // Локальный сброс сессии (кнопка в шапке)
   const btnResetSession = document.getElementById('btn-reset-session');
   if (btnResetSession) {
     btnResetSession.addEventListener('click', () => {
@@ -596,30 +507,6 @@ function setupResetButtons() {
       localStorage.removeItem(AUTH_VERSION_KEY);
       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
       showGate();
-    });
-  }
-
-  // 2. Глобальный сброс ключа у ВСЕХ пользователей (кнопка для Администратора)
-  const btnResetAll = document.getElementById('btn-reset-all-auth');
-  if (btnResetAll) {
-    btnResetAll.addEventListener('click', async () => {
-      const ok = confirm('СБРОСИТЬ КЛЮЧ СИНХРОНИЗАЦИИ У ВСЕХ ОПЕРАТОРОВ СЕТИ?\n\nВсем пользователям (включая вас) потребуется повторно ввести 4-значный ключ.');
-      if (!ok) return;
-
-      try {
-        const res = await apiPost('/auth/reset-all', {
-          telegram_id: STATE.operator?.id || null,
-        });
-
-        localStorage.removeItem(AUTH_STORAGE_KEY);
-        localStorage.removeItem(AUTH_VERSION_KEY);
-
-        if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-        alert(res.message || 'СИНХРОНИЗАЦИЯ СБРОШЕНА У ВСЕХ ОПЕРАТОРОВ');
-        showGate(res.auth_version);
-      } catch (err) {
-        alert(`[${CONFIG.INCIDENT_CODE}] ОШИБКА СБРОСА: ${err.message}`);
-      }
     });
   }
 }

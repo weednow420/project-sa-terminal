@@ -78,6 +78,16 @@ export async function initDb() {
       console.log('[TERMINAL] Столбец is_admin добавлен.');
     }
 
+    const updatedCols = queryAll(db, "PRAGMA table_info(operators)").map(c => c.name);
+    if (!updatedCols.includes('auth_revoked')) {
+      db.run("ALTER TABLE operators ADD COLUMN auth_revoked INTEGER NOT NULL DEFAULT 0;");
+      console.log('[TERMINAL] Столбец auth_revoked добавлен в operators.');
+    }
+    if (!updatedCols.includes('auth_version')) {
+      db.run("ALTER TABLE operators ADD COLUMN auth_version INTEGER NOT NULL DEFAULT 1;");
+      console.log('[TERMINAL] Столбец auth_version добавлен в operators.');
+    }
+
     // Автоматическая синхронизация карточек из папки cards/*.txt
     try {
       await syncCardsFromFiles(db, { run, queryOne, persistDb });

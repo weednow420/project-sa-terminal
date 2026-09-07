@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=3" />
+  <link rel="stylesheet" href="style.css?v=4" />
 </head>
 <body>
 
@@ -31,8 +31,10 @@
     </div>
     <div class="header-bottom">
       <span class="header-mode">MODE: НАБЛЮДАТЕЛЬ [READ-ONLY]</span>
-      <span class="header-operator" id="operator-id">ОПЕРАТОР: ──────</span>
-      <button type="button" class="btn-reset-session" id="btn-reset-session" title="Сбросить сессию на этом устройстве">[СБРОС]</button>
+      <div class="header-bottom-right">
+        <span class="header-operator" id="operator-id">ОПЕРАТОР: ──────</span>
+        <button type="button" class="btn-reset-session" id="btn-reset-session" title="Сбросить сессию на этом устройстве">[СБРОС]</button>
+      </div>
     </div>
     <div class="header-divider">════════════════════════════════════════</div>
   </header>
@@ -47,7 +49,7 @@
       <div class="boot-sequence">
         <p class="boot-line">ИНИЦИАЛИЗАЦИЯ КОНТУРА...</p>
         <p class="boot-line">ИДЕНТИФИКАЦИЯ ОПЕРАТОРА...</p>
-        <p class="boot-line">ЗАГРУЗКА ГРИМУАРА...</p>
+        <p class="boot-line">ЗАГРУЗКА РАЗДЕЛОВ...</p>
         <p class="boot-line blink">█</p>
       </div>
     </section>
@@ -91,64 +93,23 @@
       </div>
     </section>
 
-    <!-- СПИСОК КАТЕГОРИЙ -->
+    <!-- ГЛАВНЫЙ ЭКРАН: ГОРИЗОНТАЛЬНЫЕ ВКЛАДКИ И СПИСОК КАРТОЧЕК -->
     <section id="view-categories" class="view">
-      <div class="view-title">
-        <span class="bracket">[</span>ГРИМУАР / БИБЛИОТЕКА<span class="bracket">]</span>
-      </div>
-      <div class="dot-grid-divider"></div>
-      <ul class="category-list" id="category-list">
-        <!-- JS заполняет -->
-      </ul>
-
-      <!-- Переход в Реестр Операторов / Сброс ключей (ТОЛЬКО ДЛЯ АДМИНИСТРАТОРА) -->
-      <div class="terminal-section-action" id="admin-registry-section" style="display: none;">
-        <button class="btn-terminal-outline" id="btn-open-registry">
-          ► [ РЕЕСТР ОПЕРАТОРОВ СЕТИ (АДМИН) ]
-        </button>
-        <button class="btn-terminal-outline btn-warn" id="btn-reset-all-auth" style="margin-top: 8px;">
-          ⚠ [ СБРОСИТЬ КЛЮЧ У ВСЕХ ПОЛЬЗОВАТЕЛЕЙ ]
-        </button>
-      </div>
-    </section>
-
-    <!-- РЕЕСТР ОПЕРАТОРОВ -->
-    <section id="view-registry" class="view">
-      <nav class="breadcrumb">
-        <button class="btn-back" id="btn-back-to-grimoire" aria-label="Назад">
-          ← ГРИМУАР
-        </button>
-        <span class="breadcrumb-sep">/</span>
-        <span>РЕЕСТР ОПЕРАТОРОВ</span>
+      <!-- Навигационная панель вкладок (СОМАТИКА, КОГНИТИВИСТИКА, ИЗОЛЯЦИЯ и др.) -->
+      <nav class="category-tabs-bar" id="category-tabs-bar" aria-label="Вкладки разделов">
+        <!-- JS динамически заполняет вкладки -->
       </nav>
-      <div class="dot-grid-divider"></div>
-      <div class="registry-stats">
-        <span class="info-label">СИНХРОНИЗАЦИЯ С БАЗОЙ ТЕРМИНАЛА</span>
-        <span class="registry-count" id="registry-count">АКТИВНЫЕ БИО-ДАТЧИКИ: ЗАГРУЗКА...</span>
-      </div>
-      <div class="registry-search-box">
-        <input type="text" id="registry-search-input" class="terminal-input" placeholder="ПОИСК: № / @USER / TG-ID / ИМЯ..." />
-      </div>
-      <ul class="operator-list" id="operator-list">
-        <!-- JS заполняет -->
-      </ul>
-    </section>
 
-    <!-- СПИСОК КАРТОЧЕК В КАТЕГОРИИ -->
-    <section id="view-cards" class="view">
-      <nav class="breadcrumb">
-        <button class="btn-back" id="btn-back-to-categories" aria-label="Назад">
-          ← ГРИМУАР
-        </button>
-        <span class="breadcrumb-sep">/</span>
-        <span id="breadcrumb-category">──────</span>
-      </nav>
-      <div class="dot-grid-divider"></div>
-      <div class="cards-info">
-        <span class="info-label">ПОСЛЕДОВАТЕЛЬНОСТЬ НАЧАТА С СТРОКИ №1</span>
-        <span class="info-warn">// ПРОПУСК ЗАПРЕЩЁН //</span>
+      <!-- Информационная полоса текущего раздела -->
+      <div class="category-meta-bar">
+        <span class="category-meta-title" id="current-tab-label">РАЗДЕЛ // СОМАТИКА</span>
+        <span class="category-meta-count" id="current-tab-count">КАРТОЧЕК: 0</span>
       </div>
-      <ul class="card-list" id="card-list">
+
+      <div class="dot-grid-divider"></div>
+
+      <!-- Список карточек активной вкладки -->
+      <ul class="card-list" id="category-cards-list">
         <!-- JS заполняет -->
       </ul>
     </section>
@@ -156,7 +117,7 @@
     <!-- ОДНА КАРТОЧКА -->
     <section id="view-card-detail" class="view">
       <nav class="breadcrumb">
-        <button class="btn-back" id="btn-back-to-cards" aria-label="Назад">
+        <button class="btn-back" id="btn-back-to-tab" aria-label="Назад к разделу">
           ← НАЗАД
         </button>
         <span class="breadcrumb-sep">/</span>
@@ -193,6 +154,6 @@
     </div>
   </footer>
 
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

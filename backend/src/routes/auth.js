@@ -3,10 +3,10 @@
 //  Считывает актуальный 4-значный код из файла access_code.txt
 //  Поддерживает общий сброс ключей у всех пользователей
 // ============================================================
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { getDb, run, queryOne } from '../db/init.js';
+import { getDb, run, queryOne, persistDb } from '../db/init.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CODE_FILE_PATH = join(__dirname, '../../../access_code.txt');
@@ -19,9 +19,17 @@ function getAdminIds() {
     .filter(x => !isNaN(x) && x > 0);
 }
 
-function isUserAdmin(telegramId) {
+function isUserAdmin(db, telegramId) {
   if (!telegramId) return false;
-  return getAdminIds().includes(Number(telegramId));
+  const tid = Number(telegramId);
+  if (getAdminIds().includes(tid)) return true;
+  if (db) {
+    try {
+      const row = queryOne(db, "SELECT is_admin FROM operators WHERE telegram_id = ?", [tid]);
+      if (row && row.is_admin === 1) return true;
+    } catch (_) {}
+  }
+  return false;
 }
 
 function ensureConfigTable(db) {
@@ -87,6 +95,20 @@ export default async function authRoutes(fastify) {
     const authVersion = getAuthVersion(db);
 
     if (cleanCode === expectedCode) {
+      if (telegram_id) {
+        try {
+          run(
+            db,
+            `UPDATE operators
+             SET auth_revoked = 0,
+                 auth_version = ?
+             WHERE telegram_id = ?`,
+            [authVersion, Number(telegram_id)]
+          );
+          persistDb();
+        } catch (_) {}
+      }
+
       return {
         status: 'OK',
         authorized: true,
@@ -123,13 +145,114 @@ export default async function authRoutes(fastify) {
     };
   });
 
+  // GET /api/auth/current-code (ТОЛЬКО АДМИН)
+  fastify.get('/auth/current-code', async (request, reply) => {
+    const callerId = request.headers['x-telegram-user-id'] || request.query?.telegram_id;
+    const adminKey = request.headers['x-admin-key'] || request.query?.admin_key;
+    const db = await getDb();
+
+    if (!isUserAdmin(db, callerId) && adminKey !== 'PROJECT_SA_ADMIN_2026') {
+      return reply.status(403).send({
+        status: 'b181',
+        error: 'ADMIN_ACCESS_REQUIRED',
+      });
+    }
+
+    return {
+      status: 'OK',
+      current_code: getExpectedCode(),
+      auth_version: getAuthVersion(db),
+    };
+  });
+
+  // POST /api/auth/change-code (ТОЛЬКО АДМИН)
+  // Смена 4-значного ключа доступа
+  fastify.post('/auth/change-code', async (request, reply) => {
+    const callerId = request.headers['x-telegram-user-id'] || request.body?.telegram_id;
+    const adminKey = request.headers['x-admin-key'] || request.body?.admin_key;
+    const db = await getDb();
+
+    if (!isUserAdmin(db, callerId) && adminKey !== 'PROJECT_SA_ADMIN_2026') {
+      return reply.status(403).send({
+        status: 'b181',
+        error: 'ADMIN_ACCESS_REQUIRED',
+        message: 'Действие доступно исключительно Администратору.',
+      });
+    }
+
+    const { new_code, reset_all } = request.body || {};
+    if (!new_code || typeof new_code !== 'string') {
+      return reply.status(400).send({
+        status: 'b181',
+        error: 'CODE_REQUIRED',
+        message: 'Укажите новый 4-значный ключ доступа.',
+      });
+    }
+
+    const clean = new_code.trim();
+    if (!/^\d{4}$/.test(clean)) {
+      return reply.status(400).send({
+        status: 'b181',
+        error: 'INVALID_FORMAT',
+        message: 'Ключ должен состоять ровно из 4 цифр.',
+      });
+    }
+
+    if (clean.includes('8')) {
+      return reply.status(400).send({
+        status: 'b181',
+        error: 'DIGIT_8_FORBIDDEN',
+        message: 'Цифра 8 недопустима на терминальной клавиатуре.',
+      });
+    }
+
+    // Сохраняем в access_code.txt
+    try {
+      writeFileSync(CODE_FILE_PATH, clean, 'utf8');
+    } catch (err) {
+      return reply.status(500).send({
+        status: 'b181',
+        error: 'FILE_WRITE_FAILED',
+        message: `Ошибка записи файла ключа: ${err.message}`,
+      });
+    }
+
+    let newVer = getAuthVersion(db);
+    if (reset_all) {
+      newVer = bumpAuthVersion(db);
+      run(db, "UPDATE operators SET auth_revoked = 1");
+    }
+
+    try {
+      run(
+        db,
+        `INSERT INTO incident_log (operator_id, error_code, severity, context_json)
+         VALUES (NULL, 'b181', 'INFO', ?)`,
+        [JSON.stringify({ event: 'ACCESS_CODE_CHANGED', by: callerId || 'admin', reset_all: Boolean(reset_all), new_version: newVer })]
+      );
+    } catch (_) {}
+
+    persistDb();
+
+    return {
+      status: 'OK',
+      new_code: clean,
+      auth_version: newVer,
+      sessions_revoked: Boolean(reset_all),
+      message: reset_all
+        ? 'КЛЮЧ ДОСТУПА ИЗМЕНЁН // ВСЕ СЕССИИ АННУЛИРОВАНЫ'
+        : 'КЛЮЧ ДОСТУПА УСПЕШНО ИЗМЕНЁН',
+    };
+  });
+
   // POST /api/auth/reset-all
   // Сбросить ключ у ВСЕХ пользователей (только для Администратора)
   fastify.post('/auth/reset-all', async (request, reply) => {
     const callerId = request.headers['x-telegram-user-id'] || request.body?.telegram_id;
     const adminKey = request.headers['x-admin-key'] || request.body?.admin_key;
+    const db = await getDb();
 
-    const isAuthorized = isUserAdmin(callerId) || adminKey === 'PROJECT_SA_ADMIN_2026';
+    const isAuthorized = isUserAdmin(db, callerId) || adminKey === 'PROJECT_SA_ADMIN_2026';
     if (!isAuthorized) {
       return reply.status(403).send({
         status: 'b181',
@@ -138,8 +261,8 @@ export default async function authRoutes(fastify) {
       });
     }
 
-    const db = await getDb();
     const newVer = bumpAuthVersion(db);
+    run(db, "UPDATE operators SET auth_revoked = 1");
 
     try {
       run(
@@ -149,6 +272,8 @@ export default async function authRoutes(fastify) {
         [JSON.stringify({ event: 'GLOBAL_AUTH_RESET', by: callerId || 'admin_key', new_version: newVer })]
       );
     } catch (_) {}
+
+    persistDb();
 
     return {
       status: 'OK',
