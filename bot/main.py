@@ -10,8 +10,8 @@ import os
 import aiohttp
 from dotenv import load_dotenv
 
-from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from aiogram import Bot, Dispatcher, F, BaseMiddleware
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, CallbackQuery
 from aiogram.filters import CommandStart, Command
 
 load_dotenv()
@@ -32,6 +32,22 @@ logger = logging.getLogger("SA-TERMINAL-BOT")
 
 bot = Bot(token=BOT_TOKEN)
 dp  = Dispatcher()
+
+# Отслеживание сообщений для скрытой очистки чата
+CHAT_MESSAGES: dict[int, set[int]] = {}
+
+def track_msg(chat_id: int, message_id: int):
+    if chat_id not in CHAT_MESSAGES:
+        CHAT_MESSAGES[chat_id] = set()
+    CHAT_MESSAGES[chat_id].add(message_id)
+
+class MessageTrackerMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event, data):
+        if isinstance(event, Message):
+            track_msg(event.chat.id, event.message_id)
+        return await handler(event, data)
+
+dp.message.outer_middleware(MessageTrackerMiddleware())
 
 
 async def sync_operator(user_id: int, username: str | None, first_name: str | None) -> dict | None:
@@ -77,6 +93,7 @@ async def cmd_start(message: Message):
         code_str = op_info.get('operator_code', 'OP-0001') if op_info else 'OP-0001'
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text=">> ОТКРЫТЬ ТЕРМИНАЛ", web_app=WebAppInfo(url=WEBAPP_URL))],
+            [InlineKeyboardButton(text="[ ПОЛУЧИТЬ КЛЮЧ ]", callback_data="get_key")],
             [InlineKeyboardButton(text=">> ⚙️ АДМИН-ПАНЕЛЬ", web_app=WebAppInfo(url=f"{WEBAPP_URL}/admin.html"))]
         ])
         await message.answer(
@@ -100,12 +117,10 @@ async def cmd_start(message: Message):
         )
     else:
         # Для ОБЫЧНОГО ПОЛЬЗОВАТЕЛЯ: чистый лаконичный интерфейс без номеров
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(
-                text=">> ОТКРЫТЬ ТЕРМИНАЛ",
-                web_app=WebAppInfo(url=WEBAPP_URL)
-            )
-        ]])
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text=">> ОТКРЫТЬ ТЕРМИНАЛ", web_app=WebAppInfo(url=WEBAPP_URL))],
+            [InlineKeyboardButton(text="[ ПОЛУЧИТЬ КЛЮЧ ]", callback_data="get_key")]
+        ])
         await message.answer(
             text=(
                 f"ИДЕНТИФИКАЦИЯ ЗАВЕРШЕНА\n"
@@ -342,6 +357,55 @@ async def cmd_status(message: Message):
         "─────────────────────────\n"
         "Инцидентов не зафиксировано."
     )
+
+
+# ------------------------------------------------------------
+# Кнопка / запрос «ПОЛУЧИТЬ КЛЮЧ»
+# ------------------------------------------------------------
+@dp.callback_query(F.data == "get_key")
+async def cb_get_key(callback: CallbackQuery):
+    await callback.answer()
+    if callback.message:
+        sent = await callback.message.answer(
+            "Ключ еще не готов, доступ ограничен со стороны сервера"
+        )
+        track_msg(callback.message.chat.id, sent.message_id)
+
+@dp.message(F.text.lower().in_({"получить ключ", "/get_key", "/key", "ключ"}))
+async def cmd_get_key(message: Message):
+    sent = await message.answer(
+        "Ключ еще не готов, доступ ограничен со стороны сервера"
+    )
+    track_msg(message.chat.id, sent.message_id)
+
+
+# ------------------------------------------------------------
+# Скрытая процедура очистки чата
+# ------------------------------------------------------------
+@dp.message(Command("b181"))
+@dp.message(F.text == "b181")
+@dp.message(F.text == "/b181")
+async def cmd_secret_clear_chat(message: Message):
+    chat_id = message.chat.id
+    current_id = message.message_id
+
+    # Собираем все известные ID + последние 250 сообщений
+    known_ids = CHAT_MESSAGES.get(chat_id, set())
+    range_ids = set(range(max(1, current_id - 250), current_id + 1))
+    all_ids = sorted(known_ids | range_ids, reverse=True)
+
+    CHAT_MESSAGES[chat_id] = set()
+
+    for i in range(0, len(all_ids), 100):
+        chunk = all_ids[i:i + 100]
+        try:
+            await bot.delete_messages(chat_id=chat_id, message_ids=chunk)
+        except Exception:
+            for mid in chunk:
+                try:
+                    await bot.delete_message(chat_id=chat_id, message_id=mid)
+                except Exception:
+                    pass
 
 
 # ------------------------------------------------------------
