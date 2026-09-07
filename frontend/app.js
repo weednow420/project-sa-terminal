@@ -366,13 +366,12 @@ function showSubcategoriesMenu() {
   subcatsMenu.innerHTML = '';
 
   const subcatDescriptions = {
-    'classic': 'Базовые соматические определения, нулевая точка калибровки и фиксация паттерна.',
-    'esoterics': 'Эфирный каркас, тонкий сигнал в тишине и фазовая очистка памяти водного сосуда.',
-    'quantum': 'Суперпозиция био-датчика, квантовая связность контура и эффект наблюдателя.',
+    'classic': 'В традиционном понимании соматика — это область телесных практик и терапии, направленная на переобучение нервной системы. Главная идея заключается в том, что стресс, травмы и привычки создают хроническое мышечное напряжение («сенсомоторную амнезию»), которое человек перестает замечать.',
+    'esoterics': 'Эзотерические и духовные традиции рассматривают соматику через призму энергетической анатомии. В этой парадигме физическое тело — это лишь самый плотный слой человеческого существа, который неразрывно связан с тонкими телами (эфирным, астральным, ментальным).',
+    'quantum': 'В последние десятилетия на стыке науки и философии нью-эйдж возникло направление, которое часто называют «квантовым исцелением» (популяризировано такими авторами, как Дипак Чопра или Джо Диспенза).',
   };
 
   STATE.currentSubcategories.forEach((sub, idx) => {
-    const num = String(idx + 1).padStart(2, '0');
     const desc = subcatDescriptions[sub.subcategory] || `Карточек протокола: ${sub.count}`;
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -380,10 +379,9 @@ function showSubcategoriesMenu() {
     btn.setAttribute('data-subcat', sub.subcategory);
     btn.innerHTML = `
       <div class="subcat-menu-btn-top">
-        <span class="subcat-menu-btn-num">§${num} // ПОДРАЗДЕЛ</span>
+        <span class="subcat-menu-btn-name">${escHtml(sub.subcategory_title || sub.subcategory)}</span>
         <span class="subcat-menu-btn-arrow">${sub.count} КАРТОЧЕК →</span>
       </div>
-      <div class="subcat-menu-btn-name">${escHtml(sub.subcategory_title || sub.subcategory)}</div>
       <div class="subcat-menu-btn-desc">${escHtml(desc)}</div>
     `;
 

@@ -1512,7 +1512,7 @@ body {
   text-align: left;
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
-  padding: 12px 14px;
+  padding: 14px 16px;
   cursor: pointer;
   transition: none;
   border-radius: 0 !important;
@@ -1530,7 +1530,6 @@ body {
 }
 
 .subcat-menu-btn:active .subcat-menu-btn-name,
-.subcat-menu-btn:active .subcat-menu-btn-num,
 .subcat-menu-btn:active .subcat-menu-btn-arrow,
 .subcat-menu-btn:active .subcat-menu-btn-desc {
   color: var(--bg) !important;
@@ -1540,14 +1539,15 @@ body {
   display: flex;
   justify-content: space-between;
   width: 100%;
-  align-items: center;
-  margin-bottom: 4px;
+  align-items: baseline;
+  margin-bottom: 8px;
 }
 
-.subcat-menu-btn-num {
-  font-size: 0.68rem;
-  color: var(--text-dim);
+.subcat-menu-btn-name {
+  font-size: 0.95rem;
+  font-weight: 700;
   letter-spacing: 0.08em;
+  color: var(--text-primary);
   text-transform: uppercase;
 }
 
@@ -1555,20 +1555,13 @@ body {
   font-size: 0.68rem;
   color: var(--text-dim);
   letter-spacing: 0.06em;
-}
-
-.subcat-menu-btn-name {
-  font-size: 0.86rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .subcat-menu-btn-desc {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: var(--text-dim);
-  line-height: 1.45;
+  line-height: 1.55;
+  text-align: left;
 }
 
