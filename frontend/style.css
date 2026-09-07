@@ -617,3 +617,151 @@ body {
 ::-webkit-scrollbar        { width: 4px; }
 ::-webkit-scrollbar-track  { background: var(--bg); }
 ::-webkit-scrollbar-thumb  { background: var(--border-hard); }
+
+/* ── ЭКРАН СИНХРОНИЗАЦИИ (GATE / PIN-LOCK) ────────────────── */
+.gate-container {
+  max-width: 340px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+}
+
+.gate-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  text-align: center;
+  margin-bottom: var(--spacing-md);
+  text-transform: uppercase;
+}
+
+.gate-display {
+  margin: var(--spacing-xs) 0 var(--spacing-lg) 0;
+  width: 100%;
+}
+
+.pin-slots {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.pin-slot {
+  width: 46px;
+  height: 52px;
+  border: 1px solid var(--border-hard);
+  background-color: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  border-radius: 0;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.pin-slot.filled {
+  border-color: var(--text-primary);
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  gap: 12px;
+  justify-content: center;
+  margin: 0 auto var(--spacing-md) auto;
+}
+
+.pin-key {
+  width: 72px;
+  height: 72px;
+  border: 1px solid var(--border-hard);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  border-radius: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.08s, color 0.08s, border-color 0.08s;
+}
+
+.pin-key:hover,
+.pin-key:active {
+  background-color: var(--text-primary);
+  color: var(--bg);
+  border-color: var(--text-primary);
+}
+
+.gate-controls {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+  width: 100%;
+}
+
+.btn-terminal-sm {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 8px 18px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-dim);
+  border-radius: 0;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  transition: all 0.12s ease;
+}
+
+.btn-terminal-sm:hover,
+.btn-terminal-sm:active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hard);
+}
+
+.gate-status {
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  min-height: 24px;
+  padding: 4px 10px;
+  line-height: 1.4;
+  border-radius: 0;
+  transition: all 0.2s ease;
+}
+
+.gate-status.error {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--text-primary);
+  font-weight: 700;
+}
+
+.gate-status.success {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+@keyframes gateShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.gate-shake {
+  animation: gateShake 0.35s ease-in-out;
+}

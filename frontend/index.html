@@ -48,6 +48,45 @@
       </div>
     </section>
 
+    <!-- ЭКРАН СИНХРОНИЗАЦИИ (ВВОД 4-ЗНАЧНОГО КОДА) -->
+    <section id="view-gate" class="view">
+      <div class="gate-container">
+        <div class="view-title">
+          <span class="bracket">[</span>ПРОТОКОЛ СИНХРОНИЗАЦИИ<span class="bracket">]</span>
+        </div>
+        <div class="gate-subtitle">ТРЕБУЕТСЯ 4-ЗНАЧНЫЙ КЛЮЧ ДОСТУПА</div>
+
+        <div class="gate-display">
+          <div class="pin-slots" id="pin-slots">
+            <span class="pin-slot" data-index="0">_</span>
+            <span class="pin-slot" data-index="1">_</span>
+            <span class="pin-slot" data-index="2">_</span>
+            <span class="pin-slot" data-index="3">_</span>
+          </div>
+        </div>
+
+        <div class="pin-keypad" id="pin-keypad">
+          <button type="button" class="pin-key" data-digit="1">1</button>
+          <button type="button" class="pin-key" data-digit="2">2</button>
+          <button type="button" class="pin-key" data-digit="3">3</button>
+          <button type="button" class="pin-key" data-digit="4">4</button>
+          <button type="button" class="pin-key" data-digit="5">5</button>
+          <button type="button" class="pin-key" data-digit="6">6</button>
+          <button type="button" class="pin-key" data-digit="7">7</button>
+          <button type="button" class="pin-key" data-digit="9">9</button>
+          <button type="button" class="pin-key" data-digit="0">0</button>
+        </div>
+
+        <div class="gate-controls">
+          <button type="button" class="btn-terminal-sm" id="btn-pin-clear">[ СБРОС / ⌫ ]</button>
+        </div>
+
+        <div class="gate-status" id="gate-status">
+          ОЖИДАНИЕ ВВОДА КЛЮЧА СИНХРОНИЗАЦИИ...
+        </div>
+      </div>
+    </section>
+
     <!-- СПИСОК КАТЕГОРИЙ -->
     <section id="view-categories" class="view">
       <div class="view-title">
