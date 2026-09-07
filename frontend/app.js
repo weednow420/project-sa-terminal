@@ -386,6 +386,10 @@ function showSubcategoriesMenu() {
     `;
 
     btn.addEventListener('click', () => {
+      if (sub.subcategory === 'esoterics' || sub.subcategory === 'quantum') {
+        showRestrictedBanner(sub.subcategory_title || sub.subcategory);
+        return;
+      }
       selectSubcategory(sub);
       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     });
@@ -395,6 +399,10 @@ function showSubcategoriesMenu() {
 }
 
 function selectSubcategory(sub) {
+  if (sub.subcategory === 'esoterics' || sub.subcategory === 'quantum') {
+    showRestrictedBanner(sub.subcategory_title || sub.subcategory);
+    return;
+  }
   STATE.currentSubcategory = sub;
 
   // Настройка хлебных крошек
@@ -553,6 +561,53 @@ function setupBackButtons() {
       showView('view-categories');
     });
   }
+}
+
+// ── БАННЕР ОГРАНИЧЕНИЯ ДОСТУПА [b181] ────────────────────────
+function showRestrictedBanner(subcatTitle = '') {
+  const modal = document.getElementById('modal-access-restricted');
+  const titleEl = document.getElementById('restricted-modal-title');
+  if (titleEl) {
+    titleEl.textContent = subcatTitle ? `ДОСТУП ОГРАНИЧЕН // ${subcatTitle.toUpperCase()}` : 'ДОСТУП ОГРАНИЧЕН';
+  }
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+  if (tg?.HapticFeedback) {
+    tg.HapticFeedback.notificationOccurred('warning');
+  }
+}
+
+function hideRestrictedBanner() {
+  const modal = document.getElementById('modal-access-restricted');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  if (tg?.HapticFeedback) {
+    tg.HapticFeedback.impactOccurred('light');
+  }
+}
+
+function setupRestrictedModal() {
+  const closeBtn = document.getElementById('btn-close-restricted-modal');
+  const ackBtn = document.getElementById('btn-ack-restricted-modal');
+  const overlay = document.getElementById('modal-access-restricted');
+
+  if (closeBtn) closeBtn.addEventListener('click', hideRestrictedBanner);
+  if (ackBtn) ackBtn.addEventListener('click', hideRestrictedBanner);
+  if (overlay) {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        hideRestrictedBanner();
+      }
+    });
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      hideRestrictedBanner();
+    }
+  });
 }
 
 // ── ШЛЮЗ СИНХРОНИЗАЦИИ (ВВОД 4-ЗНАЧНОГО КОДА) ─────────────────
@@ -1545,6 +1600,7 @@ async function main() {
   setupBookmarkButton();
   setupObservations();
   setupTools();
+  setupRestrictedModal();
 
   // 4. Проверяем серверную версию ключа
   let serverAuthVersion = 1;

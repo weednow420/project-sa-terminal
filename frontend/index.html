@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=6" />
+  <link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
 
@@ -418,6 +418,28 @@
 
   </main>
 
+  <!-- БАННЕР-МОДАЛКА // ДОСТУП ОГРАНИЧЕН -->
+  <div class="terminal-modal-overlay" id="modal-access-restricted" style="display:none;" role="dialog" aria-modal="true">
+    <div class="terminal-modal-box">
+      <div class="modal-header">
+        <span class="modal-badge">[ ОГРАНИЧЕНИЕ ДОСТУПА ]</span>
+        <button type="button" class="btn-modal-close" id="btn-close-restricted-modal" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-divider">════════════════════════════════════</div>
+      <div class="modal-title" id="restricted-modal-title">ДОСТУП ОГРАНИЧЕН</div>
+      <div class="modal-body">
+        <p class="modal-text">
+          ДОСТУП К ДАННОМУ ПОДРАЗДЕЛУ ОГРАНИЧЕН СО СТОРОНЫ СЕРВЕРА [b181].
+        </p>
+        <p class="modal-subtext">
+          Раздел находится в процессе калибровки. Требуется повышенный уровень доступа или специальный ключ синхронизации.
+        </p>
+      </div>
+      <div class="modal-divider">────────────────────────────────────</div>
+      <button type="button" class="btn-action btn-modal-action" id="btn-ack-restricted-modal">[ ПОНЯТНО // ЗАКРЫТЬ ]</button>
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════════════
        НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK)
   ══════════════════════════════════════════════ -->
@@ -444,6 +466,6 @@
     </div>
   </footer>
 
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
