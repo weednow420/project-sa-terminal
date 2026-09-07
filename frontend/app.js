@@ -715,51 +715,235 @@ function renderBookmarks() {
   });
 }
 
-// ── НАБЛЮДЕНИЯ (ВКЛАДКИ: 1 - ИСТОЧНИК, 2 - ПОСЛАНИЕ) ───────────
-const OBSERVATIONS_DATA = {
-  source: [
-    {
-      code: 'SRC-01',
-      title: 'ПЕРВИЧНАЯ ТОПОЛОГИЯ ИСТОЧНИКА',
-      status: 'СТАБИЛЕН',
-      body: `Фиксация опорной частоты контура.\nМодуляция сигнала не зависит от внешних ретрансляторов.\n\nПри сканировании фонового поля оператором обнаружено резонансное плато. Источник не производит прямого акустического давления, но регистрируется био-сенсором в диапазоне альфа-ритма (7.83–8.2 Гц). Рекомендуется регулярная калибровка через талую воду.`,
-    },
-    {
-      code: 'SRC-02',
-      title: 'ВЕКТОР ПРИЕМА И ДЕВИАЦИЯ',
-      status: 'В НОРМЕ',
-      body: `Отношение сигнал/шум превышает критический порог 3.4 dB.\nУтечки пакетов в узле связи не зафиксировано.\n\nЛюбое искажение восприятия оператора (соматическая усталость, когнитивный шум) приводит к фазовому сдвигу. Для компенсации применяйте дыхательный паттерн и депривацию сенсорного потока.`,
-    },
-    {
-      code: 'SRC-03',
-      title: 'ЭНЕРГЕТИЧЕСКИЙ ГРАДИЕНТ',
-      status: 'АКТИВЕН',
-      body: `Показатели проводимости био-поля оператора соответствуют рабочему протоколу.\nРегулярная синхронизация сохраняет непрерывность наблюдательного слоя.`,
-    },
-  ],
-  message: [
-    {
-      code: 'MSG-001',
-      title: 'ДЕКОДИРОВАННЫЙ ТРАНСКРИПТ // ПЕРВЫЙ СЛОЙ',
-      status: 'РАСШИФРОВАНО',
-      body: `«Форма сосуда определяет геометрию жидкости.\nОсвобождение контура начинается с чистоты кристаллической решетки.»\n\nТрансляция зафиксирована в секторе b181. Сообщение ориентирует на поэтапное выведение дейтериевого балласта из организма и фиксацию внимания на внутренней тишине.`,
-    },
-    {
-      code: 'MSG-002',
-      title: 'ДЕКОДИРОВАННЫЙ ТРАНСКРИПТ // ВТОРОЙ СЛОЙ',
-      status: 'ПРИЕМ',
-      body: `«Наблюдатель не отделен от наблюдаемого.\nВсякий акт измерения меняет фазу принимаемого сигнала.»\n\nКонтур реагирует на каждое состояние оператора. Не пытайтесь форсировать интерпретацию символов — позвольте гримуару структурироваться естественным темпом.`,
-    },
-    {
-      code: 'MSG-003',
-      title: 'СИСТЕМНЫЙ СИГНАЛ // ТРЕТИЙ СЛОЙ',
-      status: 'АРХИВ',
-      body: `«Каждое утро восстанавливайте точку опоры.\nСинхронизируйте вектор воли с ритмом внешних циклов.»`,
-    },
-  ],
-};
+// ── НАБЛЮДЕНИЯ: 1 - ИСТОЧНИК (ЛОКАЛЬНО) И 2 - ПОСЛАНИЕ (СЕРВЕР) ─
+const SOURCE_NOTES_STORAGE_KEY = 'sa_terminal_source_notes';
+const SENT_MESSAGES_STORAGE_KEY = 'sa_terminal_sent_messages';
 
-function renderObservations(subtab = 'source') {
+// ── 1. ИСТОЧНИК: ЛОКАЛЬНЫЕ ЗАМЕТКИ ОПЕРАТОРА ──────────────────
+function getSourceNotes() {
+  try {
+    const raw = localStorage.getItem(SOURCE_NOTES_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveSourceNotes(notes) {
+  try {
+    localStorage.setItem(SOURCE_NOTES_STORAGE_KEY, JSON.stringify(notes));
+  } catch (e) {
+    console.error('[SOURCE] Ошибка сохранения заметок:', e);
+  }
+}
+
+function renderSourceNotes() {
+  const notes = getSourceNotes();
+  const countEl = document.getElementById('source-notes-count');
+  if (countEl) countEl.textContent = `ВСЕГО: ${notes.length}`;
+
+  const listEl = document.getElementById('source-notes-list');
+  if (!listEl) return;
+
+  if (notes.length === 0) {
+    listEl.innerHTML = `
+      <div class="source-note-card" style="text-align:center; color:var(--text-dim); padding:20px;">
+        ИСТОЧНИК ПУСТ.<br/>
+        СОЗДАЙТЕ СВОЮ ПЕРВУЮ ЛОКАЛЬНУЮ ЗАМЕТКУ С ПОМОЩЬЮ ФОРМЫ ВЫШЕ.
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = notes.map(note => {
+    const d = new Date(note.created_at);
+    const dateStr = isNaN(d.getTime())
+      ? note.created_at
+      : d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+    return `
+      <div class="source-note-card">
+        <div class="source-note-header">
+          <span>[ ${escHtml(dateStr)} ]</span>
+          <button type="button" class="btn-note-delete" data-del-note="${escHtml(note.id)}">[ ⌫ УДАЛИТЬ ]</button>
+        </div>
+        ${note.title ? `<div class="source-note-title">${escHtml(note.title)}</div>` : ''}
+        <div class="source-note-body">${escHtml(note.body)}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Обработчики удаления
+  listEl.querySelectorAll('[data-del-note]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-del-note');
+      deleteSourceNote(id);
+    });
+  });
+}
+
+function createSourceNote() {
+  const titleInput = document.getElementById('input-source-title');
+  const bodyInput = document.getElementById('input-source-body');
+  if (!bodyInput) return;
+
+  const body = bodyInput.value.trim();
+  const title = titleInput ? titleInput.value.trim() : '';
+
+  if (!body) {
+    alert('Введите текст наблюдения');
+    return;
+  }
+
+  const notes = getSourceNotes();
+  const newNote = {
+    id: String(Date.now()),
+    title: title || (body.length > 30 ? body.slice(0, 30) + '...' : body),
+    body,
+    created_at: new Date().toISOString(),
+  };
+
+  notes.unshift(newNote);
+  saveSourceNotes(notes);
+
+  if (titleInput) titleInput.value = '';
+  bodyInput.value = '';
+
+  renderSourceNotes();
+  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+}
+
+function deleteSourceNote(id) {
+  let notes = getSourceNotes();
+  notes = notes.filter(n => n.id !== String(id));
+  saveSourceNotes(notes);
+  renderSourceNotes();
+  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+}
+
+// ── 2. ПОСЛАНИЕ: ОТПРАВКА НА СЕРВЕР И ЛОГИРОВАНИЕ ─────────────
+function getSentMessagesHistory() {
+  try {
+    const raw = localStorage.getItem(SENT_MESSAGES_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveSentMessagesHistory(list) {
+  try {
+    localStorage.setItem(SENT_MESSAGES_STORAGE_KEY, JSON.stringify(list));
+  } catch (e) {
+    console.error('[MESSAGES] Ошибка сохранения истории отправки:', e);
+  }
+}
+
+function renderSentMessagesHistory() {
+  const history = getSentMessagesHistory();
+  const countEl = document.getElementById('sent-messages-count');
+  if (countEl) countEl.textContent = `ОТПРАВЛЕНО: ${history.length}`;
+
+  const listEl = document.getElementById('sent-messages-list');
+  if (!listEl) return;
+
+  if (history.length === 0) {
+    listEl.innerHTML = `
+      <div class="sent-msg-card" style="text-align:center; color:var(--text-dim); padding:20px;">
+        НЕТ ОТПРАВЛЕННЫХ ПОСЛАНИЙ.<br/>
+        НАПИШИТЕ СООБЩЕНИЕ В ФОРМЕ ВЫШЕ И НАЖМИТЕ [ ОТПРАВИТЬ НА СЕРВЕР ].
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = history.map(item => {
+    const d = new Date(item.created_at);
+    const dateStr = isNaN(d.getTime())
+      ? item.created_at
+      : d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+    return `
+      <div class="sent-msg-card">
+        <div class="sent-msg-header">
+          <span>[ ${escHtml(dateStr)} ]</span>
+          <span class="tag-badge">[ ЗАЛОГИРОВАНО НА СЕРВЕРЕ ]</span>
+        </div>
+        <div class="sent-msg-text">${escHtml(item.text)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function sendServerMessage() {
+  const input = document.getElementById('input-message-body');
+  const statusEl = document.getElementById('message-send-status');
+  const sendBtn = document.getElementById('btn-send-server-message');
+  if (!input || !sendBtn) return;
+
+  const text = input.value.trim();
+  if (!text) {
+    if (statusEl) {
+      statusEl.textContent = 'ВВЕДИТЕ ТЕКСТ ПОСЛАНИЯ ДЛЯ ОТПРАВКИ';
+      statusEl.className = 'message-send-status error';
+      statusEl.style.display = 'block';
+    }
+    return;
+  }
+
+  sendBtn.disabled = true;
+  sendBtn.textContent = '[ ОТПРАВКА СИГНАЛА... ]';
+  if (statusEl) {
+    statusEl.textContent = 'ПЕРЕДАЧА ПОСЛАНИЯ В СЕКТОР b181...';
+    statusEl.className = 'message-send-status';
+    statusEl.style.display = 'block';
+  }
+
+  try {
+    const res = await apiPost('/messages', {
+      text,
+      telegram_id: STATE.operator?.id || null,
+      username: STATE.operator?.username || null,
+      first_name: STATE.operator?.first_name || null,
+    });
+
+    if (statusEl) {
+      statusEl.textContent = '✓ ' + (res.message || 'СИГНАЛ ПРИНЯТ СЕРВЕРОМ // ЗАЛОГИРОВАНО');
+      statusEl.className = 'message-send-status success';
+      statusEl.style.display = 'block';
+    }
+
+    // Сохраняем в локальную историю отправленных
+    const history = getSentMessagesHistory();
+    history.unshift({
+      id: res.data?.id || Date.now(),
+      text,
+      created_at: res.data?.created_at || new Date().toISOString(),
+    });
+    saveSentMessagesHistory(history);
+
+    input.value = '';
+    renderSentMessagesHistory();
+
+    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+    setTimeout(() => {
+      if (statusEl) statusEl.style.display = 'none';
+    }, 4500);
+
+  } catch (err) {
+    if (statusEl) {
+      statusEl.textContent = `[${CONFIG.INCIDENT_CODE}] ОШИБКА ОТПРАВКИ: ${err.message}`;
+      statusEl.className = 'message-send-status error';
+      statusEl.style.display = 'block';
+    }
+    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = '[ 📡 ОТПРАВИТЬ ПОСЛАНИЕ НА СЕРВЕР ]';
+  }
+}
+
+// ── ПЕРЕКЛЮЧЕНИЕ ПОДВКЛАДОК НАБЛЮДЕНИЙ ────────────────────────
+function switchObservationsSubtab(subtab = 'source') {
   document.querySelectorAll('.obs-tab-btn').forEach(btn => {
     if (btn.getAttribute('data-subtab') === subtab) {
       btn.classList.add('active');
@@ -768,25 +952,26 @@ function renderObservations(subtab = 'source') {
     }
   });
 
-  const container = document.getElementById('observations-content');
-  if (!container) return;
+  const paneSource = document.getElementById('obs-pane-source');
+  const paneMessage = document.getElementById('obs-pane-message');
 
-  const items = OBSERVATIONS_DATA[subtab] || [];
-  if (items.length === 0) {
-    container.innerHTML = `<div style="padding:20px; color:var(--text-dim); text-align:center;">ДАННЫЕ ДАННОГО СЛОЯ НЕ НАЙДЕНЫ</div>`;
-    return;
+  if (subtab === 'source') {
+    if (paneSource) paneSource.style.display = 'block';
+    if (paneMessage) paneMessage.style.display = 'none';
+    renderSourceNotes();
+  } else {
+    if (paneSource) paneSource.style.display = 'none';
+    if (paneMessage) paneMessage.style.display = 'block';
+
+    // Обновляем плашку оператора
+    const senderInfo = document.getElementById('obs-sender-info');
+    if (senderInfo && STATE.operator) {
+      const tag = STATE.operator.username ? `@${STATE.operator.username}` : `ID:${STATE.operator.id}`;
+      senderInfo.textContent = `ОТПРАВИТЕЛЬ: ${STATE.operator.first_name || 'ОПЕРАТОР'} [${tag}]`;
+    }
+
+    renderSentMessagesHistory();
   }
-
-  container.innerHTML = items.map(item => `
-    <div class="obs-card">
-      <div class="obs-card-header">
-        <span class="obs-card-code">[ ${escHtml(item.code)} ]</span>
-        <span class="tag-badge">[ ${escHtml(item.status)} ]</span>
-      </div>
-      <h3 class="obs-card-title">${escHtml(item.title)}</h3>
-      <div class="obs-card-body">${escHtml(item.body)}</div>
-    </div>
-  `).join('');
 }
 
 function setupObservations() {
@@ -794,10 +979,29 @@ function setupObservations() {
   tabs.forEach(btn => {
     btn.addEventListener('click', () => {
       const subtab = btn.getAttribute('data-subtab');
-      renderObservations(subtab);
+      switchObservationsSubtab(subtab);
       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     });
   });
+
+  // Кнопка сохранения локальной заметки
+  const btnSaveNote = document.getElementById('btn-save-source-note');
+  if (btnSaveNote) {
+    btnSaveNote.addEventListener('click', () => {
+      createSourceNote();
+    });
+  }
+
+  // Кнопка отправки серверного сообщения
+  const btnSendMsg = document.getElementById('btn-send-server-message');
+  if (btnSendMsg) {
+    btnSendMsg.addEventListener('click', () => {
+      sendServerMessage();
+    });
+  }
+
+  // Инициализация первой подвкладки
+  switchObservationsSubtab('source');
 }
 
 // ── ИНСТРУМЕНТЫ (КАЛЬКУЛЯТОР ТАЛОЙ ВОДЫ, ТАРО) ────────────────
@@ -1196,7 +1400,7 @@ function setupBottomNav() {
       // Инициализация контента при переходе
       if (targetView === 'view-observations') {
         const activeObsTab = document.querySelector('.obs-tab-btn.active')?.getAttribute('data-subtab') || 'source';
-        renderObservations(activeObsTab);
+        switchObservationsSubtab(activeObsTab);
       } else if (targetView === 'view-bookmarks') {
         renderBookmarks();
       } else if (targetView === 'view-tools') {

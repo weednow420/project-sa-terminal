@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -278,6 +278,45 @@
               <tr>
                 <td colspan="6" style="text-align:center; padding:24px; color:var(--text-dim);">
                   СКАНИРОВАНИЕ БАЗЫ ДАННЫХ...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ЖУРНАЛ ПОСЛАНИЙ ОПЕРАТОРОВ И ВЫГРУЗКА -->
+      <div class="admin-panel-card">
+        <div class="card-heading">
+          <span>[ ЖУРНАЛ ПОСЛАНИЙ ОПЕРАТОРОВ // ВЫГРУЗКА ]</span>
+          <div class="inline-row" style="margin-bottom:0;">
+            <button type="button" class="btn-action btn-action-sm" id="btn-refresh-messages">[ ⟳ ОБНОВИТЬ ]</button>
+            <button type="button" class="btn-action btn-action-sm" id="btn-export-messages-json">[ JSON ]</button>
+            <button type="button" class="btn-action btn-action-sm" id="btn-export-messages-csv">[ CSV ]</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: var(--spacing-sm); display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+          <input type="text" id="search-messages-input" class="terminal-input" placeholder="ПОИСК ПО ПОСЛАНИЯМ: ТЕКСТ / @USER / TG-ID..." style="flex:1;" />
+          <span style="font-size:0.68rem; color:var(--text-dim);" id="messages-count-label">ВСЕГО ПОСЛАНИЙ: 0</span>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="registry-table">
+            <thead>
+              <tr>
+                <th style="width:50px;">ID</th>
+                <th style="width:140px;">ВРЕМЯ</th>
+                <th style="width:160px;">ОПЕРАТОР</th>
+                <th style="width:120px;">TELEGRAM ID</th>
+                <th>ТЕКСТ ПОСЛАНИЯ</th>
+                <th style="width:80px;">ДЕЙСТВИЯ</th>
+              </tr>
+            </thead>
+            <tbody id="messages-table-body">
+              <tr>
+                <td colspan="6" style="text-align:center; padding:24px; color:var(--text-dim);">
+                  СКАНИРОВАНИЕ БАЗЫ ПОСЛАНИЙ...
                 </td>
               </tr>
             </tbody>
@@ -611,9 +650,116 @@
         .replace(/"/g, '&quot;');
     }
 
+    let cachedMessages = [];
+
+    async function loadMessages() {
+      const tbody = document.getElementById('messages-table-body');
+      try {
+        const res = await fetchAdmin('/messages');
+        if (res.ok) {
+          const json = await res.json();
+          cachedMessages = json.data || [];
+          renderMessagesTable(cachedMessages);
+        } else {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-warn);">СБОЙ ЗАГРУЗКИ ПОСЛАНИЙ (HTTP ${res.status})</td></tr>`;
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-warn);">ОШИБКА: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    function renderMessagesTable(messages) {
+      const tbody = document.getElementById('messages-table-body');
+      const countLabel = document.getElementById('messages-count-label');
+      if (countLabel) countLabel.textContent = `ВСЕГО ПОСЛАНИЙ: ${messages.length}`;
+
+      if (!messages || messages.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-dim);">НЕТ ПОСЛАНИЙ В БАЗЕ ДАННЫХ</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = messages.map(msg => {
+        const d = new Date(msg.created_at);
+        const dateStr = isNaN(d.getTime())
+          ? msg.created_at
+          : d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU');
+
+        const opNum = msg.display_number || '---';
+        const userTag = msg.username ? `@${msg.username}` : (msg.first_name || 'Оператор');
+
+        return `
+          <tr>
+            <td>#${msg.id}</td>
+            <td style="color:var(--text-dim);">${escapeHtml(dateStr)}</td>
+            <td><strong>${escapeHtml(userTag)}</strong> <span style="color:var(--text-dim); font-size:0.65rem;">[${escapeHtml(opNum)}]</span></td>
+            <td><code>${msg.operator_id || '---'}</code></td>
+            <td style="white-space:pre-wrap; max-width:350px;">${escapeHtml(msg.message_text)}</td>
+            <td>
+              <button type="button" class="btn-action btn-action-sm btn-danger" onclick="deleteMessage(${msg.id})">[ ⌫ ]</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.deleteMessage = async function(id) {
+      if (!confirm(`Удалить послание #${id}?`)) return;
+      try {
+        const res = await fetchAdmin(`/messages/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showBanner(`Послание #${id} удалено.`);
+          loadMessages();
+        } else {
+          showBanner(`Ошибка удаления #${id}`, true);
+        }
+      } catch (err) {
+        showBanner(`Ошибка: ${err.message}`, true);
+      }
+    };
+
+    // Поиск по сообщениям
+    document.getElementById('search-messages-input').addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      if (!q) {
+        renderMessagesTable(cachedMessages);
+        return;
+      }
+      const filtered = cachedMessages.filter(m => {
+        return (
+          (m.message_text && m.message_text.toLowerCase().includes(q)) ||
+          (m.username && m.username.toLowerCase().includes(q)) ||
+          (m.first_name && m.first_name.toLowerCase().includes(q)) ||
+          (String(m.operator_id).includes(q)) ||
+          (String(m.id).includes(q))
+        );
+      });
+      renderMessagesTable(filtered);
+    });
+
+    document.getElementById('btn-refresh-messages').addEventListener('click', () => {
+      loadMessages();
+    });
+
+    document.getElementById('btn-export-messages-json').addEventListener('click', () => {
+      const dateStr = new Date().toISOString().slice(0, 10);
+      downloadFile(JSON.stringify(cachedMessages, null, 2), `project_sa_messages_${dateStr}.json`, 'application/json');
+    });
+
+    document.getElementById('btn-export-messages-csv').addEventListener('click', () => {
+      const dateStr = new Date().toISOString().slice(0, 10);
+      let csv = '\uFEFFid,created_at,operator_id,username,first_name,message_text\n';
+      cachedMessages.forEach(m => {
+        const cleanText = (m.message_text || '').replace(/"/g, '""');
+        const cleanName = (m.first_name || '').replace(/"/g, '""');
+        csv += `"${m.id}","${m.created_at}","${m.operator_id || ''}","${m.username || ''}","${cleanName}","${cleanText}"\n`;
+      });
+      downloadFile(csv, `project_sa_messages_${dateStr}.csv`, 'text/csv;charset=utf-8;');
+    });
+
     // Инициализация
     loadKeyInfo();
     loadOperators();
+    loadMessages();
   </script>
 </body>
 </html>

@@ -143,14 +143,67 @@
       </nav>
 
       <div class="observations-tabs-bar" id="observations-tabs-bar">
-        <button type="button" class="obs-tab-btn active" data-subtab="source">1 - ИСТОЧНИК</button>
-        <button type="button" class="obs-tab-btn" data-subtab="message">2 - ПОСЛАНИЕ</button>
+        <button type="button" class="obs-tab-btn active" data-subtab="source">1 - ИСТОЧНИК (ЛОКАЛЬНО)</button>
+        <button type="button" class="obs-tab-btn" data-subtab="message">2 - ПОСЛАНИЕ (СЕРВЕР)</button>
       </div>
 
       <div class="dot-grid-divider"></div>
 
       <div class="observations-content" id="observations-content">
-        <!-- JS заполняет -->
+        <!-- ПОДВКЛАДКА 1: ИСТОЧНИК (ЛОКАЛЬНЫЕ ЗАМЕТКИ) -->
+        <div class="obs-pane" id="obs-pane-source">
+          <div class="tool-card" style="margin-bottom: var(--spacing-md);">
+            <div class="tool-card-header">
+              <span class="tool-title">ФИКСАЦИЯ НАБЛЮДЕНИЯ // ИСТОЧНИК</span>
+              <span class="tag-badge">[ ПАМЯТЬ ТЕРМИНАЛА ]</span>
+            </div>
+            <p class="tool-desc">Создание личных заметок оператора. Записи хранятся локально в памяти устройства.</p>
+            <div class="tool-calc-form">
+              <input type="text" id="input-source-title" class="terminal-input" placeholder="Заголовок заметки..." maxlength="100" />
+              <textarea id="input-source-body" class="terminal-input terminal-textarea" rows="4" placeholder="Текст личного наблюдения или гипотезы..."></textarea>
+              <button type="button" class="btn-action" id="btn-save-source-note">[ + СОХРАНИТЬ В ИСТОЧНИК ]</button>
+            </div>
+          </div>
+
+          <div class="bookmarks-meta-bar">
+            <span class="category-meta-title">СОХРАНЁННЫЕ ЗАМЕТКИ</span>
+            <span class="category-meta-count" id="source-notes-count">ВСЕГО: 0</span>
+          </div>
+
+          <div class="dot-grid-divider"></div>
+
+          <div class="source-notes-list" id="source-notes-list">
+            <!-- JS заполняет список локальных заметок -->
+          </div>
+        </div>
+
+        <!-- ПОДВКЛАДКА 2: ПОСЛАНИЕ (СЕРВЕРНЫЕ СООБЩЕНИЯ) -->
+        <div class="obs-pane" id="obs-pane-message" style="display:none;">
+          <div class="tool-card" style="margin-bottom: var(--spacing-md);">
+            <div class="tool-card-header">
+              <span class="tool-title">ПЕРЕДАЧА ПОСЛАНИЯ // СЕРВЕРНЫЙ ЛОГ</span>
+              <span class="tag-badge">[ СЕКТОР b181 ]</span>
+            </div>
+            <p class="tool-desc">Послание будет передано на центральный сервер контура и зафиксировано в журнале Администратора.</p>
+            <div class="obs-sender-info" id="obs-sender-info">ОПЕРАТОР: ОПРЕДЕЛЕНИЕ...</div>
+            <div class="tool-calc-form" style="margin-top:8px;">
+              <textarea id="input-message-body" class="terminal-input terminal-textarea" rows="4" placeholder="Введите текст послания для логирования на сервере..."></textarea>
+              <div class="message-send-status" id="message-send-status" style="display:none;"></div>
+              <button type="button" class="btn-action" id="btn-send-server-message">[ 📡 ОТПРАВИТЬ ПОСЛАНИЕ НА СЕРВЕР ]</button>
+            </div>
+          </div>
+
+          <div class="bookmarks-meta-bar">
+            <span class="category-meta-title">ИСТОРИЯ ВАШИХ ОТПРАВЛЕННЫХ ПОСЛАНИЙ</span>
+            <span class="category-meta-count" id="sent-messages-count">ОТПРАВЛЕНО: 0</span>
+          </div>
+
+          <div class="dot-grid-divider"></div>
+
+          <div class="sent-messages-list" id="sent-messages-list">
+            <!-- JS заполняет список отправленных на сервер -->
+          </div>
+        </div>
       </div>
     </section>
 
@@ -377,6 +430,6 @@
     </div>
   </footer>
 
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

@@ -12,6 +12,7 @@ import categoriesRoutes from './routes/categories.js';
 import cardsRoutes from './routes/cards.js';
 import operatorsRoutes from './routes/operators.js';
 import authRoutes from './routes/auth.js';
+import messagesRoutes from './routes/messages.js';
 import { initDb } from './db/init.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -59,6 +60,7 @@ await fastify.register(categoriesRoutes, { prefix: '/api' });
 await fastify.register(cardsRoutes, { prefix: '/api' });
 await fastify.register(operatorsRoutes, { prefix: '/api' });
 await fastify.register(authRoutes, { prefix: '/api' });
+await fastify.register(messagesRoutes, { prefix: '/api' });
 
 // Health check — для мониторинга контура
 fastify.get('/api/health', async () => ({
