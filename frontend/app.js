@@ -936,6 +936,34 @@ function drawTarotCard() {
 }
 
 function setupTools() {
+  // Кнопки в меню инструментов (открытие конкретного инструмента)
+  document.querySelectorAll('.tool-menu-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const toolId = btn.getAttribute('data-tool');
+      selectTool(toolId);
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+  });
+
+  // Верхние кнопки быстрого переключения (вкладки)
+  document.querySelectorAll('.tool-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const toolId = btn.getAttribute('data-tool');
+      selectTool(toolId);
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+  });
+
+  // Кнопка возврата в меню инструментов
+  const btnBackMenu = document.getElementById('btn-back-tools-menu');
+  if (btnBackMenu) {
+    btnBackMenu.addEventListener('click', () => {
+      selectTool('menu');
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+  }
+
+  // 01. Калькулятор талой воды
   const btnCalc = document.getElementById('btn-calc-water');
   if (btnCalc) {
     btnCalc.addEventListener('click', () => {
@@ -944,13 +972,207 @@ function setupTools() {
     });
   }
 
+  // 02. Утренний расклад Таро
   const btnTarot = document.getElementById('btn-draw-tarot');
   if (btnTarot) {
     btnTarot.addEventListener('click', drawTarotCard);
   }
 
-  // Предварительный расчет калькулятора по умолчанию
+  // 03. Таймер дыхания (4-4-4)
+  const btnBreathing = document.getElementById('btn-toggle-breathing');
+  if (btnBreathing) {
+    btnBreathing.addEventListener('click', toggleBreathingTimer);
+  }
+
+  // 04. Журнал инцидентов b181
+  const btnScanInc = document.getElementById('btn-scan-incidents');
+  if (btnScanInc) {
+    btnScanInc.addEventListener('click', scanIncidents);
+  }
+
+  // Первоначальная инициализация
   calcMeltWater();
+  renderIncidentLogs();
+  selectTool('menu');
+}
+
+// ── НАВИГАЦИЯ ПО ИНСТРУМЕНТАМ ─────────────────────────────────
+const TOOL_NAMES = {
+  'menu': 'ИНСТРУМЕНТЫ',
+  'water-calc': 'КАЛЬКУЛЯТОР ТАЛОЙ ВОДЫ',
+  'tarot': 'УТРЕННИЙ РАСКЛАД ТАРО',
+  'breathing': 'БИО-РИТМ ДЫХАНИЯ (4-4-4)',
+  'incident-log': 'ЖУРНАЛ ИНЦИДЕНТОВ b181',
+};
+
+function selectTool(toolId) {
+  // Обновляем верхние вкладки быстрого переключения
+  document.querySelectorAll('.tool-tab-btn').forEach(btn => {
+    if (btn.getAttribute('data-tool') === toolId) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  const menuList = document.getElementById('tools-menu-list');
+  const btnBackMenu = document.getElementById('btn-back-tools-menu');
+  const subSep = document.getElementById('tools-sub-sep');
+  const activeTitle = document.getElementById('tools-active-title');
+
+  if (toolId === 'menu') {
+    if (menuList) menuList.style.display = 'flex';
+    document.querySelectorAll('.tool-pane').forEach(p => p.style.display = 'none');
+    if (btnBackMenu) btnBackMenu.style.display = 'none';
+    if (subSep) subSep.style.display = 'none';
+    if (activeTitle) activeTitle.textContent = 'ИНСТРУМЕНТЫ';
+    return;
+  }
+
+  // Скрываем меню кнопок и показываем конкретный инструмент
+  if (menuList) menuList.style.display = 'none';
+  document.querySelectorAll('.tool-pane').forEach(p => p.style.display = 'none');
+
+  const targetPane = document.getElementById(`tool-pane-${toolId}`);
+  if (targetPane) {
+    targetPane.style.display = 'block';
+  }
+
+  if (btnBackMenu) btnBackMenu.style.display = 'inline-block';
+  if (subSep) subSep.style.display = 'inline-block';
+  if (activeTitle) activeTitle.textContent = TOOL_NAMES[toolId] || 'ИНСТРУМЕНТ';
+
+  if (toolId === 'water-calc') {
+    calcMeltWater();
+  }
+}
+
+// ── 03. БИО-РИТМ ДЫХАНИЯ (4-4-4) ─────────────────────────────
+const BREATHING_PHASES = [
+  { name: 'ВДОХ (НАБОР ЭНЕРГИИ)', duration: 4 },
+  { name: 'ЗАДЕРЖКА (ФИКСАЦИЯ)', duration: 4 },
+  { name: 'ВЫДОХ (СБРОС НАПРЯЖЕНИЯ)', duration: 4 },
+  { name: 'ПАУЗА (ТИШИНА КОНТУРА)', duration: 4 },
+];
+
+let breathingTimer = null;
+let breathingPhaseIdx = 0;
+let breathingSecondsLeft = 4;
+let breathingCycles = 0;
+
+function toggleBreathingTimer() {
+  if (breathingTimer) {
+    stopBreathingTimer();
+  } else {
+    startBreathingTimer();
+  }
+}
+
+function startBreathingTimer() {
+  const btn = document.getElementById('btn-toggle-breathing');
+  if (btn) btn.textContent = '[ СТОП ЦИКЛА ДЫХАНИЯ ]';
+
+  breathingPhaseIdx = 0;
+  breathingSecondsLeft = 4;
+  updateBreathingUI();
+
+  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+  breathingTimer = setInterval(() => {
+    breathingSecondsLeft--;
+    if (breathingSecondsLeft <= 0) {
+      breathingPhaseIdx = (breathingPhaseIdx + 1) % 4;
+      breathingSecondsLeft = 4;
+      if (breathingPhaseIdx === 0) {
+        breathingCycles++;
+      }
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    }
+    updateBreathingUI();
+  }, 1000);
+}
+
+function stopBreathingTimer() {
+  if (breathingTimer) {
+    clearInterval(breathingTimer);
+    breathingTimer = null;
+  }
+  const btn = document.getElementById('btn-toggle-breathing');
+  if (btn) btn.textContent = '[ СТАРТ ЦИКЛА ДЫХАНИЯ ]';
+  const label = document.getElementById('breathing-phase-label');
+  if (label) label.textContent = 'ФАЗА: ГОТОВНОСТЬ';
+  const display = document.getElementById('breathing-timer-display');
+  if (display) display.textContent = '04';
+  const fill = document.getElementById('breathing-progress-fill');
+  if (fill) fill.style.width = '0%';
+}
+
+function updateBreathingUI() {
+  const phase = BREATHING_PHASES[breathingPhaseIdx];
+  const label = document.getElementById('breathing-phase-label');
+  if (label) label.textContent = `ФАЗА: ${phase.name}`;
+
+  const display = document.getElementById('breathing-timer-display');
+  if (display) display.textContent = String(breathingSecondsLeft).padStart(2, '0');
+
+  const fill = document.getElementById('breathing-progress-fill');
+  if (fill) {
+    const pct = ((4 - breathingSecondsLeft) / 4) * 100;
+    fill.style.width = `${pct}%`;
+  }
+
+  const cycles = document.getElementById('breathing-cycle-count');
+  if (cycles) cycles.textContent = `ЦИКЛОВ ВЫПОЛНЕНО: ${breathingCycles}`;
+}
+
+// ── 04. ЖУРНАЛ ИНЦИДЕНТОВ b181 ───────────────────────────────
+const DEFAULT_INCIDENT_LOGS = [
+  { time: '02:14:09', text: 'ПАКЕТ #9182 // СИНХРОНИЗАЦИЯ БИО-ДАТЧИКА ВЫПОЛНЕНА' },
+  { time: '01:42:15', text: 'СЕКТОР b181 // ФОНОВОЕ ДАВЛЕНИЕ В ПРЕДЕЛАХ НОРМЫ' },
+  { time: '00:15:33', text: 'КАЛИБРОВКА // ПОГРЕШНОСТЬ ТАКТОВОГО ГЕНЕРАТОРА: 0.001%' },
+  { time: '23:59:00', text: 'СИСТЕМНЫЙ ЛОГ // КОНТУР НАБЛЮДАТЕЛЯ АКТИВИРОВАН' },
+];
+
+function renderIncidentLogs() {
+  const term = document.getElementById('incident-log-terminal');
+  if (!term) return;
+  term.innerHTML = DEFAULT_INCIDENT_LOGS.map(entry => `
+    <div class="incident-log-entry">
+      <span class="incident-log-time">[${escHtml(entry.time)}]</span>
+      <span class="incident-log-text">${escHtml(entry.text)}</span>
+    </div>
+  `).join('');
+}
+
+function scanIncidents() {
+  const btn = document.getElementById('btn-scan-incidents');
+  if (!btn) return;
+
+  btn.textContent = '[ СКАНИРОВАНИЕ КОНТУРА... ]';
+  btn.disabled = true;
+
+  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+  setTimeout(() => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const randNum = Math.floor(1000 + Math.random() * 9000);
+    const msgs = [
+      `ТЕЛЕМЕТРИЯ #${randNum} // АНОМАЛИЙ НЕ ОБНАРУЖЕНО. КОНТУР СТАБИЛЕН.`,
+      `СКАНЕР СЕКТОРА b181 // УТЕЧКИ СИГНАЛА ОТСУТСТВУЮТ. ДЕВИАЦИЯ 0.00%.`,
+      `ИМПУЛЬС #${randNum} // ПРОВОДИМОСТЬ КАНАЛА В НОРМЕ. БИО-СЕНСОР В ПОРЯДКЕ.`,
+      `СИСТЕМА // ТАКТОВАЯ СИНХРОНИЗАЦИЯ УЗЛА УСПЕШНО ПОДТВЕРЖДЕНА.`,
+    ];
+    const chosen = msgs[Math.floor(Math.random() * msgs.length)];
+
+    DEFAULT_INCIDENT_LOGS.unshift({ time: timeStr, text: chosen });
+    renderIncidentLogs();
+
+    btn.textContent = '[ СКАНИРОВАТЬ КОНТУР НА АНОМАЛИИ ]';
+    btn.disabled = false;
+
+    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+  }, 750);
 }
 
 // ── НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK) ───────────────────────────
@@ -977,6 +1199,8 @@ function setupBottomNav() {
         renderObservations(activeObsTab);
       } else if (targetView === 'view-bookmarks') {
         renderBookmarks();
+      } else if (targetView === 'view-tools') {
+        selectTool('menu');
       }
     });
   });
