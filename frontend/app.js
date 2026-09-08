@@ -265,8 +265,7 @@ async function loadCategories() {
           list.style.display = 'flex';
           list.innerHTML = `
             <li class="card-item" style="border: none; background: transparent; text-align: center; padding-top: 40px;">
-              <div style="font-size: 1.2rem; margin-bottom: 8px; color: var(--text-primary); font-weight: bold;">ТЕРМИНАЛ АКТИВЕН [v0.1a]</div>
-              <div style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 12px; letter-spacing: 0.08em;">ВЕРСИЯ СИСТЕМЫ: v0.1a // ОБНОВЛЕНО</div>
+              <div style="font-size: 1.2rem; margin-bottom: 12px; color: var(--text-primary); font-weight: bold;">ТЕРМИНАЛ АКТИВЕН</div>
               <div style="color: var(--text-dim); font-size: 0.8rem; line-height: 1.5;">ИСПОЛЬЗУЙТЕ КНОПКУ [ БАЗИС ] ВНИЗУ ЭКРАНА<br>ДЛЯ ДОСТУПА КО ВСЕМ МОДУЛЯМ СИСТЕМЫ.</div>
             </li>
           `;
