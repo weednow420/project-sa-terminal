@@ -759,8 +759,11 @@ async function submitPin(code) {
     }, 450);
 
   } catch (err) {
-    setGateStatus(`[${CONFIG.INCIDENT_CODE}] ДОСТУП ОТКЛОНЕН // НЕВЕРНЫЙ КЛЮЧ`, 'error');
+    const errorMsg = err.message || `[${CONFIG.INCIDENT_CODE}] ДОСТУП ОТКЛОНЕН // НЕВЕРНЫЙ КЛЮЧ`;
+    setGateStatus(errorMsg, 'error');
     if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+
+    const isLocked = errorMsg.includes('ЗАБЛОКИРОВАН') || errorMsg.includes('ЛИМИТ') || errorMsg.includes('попыток');
 
     const container = document.querySelector('.gate-container');
     if (container) container.classList.add('gate-shake');
@@ -770,8 +773,10 @@ async function submitPin(code) {
       STATE.pinCode = '';
       STATE.pinBusy = false;
       updatePinSlots();
-      setGateStatus('ОЖИДАНИЕ ВВОДА КЛЮЧА СИНХРОНИЗАЦИИ...', 'normal');
-    }, 850);
+      if (!isLocked) {
+        setGateStatus('ОЖИДАНИЕ ВВОДА КЛЮЧА СИНХРОНИЗАЦИИ...', 'normal');
+      }
+    }, isLocked ? 2500 : 950);
   }
 }
 

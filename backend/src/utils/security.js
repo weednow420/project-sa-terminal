@@ -38,6 +38,7 @@ export function recordFailedPinAttempt(key, maxAttempts = 5, lockDurationMs = 5 
     record.lockedUntil = now + lockDurationMs;
   }
   FAILED_ATTEMPTS.set(key, record);
+  return record;
 }
 
 export function resetPinRateLimit(key) {
