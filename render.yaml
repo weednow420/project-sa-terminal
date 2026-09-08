@@ -1,4 +1,4 @@
-﻿services:
+services:
   - type: web
     name: project-sa-terminal
     env: docker
@@ -10,3 +10,5 @@
         sync: false
       - key: ADMIN_TELEGRAM_IDS
         value: "228844325"
+      - key: ADMIN_SECRET_KEY
+        generateValue: true

@@ -40,7 +40,7 @@ await fastify.register(cors, {
       cb(null, false);
     }
   },
-  allowedHeaders: ['Content-Type', 'ngrok-skip-browser-warning', 'Authorization', 'x-telegram-user-id', 'x-admin-key'],
+  allowedHeaders: ['Content-Type', 'ngrok-skip-browser-warning', 'Authorization', 'x-telegram-user-id', 'x-admin-key', 'x-telegram-init-data'],
 });
 
 // Отдаём frontend как статику с корня /

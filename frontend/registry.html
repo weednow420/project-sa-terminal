@@ -228,6 +228,8 @@
           headers: {
             'Content-Type': 'application/json',
             'ngrok-skip-browser-warning': 'true',
+            'x-telegram-init-data': tg?.initData || '',
+            'x-admin-key': localStorage.getItem('sa_admin_key') || '',
             'x-telegram-user-id': String(telegramUserId),
           }
         });
@@ -239,20 +241,22 @@
             <tr>
               <td colspan="6" style="text-align:center; padding:32px; color:var(--text-primary);">
                 <div style="font-size:0.95rem; font-weight:700; margin-bottom:8px; letter-spacing:0.1em;">[b181] ДОСТУП ОГРАНИЧЕН</div>
-                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:16px;">Реестр Операторов доступен исключительно Администраторам контура.</div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:16px;">
+                  Реестр Операторов доступен исключительно верифицированным Администраторам контура.<br>
+                  Если вы открыли страницу вне Telegram, введите мастер-ключ Администратора.
+                </div>
                 <div style="display:inline-flex; gap:8px; max-width:360px; margin:0 auto; text-align:left;">
-                  <input type="text" id="admin-id-input" class="terminal-input" placeholder="Telegram ID Администратора" value="${escapeHtml(currentAdminId)}" />
-                  <button class="btn-action" id="btn-submit-admin-id">[ ПОДТВЕРДИТЬ ]</button>
+                  <input type="password" id="admin-key-input" class="terminal-input" placeholder="Мастер-ключ Администратора" value="${escapeHtml(localStorage.getItem('sa_admin_key') || '')}" />
+                  <button class="btn-action" id="btn-submit-admin-key">[ ПОДТВЕРДИТЬ ]</button>
                 </div>
               </td>
             </tr>`;
-          const btn = document.getElementById('btn-submit-admin-id');
+          const btn = document.getElementById('btn-submit-admin-key');
           if (btn) {
             btn.addEventListener('click', () => {
-              const val = document.getElementById('admin-id-input')?.value.trim();
+              const val = document.getElementById('admin-key-input')?.value.trim();
               if (val) {
-                currentAdminId = val;
-                localStorage.setItem('sa_admin_id', val);
+                localStorage.setItem('sa_admin_key', val);
                 loadOperators();
               }
             });

@@ -8,8 +8,8 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname   = dirname(fileURLToPath(import.meta.url));
-const NGROK_TOKEN = '3Ix640F1op6BN3O9irk5hg2gozo_FQVKguMUdHwGCjWjgL6M';
-const PORT        = 3000;
+const NGROK_TOKEN = process.env.NGROK_TOKEN || '';
+const PORT        = process.env.PORT || 3000;
 
 async function startTunnel() {
   console.log('[TUNNEL] Инициализация туннеля ngrok на порт 3000...');
@@ -28,11 +28,15 @@ async function startTunnel() {
     console.log(`  PUBLIC URL: ${publicUrl}`);
     console.log('════════════════════════════════════════\n');
 
-    // Обновляем bot/.env
+    // Обновляем bot/.env при наличии BOT_TOKEN
     const envPath = join(__dirname, '..', 'bot', '.env');
-    const envContent = `BOT_TOKEN=8793816070:AAErs0NiVYl6ymhc6M82z-vw4ex4CaY7DoE\nWEBAPP_URL=${publicUrl}\nADMIN_TELEGRAM_IDS=228844325\n`;
-    writeFileSync(envPath, envContent);
-    console.log(`[TUNNEL] bot/.env успешно обновлён: ${publicUrl}`);
+    const existingToken = process.env.BOT_TOKEN || '';
+    if (existingToken) {
+      const adminIds = process.env.ADMIN_TELEGRAM_IDS || '';
+      const envContent = `BOT_TOKEN=${existingToken}\nWEBAPP_URL=${publicUrl}\nADMIN_TELEGRAM_IDS=${adminIds}\n`;
+      writeFileSync(envPath, envContent);
+      console.log(`[TUNNEL] bot/.env успешно обновлён: ${publicUrl}`);
+    }
 
     // Heartbeat каждые 30 секунд чтобы процесс не завершался
     const keepAlive = setInterval(() => {

@@ -3,29 +3,7 @@
 //  Защита: Реестр Операторов доступен ТОЛЬКО Администратору
 // ============================================================
 import { getDb, queryOne, queryAll, run, persistDb } from '../db/init.js';
-
-// Список Telegram ID администраторов (из .env с дефолтным ID создателя)
-function getAdminIds() {
-  const envVal = process.env.ADMIN_TELEGRAM_IDS || '228844325';
-  return envVal
-    .split(',')
-    .map(x => Number(x.trim()))
-    .filter(x => !isNaN(x) && x > 0);
-}
-
-function isUserAdmin(db, telegramId) {
-  if (!telegramId) return false;
-  const tid = Number(telegramId);
-  const adminIds = getAdminIds();
-  if (adminIds.includes(tid)) return true;
-  if (db) {
-    try {
-      const row = queryOne(db, "SELECT is_admin FROM operators WHERE telegram_id = ?", [tid]);
-      if (row && row.is_admin === 1) return true;
-    } catch (_) {}
-  }
-  return false;
-}
+import { isUserAdminVerified, verifyTelegramInitData, getAdminIds } from '../utils/security.js';
 
 export default async function operatorsRoutes(fastify) {
 
@@ -45,7 +23,22 @@ export default async function operatorsRoutes(fastify) {
 
     const db = await getDb();
     const tid = Number(telegram_id);
-    const adminFlag = isUserAdmin(db, tid) ? 1 : 0;
+
+    // Безопасное определение статуса Администратора:
+    // Только если запрос криптографически подтверждён Telegram HMAC initData,
+    // либо передан валидный мастер-ключ admin_key
+    let adminFlag = 0;
+    const rawInitData = request.headers['x-telegram-init-data'];
+    if (rawInitData) {
+      const verified = verifyTelegramInitData(rawInitData);
+      if (verified && Number(verified.id) === tid) {
+        const adminIds = getAdminIds();
+        if (adminIds.includes(tid)) adminFlag = 1;
+      }
+    } else if (isUserAdminVerified(request, db)) {
+      const adminIds = getAdminIds();
+      if (adminIds.includes(tid)) adminFlag = 1;
+    }
 
     try {
       let operator = queryOne(
@@ -167,19 +160,15 @@ export default async function operatorsRoutes(fastify) {
   });
 
   // ── GET /api/operators ──────────────────────────────────────
-  // Реестр всех Операторов (ДОСТУПЕН ТОЛЬКО АДМИНИСТРАТОРАМ)
+  // Реестр всех Операторов (ДОСТУПЕН ТОЛЬКО ВЕРИФИЦИРОВАННЫМ АДМИНИСТРАТОРАМ)
   fastify.get('/operators', async (request, reply) => {
-    const callerId = request.headers['x-telegram-user-id'] || request.query?.telegram_id;
-    const adminKey = request.query?.admin_key || request.headers['x-admin-key'];
-
     const db = await getDb();
-    const isAuthorized = isUserAdmin(db, callerId) || adminKey === 'PROJECT_SA_ADMIN_2026';
 
-    if (!isAuthorized) {
+    if (!isUserAdminVerified(request, db)) {
       logIncident(
         db,
-        callerId ? Number(callerId) : null,
-        `UNAUTHORIZED_REGISTRY_ACCESS_ATTEMPT: caller=${callerId || 'unknown'}`,
+        null,
+        `UNAUTHORIZED_REGISTRY_ACCESS_ATTEMPT: ip=${request.ip}`,
         'WARN'
       );
       return reply.status(403).send({
@@ -218,14 +207,13 @@ export default async function operatorsRoutes(fastify) {
   // ── POST /api/operators/:identifier/reset-auth ───────────────
   // Сброс ключа конкретного Оператора (ТОЛЬКО ДЛЯ АДМИНИСТРАТОРА)
   fastify.post('/operators/:identifier/reset-auth', async (request, reply) => {
-    const callerId = request.headers['x-telegram-user-id'] || request.body?.telegram_id;
-    const adminKey = request.headers['x-admin-key'] || request.body?.admin_key;
     const db = await getDb();
 
-    if (!isUserAdmin(db, callerId) && adminKey !== 'PROJECT_SA_ADMIN_2026') {
+    if (!isUserAdminVerified(request, db)) {
       return reply.status(403).send({
         status: 'b181',
         error: 'ADMIN_ACCESS_REQUIRED',
+        message: 'Требуются права Администратора.',
       });
     }
 
@@ -247,7 +235,7 @@ export default async function operatorsRoutes(fastify) {
     run(db, "UPDATE operators SET auth_revoked = 1 WHERE telegram_id = ?", [op.telegram_id]);
     persistDb();
 
-    logIncident(db, op.telegram_id, `OPERATOR_AUTH_RESET by caller=${callerId}`, 'WARN');
+    logIncident(db, op.telegram_id, `OPERATOR_AUTH_RESET by verified_admin`, 'WARN');
 
     return {
       status: 'OK',
@@ -260,14 +248,13 @@ export default async function operatorsRoutes(fastify) {
   // ── POST /api/operators/:identifier/toggle-admin ────────────
   // Выдать или отозвать статус Администратора (ТОЛЬКО ДЛЯ АДМИНИСТРАТОРА)
   fastify.post('/operators/:identifier/toggle-admin', async (request, reply) => {
-    const callerId = request.headers['x-telegram-user-id'] || request.body?.telegram_id;
-    const adminKey = request.headers['x-admin-key'] || request.body?.admin_key;
     const db = await getDb();
 
-    if (!isUserAdmin(db, callerId) && adminKey !== 'PROJECT_SA_ADMIN_2026') {
+    if (!isUserAdminVerified(request, db)) {
       return reply.status(403).send({
         status: 'b181',
         error: 'ADMIN_ACCESS_REQUIRED',
+        message: 'Требуются права Администратора.',
       });
     }
 
@@ -299,7 +286,7 @@ export default async function operatorsRoutes(fastify) {
     run(db, "UPDATE operators SET is_admin = ? WHERE telegram_id = ?", [newAdminStatus, op.telegram_id]);
     persistDb();
 
-    logIncident(db, op.telegram_id, `OPERATOR_ADMIN_TOGGLE to ${newAdminStatus} by caller=${callerId}`, 'INFO');
+    logIncident(db, op.telegram_id, `OPERATOR_ADMIN_TOGGLE to ${newAdminStatus} by verified_admin`, 'INFO');
 
     return {
       status: 'OK',

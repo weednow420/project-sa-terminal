@@ -134,6 +134,7 @@ async function syncOperator(operator) {
       headers: {
         'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': 'true',
+        'x-telegram-init-data': tg?.initData || '',
       },
       body: JSON.stringify({
         telegram_id: operator.id,
