@@ -95,9 +95,9 @@
 
     <!-- ГЛАВНЫЙ ЭКРАН: ГОРИЗОНТАЛЬНЫЕ ВКЛАДКИ И СПИСОК КАРТОЧЕК -->
     <section id="view-categories" class="view">
-      <!-- Навигационная панель вкладок (СОМАТИКА, КОГНИТИВИСТИКА, ИЗОЛЯЦИЯ и др.) -->
-      <nav class="category-tabs-bar" id="category-tabs-bar" aria-label="Вкладки разделов">
-        <!-- JS динамически заполняет вкладки -->
+      <!-- Навигационная панель вкладок скрыта, так как доступ теперь через Главное Меню (БАЗИС) -->
+      <nav class="category-tabs-bar" id="category-tabs-bar" aria-label="Вкладки разделов" style="display:none;">
+        <!-- JS динамически заполняет вкладки, но мы их скрыли -->
       </nav>
 
       <!-- Хлебные крошки внутри подкатегории (отображаются при просмотре карточек подкатегории) -->
@@ -130,16 +130,12 @@
 
     <!-- ОДНА КАРТОЧКА -->
     <section id="view-card-detail" class="view">
-      <nav class="breadcrumb">
-        <button class="btn-back" id="btn-back-to-tab" aria-label="Назад к разделу">
-          ← НАЗАД
-        </button>
-        <span class="breadcrumb-sep">/</span>
-        <span id="breadcrumb-card-category">──────</span>
+      <div class="card-detail-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <button type="button" class="btn-action" id="btn-back-to-tab" style="width: auto; padding: 6px 14px; font-size: 0.75rem;">← НАЗАД К СПИСКУ</button>
         <button type="button" class="btn-card-bookmark" id="btn-card-bookmark" title="Добавить в закладки">
           [ 🔖 В ЗАКЛАДКИ ]
         </button>
-      </nav>
+      </div>
       <div class="dot-grid-divider"></div>
       <article class="card-detail" id="card-detail-content">
         <!-- JS заполняет -->
@@ -156,7 +152,7 @@
         <span>НАБЛЮДЕНИЯ</span>
       </nav>
 
-      <div class="observations-tabs-bar" id="observations-tabs-bar">
+      <div class="observations-tabs-bar" id="observations-tabs-bar" style="display:none;">
         <button type="button" class="obs-tab-btn active" data-subtab="source">1 - ИСТОЧНИК (ЛОКАЛЬНО)</button>
         <button type="button" class="obs-tab-btn" data-subtab="message">2 - ПОСЛАНИЕ (СЕРВЕР)</button>
       </div>
@@ -245,27 +241,6 @@
 
     <!-- ИНСТРУМЕНТЫ (ИНТЕРАКТИВНЫЙ ХАБ) -->
     <section id="view-tools" class="view">
-      <!-- Навигационная цепочка -->
-      <nav class="breadcrumb" id="tools-breadcrumb">
-        <button class="btn-back" id="btn-back-tools" aria-label="Назад к базису">
-          ← БАЗИС
-        </button>
-        <span class="breadcrumb-sep">/</span>
-        <button class="btn-back" id="btn-back-tools-menu" style="display:none;" aria-label="К меню инструментов">
-          ИНСТРУМЕНТЫ
-        </button>
-        <span class="breadcrumb-sep" id="tools-sub-sep" style="display:none;">/</span>
-        <span id="tools-active-title">ИНСТРУМЕНТЫ</span>
-      </nav>
-
-      <!-- Горизонтальные кнопки быстрого переключения -->
-      <div class="tools-tabs-bar" id="tools-tabs-bar">
-        <button type="button" class="tool-tab-btn active" data-tool="menu">ВСЕ УТИЛИТЫ</button>
-        <button type="button" class="tool-tab-btn" data-tool="water-calc">ТАЛАЯ ВОДА</button>
-        <button type="button" class="tool-tab-btn" data-tool="tarot">РАСКЛАД ТАРО</button>
-        <button type="button" class="tool-tab-btn" data-tool="breathing">ДЫХАНИЕ (4-4-4)</button>
-        <button type="button" class="tool-tab-btn" data-tool="incident-log">ЖУРНАЛ b181</button>
-      </div>
 
       <div class="dot-grid-divider"></div>
 
@@ -306,10 +281,20 @@
           <div class="tool-menu-btn-name">ЖУРНАЛ ИНЦИДЕНТОВ b181</div>
           <div class="tool-menu-btn-desc">Автономный лог телеметрии аномальных отклонений и фиксации паттернов контура.</div>
         </button>
+
+        <button type="button" class="tool-menu-btn" data-tool="sleep-calc">
+          <div class="tool-menu-btn-top">
+            <span class="tool-menu-btn-num">05 // КАЛЬКУЛЯТОР</span>
+            <span class="tool-menu-btn-arrow">ОТКРЫТЬ →</span>
+          </div>
+          <div class="tool-menu-btn-name">КАЛЬКУЛЯТОР ФАЗ СНА</div>
+          <div class="tool-menu-btn-desc">Определение оптимальных точек пробуждения на основе 90-минутных циркадных циклов.</div>
+        </button>
       </div>
 
       <!-- Контейнер экранов инструментов (отображается только выбранный инструмент) -->
       <div class="tools-panes-wrapper" id="tools-panes-wrapper">
+        <button type="button" class="btn-action" id="btn-back-to-tools-list" style="margin-bottom: 12px; display: none; padding: 6px 12px; font-size: 0.75rem;">← ВСЕ ИНСТРУМЕНТЫ</button>
 
         <!-- 01. КАЛЬКУЛЯТОР ТАЛОЙ ВОДЫ -->
         <div class="tool-pane" id="tool-pane-water-calc" style="display:none;">
@@ -401,6 +386,33 @@
           </div>
         </div>
 
+        <!-- 05. КАЛЬКУЛЯТОР ФАЗ СНА -->
+        <div class="tool-pane" id="tool-pane-sleep-calc" style="display:none;">
+          <div class="tool-card">
+            <div class="tool-card-header">
+              <span class="tool-title">05 // КАЛЬКУЛЯТОР ФАЗ СНА</span>
+              <span class="tag-badge">[ ИНТЕРАКТИВ ]</span>
+            </div>
+            <p class="tool-desc">Расчет циклов сна (по 90 минут) для пробуждения в фазе быстрого сна. Снижение инерции сна.</p>
+            
+            <div class="tool-calc-form">
+              <button type="button" class="btn-action" id="btn-calc-sleep-now" style="margin-bottom: var(--spacing-sm);">[ ЕСЛИ УСНУТЬ ПРЯМО СЕЙЧАС ]</button>
+              
+              <div class="dot-grid-divider"></div>
+              <p class="tool-desc" style="text-align:center;">ИЛИ УКАЖИТЕ ВРЕМЯ ПРОБУЖДЕНИЯ:</p>
+              
+              <div class="tool-input-row" style="justify-content: center; margin-top: var(--spacing-sm);">
+                <input type="time" id="input-wake-time" class="terminal-input" style="width: auto; text-align: center;" value="07:00" />
+              </div>
+              <button type="button" class="btn-action" id="btn-calc-sleep-wake">[ РАССЧИТАТЬ ВРЕМЯ ЗАСЫПАНИЯ ]</button>
+            </div>
+            
+            <div class="tool-calc-result" id="sleep-calc-result" style="display:none;">
+              <!-- JS заполняет результаты -->
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -440,19 +452,62 @@
     </div>
   </div>
 
+  <!-- БАННЕР-МОДАЛКА // ГЛАВНОЕ МЕНЮ -->
+  <div class="terminal-modal-overlay" id="modal-main-menu" style="display:none;" role="dialog" aria-modal="true">
+    <div class="terminal-modal-box" style="max-width: 320px; padding: 14px;">
+      <div class="modal-header" style="margin-bottom: 6px;">
+        <span class="modal-badge">[ ГЛАВНОЕ МЕНЮ ]</span>
+        <button type="button" class="btn-modal-close" id="btn-close-main-menu" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-divider">══════════════════════════════</div>
+      <div class="main-menu-nav" style="display: flex; flex-direction: column; gap: 6px; margin: 10px 0;">
+        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="somatics">
+          <span class="main-nav-num">[01]</span>
+          <span class="main-nav-title">СОМАТИКА</span>
+          <span class="main-nav-arrow">→</span>
+        </button>
+        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="cognitivism">
+          <span class="main-nav-num">[02]</span>
+          <span class="main-nav-title">КОГНИТИВИСТИКА</span>
+          <span class="main-nav-arrow">→</span>
+        </button>
+        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="isolation">
+          <span class="main-nav-num">[03]</span>
+          <span class="main-nav-title">ИЗОЛЯЦИЯ</span>
+          <span class="main-nav-arrow">→</span>
+        </button>
+        <div class="modal-divider" style="margin: 2px 0;">──────────────────────────────</div>
+        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="tools">
+          <span class="main-nav-num">[⚡]</span>
+          <span class="main-nav-title">ИНСТРУМЕНТЫ</span>
+          <span class="main-nav-arrow">→</span>
+        </button>
+        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="bookmarks">
+          <span class="main-nav-num">[★]</span>
+          <span class="main-nav-title">ЗАКЛАДКИ</span>
+          <span class="main-nav-arrow">→</span>
+        </button>
+        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="observations">
+          <span class="main-nav-num">[◎]</span>
+          <span class="main-nav-title">НАБЛЮДЕНИЯ</span>
+          <span class="main-nav-arrow">→</span>
+        </button>
+        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="basis">
+          <span class="main-nav-num">[i]</span>
+          <span class="main-nav-title">БАЗИС (ИНФО)</span>
+          <span class="main-nav-arrow">→</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════════════
        НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK)
   ══════════════════════════════════════════════ -->
-  <nav class="terminal-bottom-nav" id="terminal-bottom-nav" style="display: none;">
-    <button type="button" class="bottom-nav-btn" data-view="view-bookmarks" id="nav-btn-bookmarks">
-      <span>ЗАКЛАДКИ</span>
-    </button>
-    <button type="button" class="bottom-nav-btn active" data-view="view-categories" id="nav-btn-basis">
+  <nav class="terminal-bottom-nav" id="terminal-bottom-nav" style="display: none; justify-content: center;">
+    <button type="button" class="bottom-nav-btn active" id="nav-btn-basis" style="flex: 1;">
       <span>БАЗИС</span>
       <span class="bottom-nav-sub">ΒΑΣΙΣ</span>
-    </button>
-    <button type="button" class="bottom-nav-btn" data-view="view-tools" id="nav-btn-tools">
-      <span>ИНСТРУМЕНТЫ</span>
     </button>
   </nav>
 

@@ -255,11 +255,22 @@ async function loadCategories() {
     renderCategoryTabs(STATE.categories);
 
     if (STATE.categories.length > 0) {
-      // По умолчанию активен раздел БАЗИС или ранее выбранная категория
-      const defaultCat = STATE.currentCategory
-        ? (STATE.categories.find(c => c.slug === STATE.currentCategory.slug) || STATE.categories[0])
-        : (STATE.categories.find(c => c.slug === 'basis') || STATE.categories[0]);
-      await selectCategoryTab(defaultCat);
+      if (STATE.currentCategory) {
+        const cat = STATE.categories.find(c => c.slug === STATE.currentCategory.slug);
+        if (cat) await selectCategoryTab(cat);
+      } else {
+        // Не загружаем категорию по умолчанию, показываем приветствие
+        const list = document.getElementById('category-cards-list');
+        if (list) {
+          list.style.display = 'flex';
+          list.innerHTML = `
+            <li class="card-item" style="border: none; background: transparent; text-align: center; padding-top: 40px;">
+              <div style="font-size: 1.2rem; margin-bottom: 12px; color: var(--text-primary); font-weight: bold;">ТЕРМИНАЛ АКТИВЕН</div>
+              <div style="color: var(--text-dim); font-size: 0.8rem; line-height: 1.5;">ИСПОЛЬЗУЙТЕ КНОПКУ [ БАЗИС ] ВНИЗУ ЭКРАНА<br>ДЛЯ ДОСТУПА КО ВСЕМ МОДУЛЯМ СИСТЕМЫ.</div>
+            </li>
+          `;
+        }
+      }
     } else {
       renderEmptyCards('БАЗИС ПУСТ. РАЗДЕЛЫ НЕ ЗАГРУЖЕНЫ.');
     }
@@ -337,16 +348,9 @@ async function selectCategoryTab(category) {
     STATE.currentCategoryCards = res.data || [];
     STATE.currentSubcategories = res.subcategories || [];
 
-    if (STATE.currentSubcategories.length > 0) {
-      // ── СЛУЧАЙ 1: Раздел содержит подкатегории (например, СОМАТИКА) ──
-      // Показываем МЕНЮ ПОДРАЗДЕЛОВ (Классика, Эзотерика, Квантовая)
-      showSubcategoriesMenu();
-    } else {
-      // ── СЛУЧАЙ 2: Раздел без подкатегорий (прямой список карточек) ────
-      if (subcatsMenu) subcatsMenu.style.display = 'none';
-      if (list) list.style.display = 'flex';
-      renderCardsForCurrentTab(STATE.currentCategoryCards);
-    }
+    if (subcatsMenu) subcatsMenu.style.display = 'none';
+    if (list) list.style.display = 'flex';
+    renderCardsForCurrentTab(STATE.currentCategoryCards);
   } catch (err) {
     renderEmptyCards(`[b181] СБОЙ ЗАГРУЗКИ КАРТОЧЕК: ${err.message}`);
   }
@@ -1335,10 +1339,10 @@ function setupTools() {
     });
   });
 
-  // Кнопка возврата в меню инструментов
-  const btnBackMenu = document.getElementById('btn-back-tools-menu');
-  if (btnBackMenu) {
-    btnBackMenu.addEventListener('click', () => {
+  // Кнопка возврата в список инструментов
+  const btnBackTools = document.getElementById('btn-back-to-tools-list');
+  if (btnBackTools) {
+    btnBackTools.addEventListener('click', () => {
       selectTool('menu');
       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     });
@@ -1371,6 +1375,16 @@ function setupTools() {
     btnScanInc.addEventListener('click', scanIncidents);
   }
 
+  // 05. Калькулятор фаз сна
+  const btnSleepNow = document.getElementById('btn-calc-sleep-now');
+  if (btnSleepNow) {
+    btnSleepNow.addEventListener('click', calcSleepNow);
+  }
+  const btnSleepWake = document.getElementById('btn-calc-sleep-wake');
+  if (btnSleepWake) {
+    btnSleepWake.addEventListener('click', calcSleepWake);
+  }
+
   // Первоначальная инициализация
   calcMeltWater();
   renderIncidentLogs();
@@ -1384,6 +1398,7 @@ const TOOL_NAMES = {
   'tarot': 'УТРЕННИЙ РАСКЛАД ТАРО',
   'breathing': 'БИО-РИТМ ДЫХАНИЯ (4-4-4)',
   'incident-log': 'ЖУРНАЛ ИНЦИДЕНТОВ b181',
+  'sleep-calc': 'КАЛЬКУЛЯТОР ФАЗ СНА',
 };
 
 function selectTool(toolId) {
@@ -1397,16 +1412,12 @@ function selectTool(toolId) {
   });
 
   const menuList = document.getElementById('tools-menu-list');
-  const btnBackMenu = document.getElementById('btn-back-tools-menu');
-  const subSep = document.getElementById('tools-sub-sep');
-  const activeTitle = document.getElementById('tools-active-title');
+  const btnBackTools = document.getElementById('btn-back-to-tools-list');
 
   if (toolId === 'menu') {
     if (menuList) menuList.style.display = 'flex';
     document.querySelectorAll('.tool-pane').forEach(p => p.style.display = 'none');
-    if (btnBackMenu) btnBackMenu.style.display = 'none';
-    if (subSep) subSep.style.display = 'none';
-    if (activeTitle) activeTitle.textContent = 'ИНСТРУМЕНТЫ';
+    if (btnBackTools) btnBackTools.style.display = 'none';
     return;
   }
 
@@ -1418,10 +1429,7 @@ function selectTool(toolId) {
   if (targetPane) {
     targetPane.style.display = 'block';
   }
-
-  if (btnBackMenu) btnBackMenu.style.display = 'inline-block';
-  if (subSep) subSep.style.display = 'inline-block';
-  if (activeTitle) activeTitle.textContent = TOOL_NAMES[toolId] || 'ИНСТРУМЕНТ';
+  if (btnBackTools) btnBackTools.style.display = 'block';
 
   if (toolId === 'water-calc') {
     calcMeltWater();
@@ -1556,25 +1564,87 @@ function scanIncidents() {
   }, 750);
 }
 
+// ── 05. КАЛЬКУЛЯТОР ФАЗ СНА ──────────────────────────────────
+function calcSleepNow() {
+  const resultDiv = document.getElementById('sleep-calc-result');
+  if (!resultDiv) return;
+
+  const now = new Date();
+  now.setMinutes(now.getMinutes() + 15); // Время на засыпание (15 мин)
+
+  let html = `<p style="margin-bottom:8px;">ОПТИМАЛЬНОЕ ВРЕМЯ ПРОБУЖДЕНИЯ (с учетом 15 мин на засыпание):</p><ul style="list-style:none; padding:0; line-height:1.8;">`;
+  
+  // Циклы по 90 минут (начиная с 6 циклов - 9 часов, и вниз до 3 циклов - 4.5 часа)
+  for (let i = 6; i >= 3; i--) {
+    const wakeup = new Date(now.getTime() + (i * 90 * 60000));
+    const hh = String(wakeup.getHours()).padStart(2, '0');
+    const mm = String(wakeup.getMinutes()).padStart(2, '0');
+    const cycleStr = i === 6 ? '[ОПТИМУМ]' : (i === 5 ? '[НОРМА]' : '[КРИТИЧНО]');
+    
+    html += `<li><strong style="color:var(--text-color); font-size:1.1rem;">${hh}:${mm}</strong> — ${i} ЦИКЛОВ ${cycleStr}</li>`;
+  }
+  
+  html += `</ul>`;
+  resultDiv.innerHTML = html;
+  resultDiv.style.display = 'block';
+
+  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+}
+
+function calcSleepWake() {
+  const timeInput = document.getElementById('input-wake-time');
+  const resultDiv = document.getElementById('sleep-calc-result');
+  if (!timeInput || !resultDiv) return;
+
+  if (!timeInput.value) {
+    resultDiv.innerHTML = '<span class="status-indicator">■ ОШИБКА: НЕ УКАЗАНО ВРЕМЯ</span>';
+    resultDiv.style.display = 'block';
+    return;
+  }
+
+  const [hours, minutes] = timeInput.value.split(':').map(Number);
+  const wakeTime = new Date();
+  wakeTime.setHours(hours, minutes, 0, 0);
+
+  // Если время меньше текущего, значит это следующий день (но мы работаем только с интервалами, так что неважно)
+  
+  let html = `<p style="margin-bottom:8px;">ЧТОБЫ ПРОСНУТЬСЯ В ${timeInput.value}, ЛОЖИТЕСЬ СПАТЬ В:</p><ul style="list-style:none; padding:0; line-height:1.8;">`;
+  
+  for (let i = 6; i >= 3; i--) {
+    // 90 мин на цикл + 15 мин на засыпание = 105 мин (отсчитываем назад)
+    const sleepTime = new Date(wakeTime.getTime() - (i * 90 * 60000) - (15 * 60000));
+    const hh = String(sleepTime.getHours()).padStart(2, '0');
+    const mm = String(sleepTime.getMinutes()).padStart(2, '0');
+    const cycleStr = i === 6 ? '[ОПТИМУМ]' : (i === 5 ? '[НОРМА]' : '[КРИТИЧНО]');
+    
+    html += `<li><strong style="color:var(--text-color); font-size:1.1rem;">${hh}:${mm}</strong> — ${i} ЦИКЛОВ ${cycleStr}</li>`;
+  }
+  
+  html += `</ul>`;
+  resultDiv.innerHTML = html;
+  resultDiv.style.display = 'block';
+
+  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+}
+
 // ── НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK) ───────────────────────────
 function setupBottomNav() {
   const navBtns = document.querySelectorAll('.bottom-nav-btn');
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
+      if (btn.id === 'nav-btn-basis') {
+        const modal = document.getElementById('modal-main-menu');
+        if (modal) modal.style.display = 'flex';
+        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        return;
+      }
+
       const targetView = btn.getAttribute('data-view');
+      if (!targetView) return;
+
       const currentActive = document.querySelector('.view.active')?.id;
 
       if (currentActive === targetView) {
-        // Повторный клик по активной вкладке
-        if (targetView === 'view-categories') {
-          // Если находимся в подкатегории или другом разделе — возвращаемся в БАЗИС
-          const basisCat = STATE.categories.find(c => c.slug === 'basis') || STATE.categories[0];
-          if (basisCat && STATE.currentCategory?.slug !== 'basis') {
-            selectCategoryTab(basisCat);
-          } else if (STATE.currentSubcategories && STATE.currentSubcategories.length > 0 && STATE.currentSubcategory) {
-            showSubcategoriesMenu();
-          }
-        }
         if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         return;
       }
@@ -1587,8 +1657,6 @@ function setupBottomNav() {
         const basisCat = STATE.categories.find(c => c.slug === 'basis') || STATE.categories[0];
         if (basisCat && STATE.currentCategory?.slug !== 'basis') {
           selectCategoryTab(basisCat);
-        } else if (STATE.currentSubcategories && STATE.currentSubcategories.length > 0 && STATE.currentSubcategory) {
-          showSubcategoriesMenu();
         }
       } else if (targetView === 'view-observations') {
         const activeObsTab = document.querySelector('.obs-tab-btn.active')?.getAttribute('data-subtab') || 'source';
@@ -1601,6 +1669,47 @@ function setupBottomNav() {
     });
   });
 }
+
+function setupMainMenu() {
+  const modal = document.getElementById('modal-main-menu');
+  const btnClose = document.getElementById('btn-close-main-menu');
+
+  if (btnClose && modal) {
+    btnClose.addEventListener('click', () => {
+      modal.style.display = 'none';
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+  }
+
+  document.querySelectorAll('.main-menu-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.getAttribute('data-menu-action');
+      if (modal) modal.style.display = 'none';
+      
+      if (action === 'bookmarks') {
+        showView('view-bookmarks');
+        renderBookmarks();
+      } else if (action === 'tools') {
+        showView('view-tools');
+        selectTool('menu');
+      } else if (action === 'observations') {
+        showView('view-observations');
+        const activeObsTab = document.querySelector('.obs-tab-btn.active')?.getAttribute('data-subtab') || 'source';
+        switchObservationsSubtab(activeObsTab);
+      } else {
+        // Это одна из категорий: somatics, cognitivism, isolation
+        showView('view-categories');
+        const cat = STATE.categories.find(c => c.slug === action);
+        if (cat) {
+          selectCategoryTab(cat);
+        }
+      }
+      
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+  });
+}
+
 
 // ── ГЛАВНАЯ ТОЧКА ВХОДА ───────────────────────────────────────
 async function main() {
@@ -1623,6 +1732,7 @@ async function main() {
   setupResetButtons();
   setupThemeToggle();
   setupBottomNav();
+  setupMainMenu();
   setupBookmarkButton();
   setupObservations();
   setupTools();

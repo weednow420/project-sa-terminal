@@ -283,7 +283,7 @@ body {
 }
 
 .category-meta-bar {
-  display: flex;
+  display: none !important;
   justify-content: space-between;
   align-items: center;
   padding: 4px 0;
@@ -371,7 +371,7 @@ body {
 
 /* ── КАРТОЧКИ СПИСОК ──────────────────────────────────────── */
 .breadcrumb {
-  display: flex;
+  display: none !important;
   align-items: center;
   gap: var(--spacing-sm);
   font-size: 0.75rem;
@@ -1679,5 +1679,57 @@ body {
   margin-top: 4px;
   width: 100%;
 }
+
+/* ── КНОПКИ ГЛАВНОГО МЕНЮ (БАЗИС) ────────────────────────── */
+.main-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 11px 12px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hard);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  border-radius: 0 !important;
+  text-align: left;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.main-nav-btn:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--text-primary);
+}
+
+.main-nav-btn:active {
+  background-color: var(--text-primary);
+  color: var(--bg);
+}
+
+.main-nav-num {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: normal;
+  margin-right: 8px;
+}
+
+.main-nav-title {
+  flex: 1;
+}
+
+.main-nav-arrow {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+
+.main-nav-btn:active .main-nav-num,
+.main-nav-btn:active .main-nav-arrow {
+  color: var(--bg);
+}
+
 
 

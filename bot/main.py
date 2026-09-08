@@ -11,19 +11,29 @@ import aiohttp
 from dotenv import load_dotenv
 
 from aiogram import Bot, Dispatcher, F, BaseMiddleware
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, CallbackQuery
+from aiogram.types import (
+    Message, InlineKeyboardMarkup, InlineKeyboardButton, 
+    ReplyKeyboardMarkup, KeyboardButton, WebAppInfo, CallbackQuery
+)
 from aiogram.filters import CommandStart, Command
 
 load_dotenv()
 
-BOT_TOKEN   = os.getenv("BOT_TOKEN")        # Токен от @BotFather
-WEBAPP_URL  = os.getenv("WEBAPP_URL")       # URL твоего фронтенда (HTTPS обязателен)
+BOT_TOKEN   = os.getenv("BOT_TOKEN") or "8648994778:AAFxosr_wXinyYZ4zIyrWOVyQmMM6fHCHAQ"
+WEBAPP_URL  = os.getenv("WEBAPP_URL") or "https://project-sa-terminal.onrender.com"
 API_PORT = os.getenv("PORT", "3000")
 API_INTERNAL_URL = os.getenv("API_INTERNAL_URL", f"http://127.0.0.1:{API_PORT}/api")
 ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "")
 
-if not BOT_TOKEN or not WEBAPP_URL:
-    raise RuntimeError("[b181] BOT_TOKEN или WEBAPP_URL не заданы в .env")
+def get_reply_keyboard(url: str) -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=">> ОТКРЫТЬ ТЕРМИНАЛ", web_app=WebAppInfo(url=url))],
+            [KeyboardButton(text="👤 ПРОФИЛЬ ОПЕРАТОРА"), KeyboardButton(text="📡 СТАТУС СИСТЕМЫ")]
+        ],
+        resize_keyboard=True,
+        is_persistent=True
+    )
 
 logging.basicConfig(
     level=logging.INFO,
@@ -137,6 +147,12 @@ async def cmd_start(message: Message):
             reply_markup=keyboard
         )
 
+    # Устанавливаем нижнюю постоянную клавиатуру быстрого доступа
+    await message.answer(
+        ">> КЛАВИАТУРА КОНТУРА АКТИВИРОВАНА",
+        reply_markup=get_reply_keyboard(WEBAPP_URL)
+    )
+
     logger.info(f"[OPERATOR] {message.from_user.id} (@{message.from_user.username}) admin={is_admin} → /start")
 
 
@@ -144,6 +160,7 @@ async def cmd_start(message: Message):
 # /id или /profile — карточка Оператора
 # ------------------------------------------------------------
 @dp.message(Command("id", "profile", "me"))
+@dp.message(F.text.in_({"👤 ПРОФИЛЬ ОПЕРАТОРА", "Профиль", "профиль"}))
 async def cmd_profile(message: Message):
     admin_ids = get_admin_ids()
     is_admin = message.from_user.id in admin_ids
@@ -354,6 +371,7 @@ async def cmd_reset_auth(message: Message):
 # /status — текущий статус системы
 # ------------------------------------------------------------
 @dp.message(Command("status"))
+@dp.message(F.text.in_({"📡 СТАТУС СИСТЕМЫ", "Статус", "статус"}))
 async def cmd_status(message: Message):
     await message.answer(
         "СТАТУС СИСТЕМЫ\n"
