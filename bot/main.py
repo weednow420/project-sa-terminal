@@ -19,8 +19,11 @@ from aiogram.filters import CommandStart, Command
 
 load_dotenv()
 
-BOT_TOKEN   = os.getenv("BOT_TOKEN") or "8648994778:AAFxosr_wXinyYZ4zIyrWOVyQmMM6fHCHAQ"
-WEBAPP_URL  = os.getenv("WEBAPP_URL") or "https://project-sa-terminal.onrender.com"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+if not BOT_TOKEN or "8793816070" in BOT_TOKEN:
+    BOT_TOKEN = "8648994778:AAFxosr_wXinyYZ4zIyrWOVyQmMM6fHCHAQ"
+
+WEBAPP_URL = os.getenv("WEBAPP_URL") or "https://project-sa-terminal.onrender.com"
 API_PORT = os.getenv("PORT", "3000")
 API_INTERNAL_URL = os.getenv("API_INTERNAL_URL", f"http://127.0.0.1:{API_PORT}/api")
 ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "")
