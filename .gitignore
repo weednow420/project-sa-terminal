@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 backend/node_modules/
 *.sqlite
 backend/*.sqlite
@@ -9,3 +9,4 @@ __pycache__/
 *.pyc
 .system_generated/
 upload_to_hf.py
+access_code.txt

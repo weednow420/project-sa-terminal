@@ -7,30 +7,16 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getDb, run, queryOne, persistDb } from '../db/init.js';
+import {
+  checkPinRateLimit,
+  recordFailedPinAttempt,
+  resetPinRateLimit,
+  isUserAdminVerified
+} from '../utils/security.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CODE_FILE_PATH = join(__dirname, '../../../access_code.txt');
 
-function getAdminIds() {
-  const envVal = process.env.ADMIN_TELEGRAM_IDS || '228844325';
-  return envVal
-    .split(',')
-    .map(x => Number(x.trim()))
-    .filter(x => !isNaN(x) && x > 0);
-}
-
-function isUserAdmin(db, telegramId) {
-  if (!telegramId) return false;
-  const tid = Number(telegramId);
-  if (getAdminIds().includes(tid)) return true;
-  if (db) {
-    try {
-      const row = queryOne(db, "SELECT is_admin FROM operators WHERE telegram_id = ?", [tid]);
-      if (row && row.is_admin === 1) return true;
-    } catch (_) {}
-  }
-  return false;
-}
 
 function ensureConfigTable(db) {
   db.run(`CREATE TABLE IF NOT EXISTS system_config (
@@ -89,12 +75,24 @@ export default async function authRoutes(fastify) {
       });
     }
 
+    const clientIp = request.ip || 'unknown';
+    const limiterKey = `${clientIp}_${telegram_id || ''}`;
+    const limitCheck = checkPinRateLimit(limiterKey);
+    if (limitCheck.limited) {
+      return reply.status(429).send({
+        status: 'b181',
+        error: 'TOO_MANY_ATTEMPTS',
+        message: `Слишком много попыток ввода. Доступ временно заблокирован на ${limitCheck.remainingSec} сек.`,
+      });
+    }
+
     const expectedCode = getExpectedCode();
     const cleanCode = code.trim();
     const db = await getDb();
     const authVersion = getAuthVersion(db);
 
     if (cleanCode === expectedCode) {
+      resetPinRateLimit(limiterKey);
       if (telegram_id) {
         try {
           run(
@@ -116,6 +114,8 @@ export default async function authRoutes(fastify) {
         message: 'СИНХРОНИЗАЦИЯ УСПЕШНА // ДОСТУП РАЗРЕШЕН',
       };
     }
+
+    recordFailedPinAttempt(limiterKey);
 
     // При неверном вводе логируем инцидент b181
     try {
@@ -147,14 +147,13 @@ export default async function authRoutes(fastify) {
 
   // GET /api/auth/current-code (ТОЛЬКО АДМИН)
   fastify.get('/auth/current-code', async (request, reply) => {
-    const callerId = request.headers['x-telegram-user-id'] || request.query?.telegram_id;
-    const adminKey = request.headers['x-admin-key'] || request.query?.admin_key;
     const db = await getDb();
 
-    if (!isUserAdmin(db, callerId) && adminKey !== 'PROJECT_SA_ADMIN_2026') {
+    if (!isUserAdminVerified(request, db)) {
       return reply.status(403).send({
         status: 'b181',
         error: 'ADMIN_ACCESS_REQUIRED',
+        message: 'Доступ к ключу контура доступен исключительно верифицированному Администратору.',
       });
     }
 
@@ -168,15 +167,13 @@ export default async function authRoutes(fastify) {
   // POST /api/auth/change-code (ТОЛЬКО АДМИН)
   // Смена 4-значного ключа доступа
   fastify.post('/auth/change-code', async (request, reply) => {
-    const callerId = request.headers['x-telegram-user-id'] || request.body?.telegram_id;
-    const adminKey = request.headers['x-admin-key'] || request.body?.admin_key;
     const db = await getDb();
 
-    if (!isUserAdmin(db, callerId) && adminKey !== 'PROJECT_SA_ADMIN_2026') {
+    if (!isUserAdminVerified(request, db)) {
       return reply.status(403).send({
         status: 'b181',
         error: 'ADMIN_ACCESS_REQUIRED',
-        message: 'Действие доступно исключительно Администратору.',
+        message: 'Действие доступно исключительно верифицированному Администратору.',
       });
     }
 
@@ -228,7 +225,7 @@ export default async function authRoutes(fastify) {
         db,
         `INSERT INTO incident_log (operator_id, error_code, severity, context_json)
          VALUES (NULL, 'b181', 'INFO', ?)`,
-        [JSON.stringify({ event: 'ACCESS_CODE_CHANGED', by: callerId || 'admin', reset_all: Boolean(reset_all), new_version: newVer })]
+        [JSON.stringify({ event: 'ACCESS_CODE_CHANGED', by: 'verified_admin', reset_all: Boolean(reset_all), new_version: newVer })]
       );
     } catch (_) {}
 
@@ -248,16 +245,13 @@ export default async function authRoutes(fastify) {
   // POST /api/auth/reset-all
   // Сбросить ключ у ВСЕХ пользователей (только для Администратора)
   fastify.post('/auth/reset-all', async (request, reply) => {
-    const callerId = request.headers['x-telegram-user-id'] || request.body?.telegram_id;
-    const adminKey = request.headers['x-admin-key'] || request.body?.admin_key;
     const db = await getDb();
 
-    const isAuthorized = isUserAdmin(db, callerId) || adminKey === 'PROJECT_SA_ADMIN_2026';
-    if (!isAuthorized) {
+    if (!isUserAdminVerified(request, db)) {
       return reply.status(403).send({
         status: 'b181',
         error: 'ADMIN_ACCESS_REQUIRED',
-        message: 'Действие сброса доступно исключительно Администратору.',
+        message: 'Действие сброса доступно исключительно верифицированному Администратору.',
       });
     }
 
@@ -269,7 +263,7 @@ export default async function authRoutes(fastify) {
         db,
         `INSERT INTO incident_log (operator_id, error_code, severity, context_json)
          VALUES (NULL, 'b181', 'WARN', ?)`,
-        [JSON.stringify({ event: 'GLOBAL_AUTH_RESET', by: callerId || 'admin_key', new_version: newVer })]
+        [JSON.stringify({ event: 'GLOBAL_AUTH_RESET', by: 'verified_admin', new_version: newVer })]
       );
     } catch (_) {}
 

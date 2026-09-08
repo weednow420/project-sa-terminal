@@ -4,28 +4,7 @@
 //  Администратор просматривает и выгружает их через админку.
 // ============================================================
 import { getDb, queryOne, queryAll, run, persistDb } from '../db/init.js';
-
-function getAdminIds() {
-  const envVal = process.env.ADMIN_TELEGRAM_IDS || '228844325';
-  return envVal
-    .split(',')
-    .map(x => Number(x.trim()))
-    .filter(x => !isNaN(x) && x > 0);
-}
-
-function isUserAdmin(db, telegramId) {
-  if (!telegramId) return false;
-  const tid = Number(telegramId);
-  const adminIds = getAdminIds();
-  if (adminIds.includes(tid)) return true;
-  if (db) {
-    try {
-      const row = queryOne(db, "SELECT is_admin FROM operators WHERE telegram_id = ?", [tid]);
-      if (row && row.is_admin === 1) return true;
-    } catch (_) {}
-  }
-  return false;
-}
+import { isUserAdminVerified } from '../utils/security.js';
 
 export default async function messagesRoutes(fastify) {
 
@@ -94,14 +73,13 @@ export default async function messagesRoutes(fastify) {
   // ── GET /api/messages ────────────────────────────────────────
   // Получение всех посланий для администратора
   fastify.get('/messages', async (request, reply) => {
-    const callerId = request.headers['x-telegram-user-id'] || request.query?.admin_id;
     const db = await getDb();
 
-    if (!isUserAdmin(db, callerId)) {
+    if (!isUserAdminVerified(request, db)) {
       return reply.status(403).send({
         status: 'b181',
         error: 'ACCESS_DENIED',
-        message: 'Журнал посланий доступен только Администраторам контура',
+        message: 'Журнал посланий доступен только верифицированным Администраторам контура',
       });
     }
 
@@ -141,10 +119,9 @@ export default async function messagesRoutes(fastify) {
   // ── DELETE /api/messages/:id ─────────────────────────────────
   // Удаление послания администратором
   fastify.delete('/messages/:id', async (request, reply) => {
-    const callerId = request.headers['x-telegram-user-id'];
     const db = await getDb();
 
-    if (!isUserAdmin(db, callerId)) {
+    if (!isUserAdminVerified(request, db)) {
       return reply.status(403).send({
         status: 'b181',
         error: 'ACCESS_DENIED',

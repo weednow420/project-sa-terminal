@@ -21,6 +21,10 @@ fi
 export PORT=${PORT:-10000}
 export HOST=0.0.0.0
 
+if [ -z "$ADMIN_SECRET_KEY" ]; then
+  export ADMIN_SECRET_KEY="SA_SEC_$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+fi
+
 echo "[1/3] Инициализация базы данных и синхронизация карточек..."
 cd /home/user/app/backend
 node src/db/init.js

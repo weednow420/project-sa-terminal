@@ -20,6 +20,7 @@ BOT_TOKEN   = os.getenv("BOT_TOKEN")        # Токен от @BotFather
 WEBAPP_URL  = os.getenv("WEBAPP_URL")       # URL твоего фронтенда (HTTPS обязателен)
 API_PORT = os.getenv("PORT", "3000")
 API_INTERNAL_URL = os.getenv("API_INTERNAL_URL", f"http://127.0.0.1:{API_PORT}/api")
+ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "")
 
 if not BOT_TOKEN or not WEBAPP_URL:
     raise RuntimeError("[b181] BOT_TOKEN или WEBAPP_URL не заданы в .env")
@@ -222,7 +223,10 @@ async def cmd_operators_list(message: Message):
                 pass
             async with session.get(
                 f"{API_INTERNAL_URL}/operators",
-                headers={"x-telegram-user-id": str(message.from_user.id)},
+                headers={
+                    "x-telegram-user-id": str(message.from_user.id),
+                    "x-admin-key": ADMIN_SECRET_KEY,
+                },
                 timeout=aiohttp.ClientTimeout(total=2.5)
             ) as resp:
                 if resp.status == 200:
@@ -322,7 +326,10 @@ async def cmd_reset_auth(message: Message):
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 f"{API_INTERNAL_URL}/auth/reset-all",
-                headers={"x-telegram-user-id": str(message.from_user.id)},
+                headers={
+                    "x-telegram-user-id": str(message.from_user.id),
+                    "x-admin-key": ADMIN_SECRET_KEY,
+                },
                 timeout=aiohttp.ClientTimeout(total=3.0)
             ) as resp:
                 if resp.status == 200:
