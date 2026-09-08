@@ -71,21 +71,41 @@ async function launchAll() {
   console.log('[2/3] Подключение HTTPS туннеля ngrok...');
   let publicUrl = '';
   try {
-    const listener = await ngrok.forward({
+    const ngrokOpts = {
       addr: PORT,
-      authtoken: NGROK_TOKEN,
-    });
+      authtoken: NGROK_TOKEN || '3Ix640F1op6BN3O9irk5hg2gozo_FQVKguMUdHwGCjWjgL6M',
+    };
+    // Используем закрепленный домен
+    ngrokOpts.domain = 'require-cursive-gone.ngrok-free.dev';
+
+    const listener = await ngrok.forward(ngrokOpts);
     publicUrl = listener.url();
     console.log(`[TUNNEL] Публичный URL: ${publicUrl}`);
 
     // Обновляем bot/.env при наличии BOT_TOKEN
     const envPath = join(__dirname, '..', 'bot', '.env');
-    const existingToken = process.env.BOT_TOKEN || '';
-    if (existingToken) {
-      const adminIds = process.env.ADMIN_TELEGRAM_IDS || '';
-      const envContent = `BOT_TOKEN=${existingToken}\nWEBAPP_URL=${publicUrl}\nADMIN_TELEGRAM_IDS=${adminIds}\n`;
-      writeFileSync(envPath, envContent);
-      console.log(`[TUNNEL] bot/.env успешно обновлён с новым URL.`);
+    const existingToken = process.env.BOT_TOKEN || '8648994778:AAFxosr_wXinyYZ4zIyrWOVyQmMM6fHCHAQ';
+    const adminIds = process.env.ADMIN_TELEGRAM_IDS || '228844325';
+    const envContent = `BOT_TOKEN=${existingToken}\nWEBAPP_URL=${publicUrl}\nADMIN_TELEGRAM_IDS=${adminIds}\n`;
+    writeFileSync(envPath, envContent);
+    console.log(`[TUNNEL] bot/.env успешно обновлён с новым URL.`);
+
+    // Обновляем кнопку меню в Telegram
+    try {
+      await fetch(`https://api.telegram.org/bot${existingToken}/setChatMenuButton`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          menu_button: {
+            type: 'web_app',
+            text: '>> ТЕРМИНАЛ S-A',
+            web_app: { url: publicUrl }
+          }
+        })
+      });
+      console.log(`[TELEGRAM] Кнопка меню обновлена на ${publicUrl}`);
+    } catch (err) {
+      console.warn('[TELEGRAM] Ошибка обновления кнопки меню:', err.message);
     }
   } catch (err) {
     console.error(`\n[b181] Ошибка запуска туннеля ngrok: ${err.message}`);
