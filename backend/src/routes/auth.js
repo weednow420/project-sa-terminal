@@ -115,7 +115,7 @@ export default async function authRoutes(fastify) {
       };
     }
 
-    recordFailedPinAttempt(limiterKey);
+    const record = recordFailedPinAttempt(limiterKey);
 
     // При неверном вводе логируем инцидент b181
     try {
@@ -127,10 +127,20 @@ export default async function authRoutes(fastify) {
       );
     } catch (_) {}
 
+    if (record && record.lockedUntil && record.lockedUntil > Date.now()) {
+      return reply.status(429).send({
+        status: 'b181',
+        error: 'TOO_MANY_ATTEMPTS',
+        message: 'ПРЕВЫШЕН ЛИМИТ ПОПЫТОК // ДОСТУП ЗАБЛОКИРОВАН НА 5 МИН',
+      });
+    }
+
+    const remaining = Math.max(0, 5 - (record ? record.count : 1));
     return reply.status(403).send({
       status: 'b181',
       error: 'INVALID_CODE',
-      message: 'КЛЮЧ ДОСТУПА НЕ ВЕРЕН // b181',
+      remaining_attempts: remaining,
+      message: `КЛЮЧ ДОСТУПА НЕ ВЕРЕН // b181 (ОСТАЛОСЬ ПОПЫТОК: ${remaining})`,
     });
   });
 
