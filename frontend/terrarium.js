@@ -67,24 +67,19 @@
     state.lastUpdate = now;
   }
 
-  // ── ГРАФИКА И ДВА ХОЛСТА (ПОЛОСКА ВВЕРХУ + ЛАБОРАТОРИЯ) ───────
-  let canvasStrip = null;
-  let ctxStrip = null;
+  // ── ГРАФИКА И ДВА ХОЛСТА (МОРДОЧКА ВВЕРХУ + ЛАБОРАТОРИЯ) ───────
+  let canvasFace = null;
+  let ctxFace = null;
   let canvasLab = null;
   let ctxLab = null;
   let animId = null;
 
-  // Физика аксолотля в узкой полоске
-  const axoStrip = {
-    x: 80,
-    y: 19,
-    vx: 0.45,
-    facing: 1,
-    bobOffset: 0,
+  // Анимация мордочки в верхнем меню
+  const axoFace = {
     blinkTimer: 0,
     isBlinking: false,
     wigglePhase: 0,
-    reactionTimer: 0,
+    bobOffset: 0,
   };
 
   // Физика аксолотля в лаборатории
@@ -100,16 +95,13 @@
     reactionTimer: 0,
   };
 
-  // Пузырьки и флоатеры
-  const stripBubbles = [];
-  const stripFloaters = [];
-
+  // Пузырьки и флоатеры лаборатории
   const labBubbles = [];
   const labFloaters = [];
 
   function initCanvases() {
-    canvasStrip = document.getElementById('axolotl-canvas-strip');
-    if (canvasStrip) ctxStrip = canvasStrip.getContext('2d');
+    canvasFace = document.getElementById('axolotl-canvas-face');
+    if (canvasFace) ctxFace = canvasFace.getContext('2d');
 
     canvasLab = document.getElementById('axolotl-canvas-lab');
     if (canvasLab) ctxLab = canvasLab.getContext('2d');
@@ -117,12 +109,12 @@
     function resizeAll() {
       const dpr = window.devicePixelRatio || 1;
 
-      if (canvasStrip) {
-        const rect = canvasStrip.getBoundingClientRect();
+      if (canvasFace) {
+        const rect = canvasFace.getBoundingClientRect();
         if (rect.width > 0 && rect.height > 0) {
-          canvasStrip.width = Math.floor(rect.width * dpr);
-          canvasStrip.height = Math.floor(rect.height * dpr);
-          if (ctxStrip) ctxStrip.imageSmoothingEnabled = false;
+          canvasFace.width = Math.floor(rect.width * dpr);
+          canvasFace.height = Math.floor(rect.height * dpr);
+          if (ctxFace) ctxFace.imageSmoothingEnabled = false;
         }
       }
 
@@ -139,17 +131,6 @@
     resizeAll();
     window.addEventListener('resize', resizeAll);
 
-    // Пузырьки для полоски
-    stripBubbles.length = 0;
-    for (let i = 0; i < 5; i++) {
-      stripBubbles.push({
-        x: Math.random() * 240,
-        y: Math.random() * 38,
-        speed: 0.2 + Math.random() * 0.3,
-        r: 1 + Math.random() * 0.8,
-      });
-    }
-
     // Пузырьки для лаборатории
     labBubbles.length = 0;
     for (let i = 0; i < 9; i++) {
@@ -161,18 +142,7 @@
       });
     }
 
-    // Клик по верхней полоске открывает Лабораторию (в полоске только эмоция, без кликера)
-    const stripArea = document.getElementById('terrarium-strip-area');
-    if (stripArea) {
-      stripArea.addEventListener('click', () => {
-        const labBtn = document.getElementById('nav-btn-lab');
-        if (labBtn) {
-          labBtn.click();
-        }
-      });
-    }
-
-    // Клик по лаборатории
+    // Клик по лаборатории (верхняя мордочка строго некликабельна)
     const labArea = document.getElementById('lab-tank-area');
     if (labArea) {
       labArea.addEventListener('click', (e) => {
@@ -333,7 +303,121 @@
     c.restore();
   }
 
-  // ── РЕНДЕР ОБОИХ ХОЛСТОВ ──────────────────────────────────────
+  // ── ОТРИСОВКА ТОЛЬКО МОРДОЧКИ АКСОЛОТЛЯ (ВЕРХНЕЕ МЕНЮ) ─────────
+  function drawAxolotlFace(c, cx, cy, scale, isHappy, isBlink, isDistressed, wiggle, isLight) {
+    c.save();
+    c.translate(Math.round(cx), Math.round(cy));
+    c.scale(scale, scale);
+
+    const C_BODY = '#ffb3cb';        // Нежно-розовая голова
+    const C_BODY_SHADOW = '#f29ab5'; // Тень снизу
+    const C_GILLS = '#ff548e';       // Веточки-жабры
+    const C_GILLS_DARK = '#cc2a64';  // Внутренний акцент жабр
+    const C_OUTLINE = isLight ? '#111111' : '#333333'; // Контур головы
+    const C_FEATURE = '#111111';     // Глазки (всегда темные на розовом)
+    const C_WHITE = '#ffffff';       // Блики в глазках
+    const C_MOUTH = '#991e4a';       // Ротик
+    const C_BLUSH = '#ff6599';       // Румянец на щечках
+
+    const p = (px, py, w, h, col) => {
+      c.fillStyle = col;
+      c.fillRect(px, py, w, h);
+    };
+
+    // Жабры покачиваются
+    const gTop = Math.round(Math.sin(wiggle) * 1.5);
+    const gMid = Math.round(Math.sin(wiggle + 1.2) * 2);
+    const gBot = Math.round(Math.sin(wiggle + 2.4) * 1.5);
+
+    // Левые жабры
+    // Верхняя
+    p(-15, -11 + gTop, 4, 4, C_GILLS);
+    p(-17, -10 + gTop, 2, 3, C_GILLS_DARK);
+    p(-15, -12 + gTop, 4, 1, C_OUTLINE);
+    // Средняя
+    p(-19, -5 + gMid, 6, 4, C_GILLS);
+    p(-22, -4 + gMid, 3, 3, C_GILLS_DARK);
+    p(-22, -5 + gMid, 5, 1, C_OUTLINE);
+    p(-23, -3 + gMid, 1, 2, C_OUTLINE);
+    p(-22, -1 + gMid, 5, 1, C_OUTLINE);
+    // Нижняя
+    p(-17, 1 + gBot, 5, 3, C_GILLS);
+    p(-19, 2 + gBot, 2, 2, C_GILLS_DARK);
+
+    // Правые жабры
+    // Верхняя
+    p(11, -11 - gTop, 4, 4, C_GILLS);
+    p(15, -10 - gTop, 2, 3, C_GILLS_DARK);
+    p(11, -12 - gTop, 4, 1, C_OUTLINE);
+    // Средняя
+    p(13, -5 - gMid, 6, 4, C_GILLS);
+    p(19, -4 - gMid, 3, 3, C_GILLS_DARK);
+    p(17, -5 - gMid, 5, 1, C_OUTLINE);
+    p(22, -4 - gMid, 1, 2, C_OUTLINE);
+    p(17, -1 - gMid, 5, 1, C_OUTLINE);
+    // Нижняя
+    p(12, 1 - gBot, 5, 3, C_GILLS);
+    p(17, 2 - gBot, 2, 2, C_GILLS_DARK);
+
+    // Голова (овал)
+    p(-13, -7, 26, 15, C_BODY);
+    p(-15, -5, 30, 11, C_BODY);
+
+    // Тень снизу головы
+    p(-11, 6, 22, 2, C_BODY_SHADOW);
+
+    // Контур головы
+    p(-11, -8, 22, 1, C_OUTLINE); // верх
+    p(-11, 8, 22, 1, C_OUTLINE);  // низ
+    p(-16, -4, 1, 9, C_OUTLINE);  // лево
+    p(15, -4, 1, 9, C_OUTLINE);   // право
+    p(-15, -6, 2, 2, C_OUTLINE);  // скругления углов
+    p(-15, 5, 2, 2, C_OUTLINE);
+    p(13, -6, 2, 2, C_OUTLINE);
+    p(13, 5, 2, 2, C_OUTLINE);
+
+    // Румянец на щечках
+    p(-9, 1, 3, 2, C_BLUSH);
+    p(6, 1, 3, 2, C_BLUSH);
+
+    // Глазки
+    if (isBlink) {
+      // Моргание: аккуратные горизонтальные черточки
+      p(-7, 0, 4, 1, C_FEATURE);
+      p(3, 0, 4, 1, C_FEATURE);
+    } else if (isDistressed) {
+      // Маленькие обеспокоенные глазки
+      p(-6, -1, 3, 3, C_FEATURE);
+      p(3, -1, 3, 3, C_FEATURE);
+    } else if (isHappy) {
+      // Радостные прищуренные глазки-дуги ^ ^
+      p(-7, 0, 1, 2, C_FEATURE);
+      p(-6, -1, 2, 1, C_FEATURE);
+      p(-4, 0, 1, 2, C_FEATURE);
+      p(3, 0, 1, 2, C_FEATURE);
+      p(4, -1, 2, 1, C_FEATURE);
+      p(6, 0, 1, 2, C_FEATURE);
+    } else {
+      // Большие милые черные глазки с белым бликом
+      p(-7, -2, 4, 4, C_FEATURE);
+      p(-6, -2, 2, 2, C_WHITE);
+      p(3, -2, 4, 4, C_FEATURE);
+      p(4, -2, 2, 2, C_WHITE);
+    }
+
+    // Ротик
+    if (isDistressed) {
+      p(-2, 3, 4, 1, C_MOUTH);
+    } else {
+      p(-2, 3, 4, 1, C_MOUTH);
+      p(-3, 2, 1, 1, C_MOUTH);
+      p(2, 2, 1, 1, C_MOUTH);
+    }
+
+    c.restore();
+  }
+
+  // ── РЕНДЕР ХОЛСТОВ ─────────────────────────────────────────────
   function render(time) {
     const isLight = document.documentElement.getAttribute('data-theme') === 'light';
     const bgCol = isLight ? '#f2f2eb' : '#0e0e0e';
@@ -343,82 +427,54 @@
 
     const dpr = window.devicePixelRatio || 1;
 
-    // 1. РЕНДЕР ВЕРХНЕЙ ПОЛОСКИ
-    const terrariumStripWrapper = document.getElementById('bio-terrarium');
-    if (canvasStrip && ctxStrip && terrariumStripWrapper && terrariumStripWrapper.style.display !== 'none') {
-      if (canvasStrip.width === 0 || canvasStrip.height === 0) {
-        const rect = canvasStrip.getBoundingClientRect();
+    // 1. РЕНДЕР МОРДОЧКИ В ВЕРХНЕМ МЕНЮ (ПРОСТО МОРДОЧКА С АНИМАЦИЕЙ, НЕКЛИКАБЕЛЬНАЯ)
+    const terrariumWrapper = document.getElementById('bio-terrarium');
+    if (canvasFace && ctxFace && terrariumWrapper && terrariumWrapper.style.display !== 'none') {
+      if (canvasFace.width === 0 || canvasFace.height === 0) {
+        const rect = canvasFace.getBoundingClientRect();
         if (rect.width > 0 && rect.height > 0) {
-          canvasStrip.width = Math.floor(rect.width * dpr);
-          canvasStrip.height = Math.floor(rect.height * dpr);
-          ctxStrip.imageSmoothingEnabled = false;
+          canvasFace.width = Math.floor(rect.width * dpr);
+          canvasFace.height = Math.floor(rect.height * dpr);
+          ctxFace.imageSmoothingEnabled = false;
         }
       }
 
-      if (canvasStrip.width > 0 && canvasStrip.height > 0) {
-        const w = canvasStrip.width;
-        const h = canvasStrip.height;
+      if (canvasFace.width > 0 && canvasFace.height > 0) {
+        const w = canvasFace.width;
+        const h = canvasFace.height;
         const logicalW = w / dpr;
         const logicalH = h / dpr;
 
-        ctxStrip.clearRect(0, 0, w, h);
-        ctxStrip.fillStyle = bgCol;
-        ctxStrip.fillRect(0, 0, w, h);
+        ctxFace.clearRect(0, 0, w, h);
 
-        // Пузырьки
-        ctxStrip.fillStyle = bubbleCol;
-        stripBubbles.forEach(b => {
-          b.y -= b.speed * dpr;
-          if (b.y < 2) {
-            b.y = (h / dpr) + 2;
-            b.x = Math.random() * logicalW;
-          }
-          ctxStrip.beginPath();
-          ctxStrip.arc(b.x * dpr, b.y * dpr, b.r * dpr, 0, Math.PI * 2);
-          ctxStrip.fill();
-        });
+        // Фазы дыхания и покачивания жабр
+        axoFace.wigglePhase = time * 0.004;
+        axoFace.bobOffset = Math.sin(time * 0.003) * 1.5;
 
-        // Движение аксолотля в полоске
-        axoStrip.wigglePhase = time * 0.004;
-        axoStrip.bobOffset = Math.sin(time * 0.0035) * 2;
-        axoStrip.x += axoStrip.vx;
-
-        const boundPadding = 25;
-        if (axoStrip.x > logicalW - boundPadding) {
-          axoStrip.x = logicalW - boundPadding;
-          axoStrip.vx = -Math.abs(axoStrip.vx);
-        } else if (axoStrip.x < boundPadding) {
-          axoStrip.x = boundPadding;
-          axoStrip.vx = Math.abs(axoStrip.vx);
-        }
-        axoStrip.facing = axoStrip.vx >= 0 ? 1 : -1;
-
-        // Моргание
-        axoStrip.blinkTimer++;
-        if (axoStrip.blinkTimer > 170) {
-          axoStrip.isBlinking = true;
-          if (axoStrip.blinkTimer > 182) {
-            axoStrip.isBlinking = false;
-            axoStrip.blinkTimer = 0;
+        // Таймер моргания
+        axoFace.blinkTimer++;
+        if (axoFace.blinkTimer > 165) {
+          axoFace.isBlinking = true;
+          if (axoFace.blinkTimer > 177) {
+            axoFace.isBlinking = false;
+            axoFace.blinkTimer = 0;
           }
         }
 
-        // В полоске аксолотль выражает текущую эмоцию состояния
-        const isHealthy = state.satiety > 50 && state.cleanliness > 50;
-        const isHappyStrip = isHealthy && (state.satiety > 75 || axoStrip.reactionTimer > 0);
-        if (axoStrip.reactionTimer > 0) axoStrip.reactionTimer--;
+        const isDistressed = state.satiety < 25 || state.cleanliness < 25;
+        const isHappy = !isDistressed && (state.satiety > 70 && state.cleanliness > 70);
 
-        // Отрисовка маленького аксолотля
-        const scaleStrip = 0.68 * dpr;
-        drawPixelAxolotl(
-          ctxStrip,
-          axoStrip.x * dpr,
-          (logicalH / 2 + axoStrip.bobOffset) * dpr,
-          scaleStrip,
-          axoStrip.facing,
-          isHappyStrip,
-          axoStrip.isBlinking,
-          axoStrip.wigglePhase
+        const scaleFace = 1.0 * dpr;
+        drawAxolotlFace(
+          ctxFace,
+          (logicalW / 2) * dpr,
+          (logicalH / 2 + axoFace.bobOffset) * dpr,
+          scaleFace,
+          isHappy,
+          axoFace.isBlinking,
+          isDistressed,
+          axoFace.wigglePhase,
+          isLight
         );
       }
     }
@@ -550,35 +606,7 @@
   function updateUI() {
     const formattedImpulses = `${Math.floor(state.impulses)} ⚡`;
 
-    // 1. Полоска вверху (только эмоция питомца)
-    const stripEmotion = document.getElementById('terrarium-strip-emotion');
-    if (stripEmotion) {
-      let face = '^_^';
-      let text = 'СПОКОЙСТВИЕ';
-      let isWarn = false;
-
-      if (state.satiety < 20 && state.cleanliness < 20) {
-        face = '×_×';
-        text = 'ИСТОЩЕНИЕ';
-        isWarn = true;
-      } else if (state.satiety < 30) {
-        face = '•_•';
-        text = 'ГОЛОДЕН';
-        isWarn = true;
-      } else if (state.cleanliness < 30) {
-        face = '¬_¬';
-        text = 'ЭНТРОПИЯ';
-        isWarn = true;
-      } else if (state.satiety > 75 && state.cleanliness > 75) {
-        face = '˘◡˘';
-        text = 'ГАРМОНИЯ';
-      }
-
-      stripEmotion.textContent = `[ ${face} ${text} ]`;
-      stripEmotion.style.color = isWarn ? 'var(--text-warn, #ff5555)' : 'var(--text-dim)';
-    }
-
-    // 2. Экран лаборатории
+    // Экран лаборатории
     const labImpulses = document.getElementById('lab-impulses-val');
     if (labImpulses) {
       labImpulses.textContent = formattedImpulses;

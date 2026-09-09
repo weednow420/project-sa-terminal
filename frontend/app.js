@@ -1685,16 +1685,6 @@ function setupBottomNav() {
       }
     });
   });
-
-  const stripTag = document.querySelector('.terrarium-strip-tag');
-  if (stripTag) {
-    stripTag.style.cursor = 'pointer';
-    stripTag.addEventListener('click', (e) => {
-      e.stopPropagation();
-      showView('view-terrarium-lab');
-      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-    });
-  }
 }
 
 function setupMainMenu() {

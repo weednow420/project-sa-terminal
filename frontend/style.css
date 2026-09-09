@@ -1731,73 +1731,37 @@ body {
   color: var(--bg);
 }
 
-/* ── БИО-ТЕРРАРИУМ АКСОЛОТЛЯ (УЗКАЯ ПОЛОСКА ВВЕРХУ) ──────── */
+/* ── МОРДОЧКА СИМБИОНТА В ВЕРХНЕМ МЕНЮ (НЕКЛИКАБЕЛЬНАЯ) ────── */
 .bio-terrarium-wrapper {
-  padding: 0 var(--spacing-md) var(--spacing-sm);
+  display: block;
+  text-align: center;
+  padding: 2px var(--spacing-md) 6px;
   background-color: var(--bg);
-}
-
-.terrarium-strip-glass {
-  display: flex;
-  align-items: center;
-  height: 38px;
-  background-color: #0e0e0e;
-  border: 1px solid var(--border-hard);
-  border-radius: 0 !important;
-  padding: 0 10px;
-  gap: 10px;
-  cursor: pointer;
+  pointer-events: none !important;
   user-select: none;
-  touch-action: manipulation;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-[data-theme="light"] .terrarium-strip-glass {
-  background-color: #f2f2eb;
-}
-
-.terrarium-strip-glass:hover {
-  border-color: var(--text-primary);
-}
-
-.terrarium-strip-glass:active {
-  background-color: var(--bg-hover);
-}
-
-.terrarium-strip-tag {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: var(--text-dim);
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.terrarium-strip-tank {
-  flex: 1;
-  height: 100%;
-  position: relative;
+.pet-face-container {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 76px;
+  height: 36px;
+  margin: 0 auto;
+  pointer-events: none !important;
+  user-select: none;
+  cursor: default !important;
   overflow: hidden;
 }
 
-.terrarium-strip-tank canvas {
+.pet-face-container canvas {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 76px;
+  height: 36px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-}
-
-.terrarium-strip-emotion {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--text-dim);
-  white-space: nowrap;
-  flex-shrink: 0;
-  letter-spacing: 0.05em;
-  transition: color 0.2s ease;
+  pointer-events: none !important;
+  cursor: default !important;
 }
 
 /* ── ЭКРАН ЛАБОРАТОРИИ СИМБИОНТА ─────────────────────────── */
