@@ -1604,14 +1604,15 @@ body.gate-active .terminal-main {
 /* ── НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK) ─────────────────────────── */
 .terminal-bottom-nav {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-  padding: 8px var(--spacing-md);
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  padding: 0;
   background-color: var(--bg);
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-hard);
   position: sticky;
   bottom: 0;
-  z-index: 10;
+  z-index: 100;
+  width: 100%;
 }
 
 .bottom-nav-btn {
@@ -1620,48 +1621,82 @@ body.gate-active .terminal-main {
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
   text-align: center;
-  padding: 7px 4px;
-  min-height: 46px;
+  padding: 8px 2px 7px 2px;
+  min-height: 62px;
   background-color: var(--bg-surface);
   color: var(--text-dim);
-  border: 1px solid var(--border);
+  border: none;
+  border-right: 1px solid var(--border);
   border-radius: 0 !important;
   cursor: pointer;
   text-transform: uppercase;
   white-space: nowrap;
   user-select: none;
-  transition: all 0.12s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   box-sizing: border-box;
 }
 
-.bottom-nav-btn:hover {
-  color: var(--text-primary);
-  border-color: var(--border-hard);
-  background-color: var(--bg-hover);
+.bottom-nav-btn:last-child {
+  border-right: none;
 }
 
-.bottom-nav-btn.active {
-  background-color: var(--text-primary);
-  color: var(--bg);
-  border-color: var(--text-primary);
+.bottom-nav-icon {
+  width: 20px;
+  height: 20px;
+  stroke: var(--text-dim);
+  fill: none;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+  transition: stroke 0.15s ease, transform 0.1s ease;
+}
+
+.bottom-nav-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+  margin-bottom: 2px;
 }
 
 .bottom-nav-sub {
   font-size: 0.52rem;
   font-weight: 400;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
   opacity: 0.75;
-  margin-top: 2px;
   line-height: 1;
 }
 
+/* Ховер */
+.bottom-nav-btn:hover:not(.active) {
+  background-color: var(--bg-hover);
+}
+
+.bottom-nav-btn:hover:not(.active) .bottom-nav-icon {
+  stroke: var(--text-primary);
+}
+
+/* Активное инверсное состояние (точно как на референсе) */
+.bottom-nav-btn.active {
+  background-color: var(--text-primary) !important;
+  color: var(--bg) !important;
+}
+
+.bottom-nav-btn.active .bottom-nav-icon {
+  stroke: var(--bg) !important;
+}
+
+.bottom-nav-btn.active .bottom-nav-title {
+  color: var(--bg) !important;
+  font-weight: 700;
+}
+
 .bottom-nav-btn.active .bottom-nav-sub {
-  color: var(--bg);
-  opacity: 0.9;
+  color: var(--bg) !important;
+  opacity: 0.85;
+  font-weight: 500;
 }
 
 /* ── КНОПКА ЗАКЛАДКИ В РИДЕРЕ КАРТОЧКИ ──────────────────────── */
