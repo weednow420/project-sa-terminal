@@ -1879,29 +1879,6 @@ async function main() {
   }
 }
 
-// Переключение вкладки спутника (CAT-01 vs b181) в лаборатории
-window.switchSymbiontTab = function(type) {
-  const catPane = document.getElementById('symbiont-section-cat');
-  const axolotlPane = document.getElementById('symbiont-section-axolotl');
-  const catTab = document.getElementById('tab-symbiont-cat');
-  const axolotlTab = document.getElementById('tab-symbiont-axolotl');
-
-  if (type === 'cat') {
-    if (catPane) catPane.style.display = 'block';
-    if (axolotlPane) axolotlPane.style.display = 'none';
-    if (catTab) catTab.classList.add('active');
-    if (axolotlTab) axolotlTab.classList.remove('active');
-  } else {
-    if (catPane) catPane.style.display = 'none';
-    if (axolotlPane) axolotlPane.style.display = 'block';
-    if (catTab) catTab.classList.remove('active');
-    if (axolotlTab) axolotlTab.classList.add('active');
-  }
-  if (window.SoundFX && window.SoundFX.playKeyClick) {
-    window.SoundFX.playKeyClick(960);
-  }
-};
-
 // Запуск после загрузки DOM
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', main);

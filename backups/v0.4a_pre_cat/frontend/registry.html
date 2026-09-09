@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>PROJECT S-A // РЕЕСТР ОПЕРАТОРОВ</title>
+
+  <!-- Telegram Web App SDK (если открыто внутри TMA) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Monowidth fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    /* Дополнительные стили для standalone дашборда */
+    .registry-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: var(--spacing-md);
+    }
+    .registry-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+    }
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+    }
+    .metric-cell {
+      border: 1px solid var(--border);
+      background-color: var(--bg-surface);
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+    .metric-cell .label {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+    .metric-cell .val {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-top: 4px;
+      letter-spacing: 0.05em;
+    }
+    .action-bar {
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+      margin-bottom: var(--spacing-md);
+    }
+    .btn-action {
+      background: transparent;
+      border: 1px solid var(--border-hard);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      border-radius: 0 !important;
+    }
+    .btn-action:hover {
+      background-color: var(--bg-hover);
+      border-color: var(--text-primary);
+    }
+    .table-wrapper {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      background-color: var(--bg-surface);
+    }
+    table.registry-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      letter-spacing: 0.03em;
+      text-align: left;
+    }
+    table.registry-table th {
+      background-color: var(--bg);
+      border-bottom: 2px solid var(--border-hard);
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    table.registry-table td {
+      border-bottom: 1px dotted var(--border);
+      padding: var(--spacing-sm) var(--spacing-md);
+      vertical-align: middle;
+    }
+    table.registry-table tr:hover {
+      background-color: var(--bg-hover);
+    }
+    .tag-badge {
+      display: inline-block;
+      border: 1px solid var(--border-hard);
+      padding: 1px 5px;
+      font-size: 0.7rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ШАПКА ТЕРМИНАЛА -->
+  <header class="terminal-header">
+    <div class="header-top">
+      <span class="header-label">PROJECT S-A // РЕЕСТР</span>
+      <span class="header-status">■ СИНХРОНИЗАЦИЯ СЕТИ</span>
+    </div>
+    <div class="header-bottom">
+      <span class="header-mode">ТЕЛЕМЕТРИЯ БИО-ДАТЧИКОВ [LIVE]</span>
+      <span class="header-operator">
+        <a href="admin.html" style="color:var(--text-primary); text-decoration:none; margin-right:12px;">⚙️ [ АДМИН-ПАНЕЛЬ ]</a>
+        <a href="index.html" style="color:var(--text-primary); text-decoration:none;">◄ [ ТЕРМИНАЛ ]</a>
+      </span>
+    </div>
+    <div class="header-divider">════════════════════════════════════════════════════════════════════════</div>
+  </header>
+
+  <main class="terminal-main">
+    <div class="registry-container">
+
+      <!-- МЕТРИКИ СЕТИ -->
+      <div class="metrics-bar">
+        <div class="metric-cell">
+          <div class="label">ОПЕРАТОРОВ В СЕТИ</div>
+          <div class="val" id="total-count">0</div>
+        </div>
+        <div class="metric-cell">
+          <div class="label">ПОСЛЕДНИЙ КОНТАКТ</div>
+          <div class="val" id="last-operator">──────</div>
+        </div>
+        <div class="metric-cell">
+          <div class="label">СТАТУС ТЕЛЕМЕТРИИ</div>
+          <div class="val">ШТАТНЫЙ [b181: OK]</div>
+        </div>
+      </div>
+
+      <!-- ПАНЕЛЬ ДЕЙСТВИЙ -->
+      <div class="registry-header-bar">
+        <div style="flex:1; min-width:240px;">
+          <input type="text" id="search-input" class="terminal-input" placeholder="ПОИСК: НОМЕР / @USER / TG-ID / ИМЯ..." />
+        </div>
+        <div class="action-bar" style="margin-bottom:0;">
+          <button class="btn-action" id="btn-refresh">[ ⟳ ОБНОВИТЬ ]</button>
+          <button class="btn-action" id="btn-export-json">[ ЭКСПОРТ JSON ]</button>
+          <button class="btn-action" id="btn-export-csv">[ ЭКСПОРТ CSV ]</button>
+        </div>
+      </div>
+
+      <div class="dot-grid-divider"></div>
+
+      <!-- ТАБЛИЦА РЕЕСТРА -->
+      <div class="table-wrapper">
+        <table class="registry-table">
+          <thead>
+            <tr>
+              <th>НОМЕР</th>
+              <th>КОД ТРАНСКРИПТА</th>
+              <th>ОПЕРАТОР</th>
+              <th>TELEGRAM ID</th>
+              <th>ПЕРВЫЙ КОНТАКТ</th>
+              <th>ПОСЛЕДНЯЯ АКТИВНОСТЬ</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr>
+              <td colspan="6" style="text-align:center; padding:24px; color:var(--text-dim);">
+                СКАНИРОВАНИЕ БАЗЫ ДАННЫХ...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:var(--spacing-md); font-size:0.68rem; color:var(--text-dim); text-align:right;">
+        ДАННЫЕ ИСПОЛЬЗУЮТСЯ ДЛЯ СИНХРОНИЗАЦИИ С ТРАНСКРИПТАМИ КОНТУРА S-A
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ПОДВАЛ -->
+  <footer class="terminal-footer">
+    <div class="footer-divider">════════════════════════════════════════════════════════════════════════</div>
+    <div class="footer-content">
+      <span>КОНТУР: S-A REGISTRY v1.0</span>
+      <span>СИСТЕМНЫЙ СБОЙ: b181</span>
+    </div>
+  </footer>
+
+  <script>
+    // ── API & ДАННЫЕ ───────────────────────────────────────────────
+    const API_BASE = `${window.location.origin}/api`;
+    let cachedOperators = [];
+
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      if (tg.colorScheme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    }
+
+    let currentAdminId = localStorage.getItem('sa_admin_id') || '';
+
+    async function loadOperators() {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-dim);">ЗАГРУЗКА РЕЕСТРА...</td></tr>`;
+
+      const telegramUserId = tg?.initDataUnsafe?.user?.id || currentAdminId || '';
+
+      try {
+        const res = await fetch(`${API_BASE}/operators`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+            'x-telegram-init-data': tg?.initData || '',
+            'x-admin-key': localStorage.getItem('sa_admin_key') || '',
+            'x-telegram-user-id': String(telegramUserId),
+          }
+        });
+
+        if (res.status === 403) {
+          document.getElementById('total-count').textContent = '—';
+          document.getElementById('last-operator').textContent = 'ДОСТУП ЗАКРЫТ';
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" style="text-align:center; padding:32px; color:var(--text-primary);">
+                <div style="font-size:0.95rem; font-weight:700; margin-bottom:8px; letter-spacing:0.1em;">[b181] ДОСТУП ОГРАНИЧЕН</div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:16px;">
+                  Реестр Операторов доступен исключительно верифицированным Администраторам контура.<br>
+                  Если вы открыли страницу вне Telegram, введите мастер-ключ Администратора.
+                </div>
+                <div style="display:inline-flex; gap:8px; max-width:360px; margin:0 auto; text-align:left;">
+                  <input type="password" id="admin-key-input" class="terminal-input" placeholder="Мастер-ключ Администратора" value="${escapeHtml(localStorage.getItem('sa_admin_key') || '')}" />
+                  <button class="btn-action" id="btn-submit-admin-key">[ ПОДТВЕРДИТЬ ]</button>
+                </div>
+              </td>
+            </tr>`;
+          const btn = document.getElementById('btn-submit-admin-key');
+          if (btn) {
+            btn.addEventListener('click', () => {
+              const val = document.getElementById('admin-key-input')?.value.trim();
+              if (val) {
+                localStorage.setItem('sa_admin_key', val);
+                loadOperators();
+              }
+            });
+          }
+          return;
+        }
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { data } = await res.json();
+        cachedOperators = data || [];
+        renderDashboard(cachedOperators);
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-warn);">[b181] СБОЙ ЗАГРУЗКИ: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderDashboard(operators) {
+      // Метрики
+      document.getElementById('total-count').textContent = operators.length;
+      if (operators.length > 0) {
+        const last = operators[operators.length - 1];
+        document.getElementById('last-operator').textContent = `${last.display_number} (${last.first_name || last.username || '---'})`;
+      } else {
+        document.getElementById('last-operator').textContent = '──────';
+      }
+
+      renderTable(operators);
+    }
+
+    function renderTable(operators) {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+
+      if (operators.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-dim);">РЕЕСТР ПУСТ. НЕТ ЗАРЕГИСТРИРОВАННЫХ ОПЕРАТОРОВ.</td></tr>`;
+        return;
+      }
+
+      operators.forEach(op => {
+        const tr = document.createElement('tr');
+        const userTag = op.username ? `@${op.username}` : '—';
+        const opName = op.first_name ? op.first_name : 'ОПЕРАТОР';
+
+        tr.innerHTML = `
+          <td><strong>${op.display_number}</strong></td>
+          <td><span class="tag-badge">${op.operator_code}</span></td>
+          <td>
+            <div><strong>${escapeHtml(opName)}</strong></div>
+            <div style="color:var(--text-dim); font-size:0.68rem;">${escapeHtml(userTag)}</div>
+          </td>
+          <td style="font-family:var(--font-mono);">${op.telegram_id}</td>
+          <td style="color:var(--text-dim); font-size:0.7rem;">${op.first_seen_at || '—'}</td>
+          <td style="color:var(--text-dim); font-size:0.7rem;">${op.last_seen_at || '—'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ── ЖИВОЙ ПОИСК ────────────────────────────────────────────────
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      if (!q) {
+        renderTable(cachedOperators);
+        return;
+      }
+
+      const filtered = cachedOperators.filter(op => {
+        return (
+          (op.display_number && op.display_number.toLowerCase().includes(q)) ||
+          (op.operator_code && op.operator_code.toLowerCase().includes(q)) ||
+          (op.username && op.username.toLowerCase().includes(q)) ||
+          (op.first_name && op.first_name.toLowerCase().includes(q)) ||
+          (String(op.telegram_id).includes(q))
+        );
+      });
+
+      renderTable(filtered);
+    });
+
+    // ── КНОПКИ ДЕЙСТВИЙ ───────────────────────────────────────────
+    document.getElementById('btn-refresh').addEventListener('click', loadOperators);
+
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      const jsonStr = JSON.stringify(cachedOperators, null, 2);
+      downloadFile(jsonStr, 'operators_registry.json', 'application/json');
+    });
+
+    document.getElementById('btn-export-csv').addEventListener('click', () => {
+      let csv = 'operator_number,operator_code,telegram_id,username,first_name,first_seen_at,last_seen_at\n';
+      cachedOperators.forEach(o => {
+        csv += `"${o.operator_number}","${o.operator_code}","${o.telegram_id}","${o.username || ''}","${(o.first_name || '').replace(/"/g, '""')}","${o.first_seen_at}","${o.last_seen_at}"\n`;
+      });
+      downloadFile(csv, 'operators_registry.csv', 'text/csv');
+    });
+
+    function downloadFile(content, fileName, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Старт
+    loadOperators();
+  </script>
+</body>
+</html>
