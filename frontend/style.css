@@ -804,6 +804,11 @@ body.gate-active #terminal-bottom-nav {
   display: none !important;
 }
 
+body:has(#view-gate.active) .terminal-main,
+body.gate-active .terminal-main {
+  padding: 0 !important;
+}
+
 #view-gate.active {
   min-height: 100vh;
   display: flex;
@@ -817,11 +822,11 @@ body.gate-active #terminal-bottom-nav {
   width: 100%;
   max-width: 380px;
   margin: 0 auto;
-  min-height: calc(100vh - 80px);
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 16px 20px 24px 20px;
+  padding: 16px 16px 24px 16px;
   background-color: var(--bg);
   color: var(--text-primary);
   box-sizing: border-box;
@@ -831,48 +836,62 @@ body.gate-active #terminal-bottom-nav {
 /* Minimal Header */
 .swiss-gate-header {
   width: 100%;
-  height: 44px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
+  flex-wrap: nowrap;
   border-bottom: 1px solid var(--border);
   padding-bottom: 8px;
   margin-bottom: 28px;
+  box-sizing: border-box;
 }
 
 .swiss-gate-header-left {
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap !important;
+  flex-shrink: 0;
 }
 
 .swiss-gate-square {
   font-size: 8px;
   color: var(--text-primary);
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .swiss-gate-brand {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.12em;
   color: var(--text-primary);
   text-transform: uppercase;
   font-family: var(--font-mono);
+  white-space: nowrap !important;
 }
 
 .swiss-gate-badge {
-  padding: 3px 8px;
+  padding: 2px 5px;
   border: 1px solid var(--border);
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 9px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-dim);
   display: flex;
   align-items: center;
+  justify-content: center;
   font-family: var(--font-mono);
   transition: all 0.15s ease;
   border-radius: 0 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+}
+
+.swiss-gate-badge span {
+  white-space: nowrap !important;
 }
 
 .swiss-gate-badge.badge-granted {
@@ -1076,9 +1095,12 @@ body.gate-active #terminal-bottom-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  flex-wrap: nowrap;
   font-size: 10px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   font-family: var(--font-mono);
+  box-sizing: border-box;
 }
 
 .swiss-attempts-block {
@@ -1086,6 +1108,8 @@ body.gate-active #terminal-bottom-nav {
   align-items: center;
   gap: 6px;
   color: var(--text-dim);
+  white-space: nowrap !important;
+  flex-shrink: 0;
 }
 
 .swiss-attempts-val {
@@ -1099,11 +1123,13 @@ body.gate-active #terminal-bottom-nav {
   color: var(--text-dim);
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   cursor: pointer;
   padding: 0;
   border-radius: 0 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0;
 }
 
 .swiss-reset-btn:hover {
