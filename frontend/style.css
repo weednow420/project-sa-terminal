@@ -725,24 +725,37 @@ body {
   color: var(--text-primary);
 }
 
-/* ИНТЕРАКТИВНЫЕ ZETTELKASTEN / СИНАПТИЧЕСКИЕ ССЫЛКИ [[...]] */
+.card-zettel-line {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.card-zettel-line:last-child {
+  margin-bottom: 0;
+}
+
+/* ИНТЕРАКТИВНЫЕ СИНАПТИЧЕСКИЕ ССЫЛКИ */
 .zettel-link-btn {
   display: inline;
   font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.82rem;
+  font-weight: 700;
   line-height: inherit;
   color: var(--text-primary);
   background: transparent;
   border: none;
   border-bottom: 1px dotted var(--border-hard);
   border-radius: 0 !important;
-  padding: 0 2px;
-  margin: 0 2px;
+  padding: 0 1px;
+  margin: 0;
   cursor: pointer;
   vertical-align: baseline;
   text-decoration: none;
   transition: all 0.12s ease;
+}
+
+.zettel-link-btn strong {
+  font-weight: 700;
 }
 
 .zettel-link-btn:hover {

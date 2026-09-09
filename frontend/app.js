@@ -608,16 +608,43 @@ function renderEmptyCards(message) {
     </li>`;
 }
 
-// ── ZETTELKASTEN ТЕКСТОВЫЙ ПАРСЕР И РЕНДЕР КАРТОЧКИ ─────────
+// ── ZETTELKASTEN / СИНАПСЫ: ТЕКСТОВЫЙ ПАРСЕР И РЕНДЕР КАРТОЧКИ ─────────
 function formatZettelText(text) {
   if (!text) return '';
-  let html = escHtml(text);
-  // Замена [[...]] на интерактивные ссылки
-  html = html.replace(/\[\[(.*?)\]\]/g, (match, title) => {
-    const cleanTitle = title.trim();
-    return `<button type="button" class="zettel-link-btn" data-zettel-title="${cleanTitle}">[[ ${cleanTitle} ]] ↗</button>`;
-  });
-  return html;
+  let raw = text.trim();
+
+  if (raw.includes('[[')) {
+    // Разбиваем текст на отдельные высказывания / строки связей
+    const rawParagraphs = raw.split(/\r?\n+/);
+    const lines = [];
+
+    for (const p of rawParagraphs) {
+      const trimmed = p.trim();
+      if (!trimmed) continue;
+      // Каждая связь заканчивается ссылкой [[...]] и возможной точкой перед началом новой фразы
+      const parts = trimmed.split(/(?<=\]\])\s*\.?\s+(?=[А-ЯA-Z0-9«—])/g);
+      for (const part of parts) {
+        const cleanPart = part.trim();
+        if (cleanPart) lines.push(cleanPart);
+      }
+    }
+
+    return lines.map(line => {
+      // Удаляем замыкающие точки у предложений
+      let clean = line.replace(/\.\s*$/, '').trim();
+      // Преобразуем [[Title]] в кликабельный жирный текст без скобок и стрелок
+      let lineHtml = clean.replace(/\[\[(.*?)\]\]\s*\.?/g, (match, title) => {
+        const cleanTitle = title.trim();
+        return `<a href="javascript:void(0)" class="zettel-link-btn" data-zettel-title="${escHtml(cleanTitle)}"><strong>${escHtml(cleanTitle)}</strong></a>`;
+      });
+      // Удаляем любые оторванные или лишние точки
+      lineHtml = lineHtml.replace(/\s+\.\s*/g, ' ').replace(/\.\s*$/, '').trim();
+      return `<div class="card-zettel-line">${lineHtml}</div>`;
+    }).join('');
+  }
+
+  // Для обычного текста убираем случайные пробелы и неразрывные пробелы перед знаками препинания
+  return escHtml(raw).replace(/[\s\u00A0]+([.,;:!?])/g, '$1');
 }
 
 function renderGrimoireCardBody(card) {
