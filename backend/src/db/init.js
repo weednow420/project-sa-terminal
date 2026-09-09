@@ -126,6 +126,13 @@ export async function initDb() {
       console.log(`[TERMINAL] Миграция cards завершена. Перенесено ${oldCards.length} записей.`);
     }
 
+    // Миграция: колонка tags в cards
+    const currentCols = queryAll(db, "PRAGMA table_info(cards)").map(c => c.name);
+    if (currentCols.length > 0 && !currentCols.includes('tags')) {
+      console.log('[TERMINAL] Миграция: добавление колонки tags в таблицу cards...');
+      db.run("ALTER TABLE cards ADD COLUMN tags TEXT NOT NULL DEFAULT '';");
+    }
+
     // Автоматическая синхронизация карточек из папки cards/*.txt
     try {
       await syncCardsFromFiles(db, { run, queryOne, persistDb });

@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS cards (
     sequence_index    INTEGER NOT NULL DEFAULT 1,     -- СТАРТ ВСЕГДА С 1, без пропусков
     subcategory       TEXT    NOT NULL DEFAULT '',    -- машинный slug подкатегории (e.g. 'classic', 'quantum')
     subcategory_title TEXT    NOT NULL DEFAULT '',    -- отображаемое название (e.g. 'КЛАССИКА', 'КВАНТОВАЯ')
+    tags              TEXT    NOT NULL DEFAULT '',    -- теги через запятую (#Практика, #Концентрация)
     is_active         INTEGER NOT NULL DEFAULT 1,
     created_at        TEXT    NOT NULL DEFAULT (datetime('now')),
     UNIQUE(category_id, subcategory, sequence_index)  -- уникальный порядок внутри категории и подкатегории

@@ -202,6 +202,22 @@
       </article>
     </section>
 
+    <!-- РЕЗУЛЬТАТЫ ПОИСКА ПО ТЕГУ / КЛАСТЕРУ (ZETTELKASTEN) -->
+    <section id="view-tag-results" class="view">
+      <div class="card-detail-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <button type="button" class="btn-action" id="btn-back-tag-results" style="width: auto; padding: 6px 14px; font-size: 0.75rem;">← НАЗАД</button>
+        <span class="category-meta-count" id="tag-results-count">КАРТОЧЕК: 0</span>
+      </div>
+      <div class="dot-grid-divider"></div>
+      <div class="category-meta-bar" style="margin-top: 6px;">
+        <span class="category-meta-title" id="tag-results-title">ИНДЕКС ТЕГА // #...</span>
+      </div>
+      <div class="dot-grid-divider"></div>
+      <ul class="card-list" id="tag-cards-list">
+        <!-- JS заполняет карточки с данным тегом -->
+      </ul>
+    </section>
+
     <!-- НАБЛЮДЕНИЯ (ВКЛАДКИ: 1 - ИСТОЧНИК, 2 - ПОСЛАНИЕ) -->
     <section id="view-observations" class="view">
       <nav class="breadcrumb">
@@ -753,13 +769,13 @@
     <div class="footer-divider">════════════════════════════════════════</div>
     <div class="footer-content">
       <span class="footer-label">БИО-ДАТЧИК: АКТИВЕН</span>
-      <span class="footer-version" style="font-weight:700; color:var(--text-primary);">v0.7a</span>
+      <span class="footer-version" style="font-weight:700; color:var(--text-primary);">v0.8a</span>
     </div>
   </footer>
 
-  <script src="audio.js?v=0.6a"></script>
-  <script src="app.js?v=0.6a"></script>
-  <script src="terrarium.js?v=0.6a"></script>
-  <script src="cat_symbiont.js?v=0.6a"></script>
+  <script src="audio.js?v=0.8a"></script>
+  <script src="app.js?v=0.8a"></script>
+  <script src="terrarium.js?v=0.8a"></script>
+  <script src="cat_symbiont.js?v=0.8a"></script>
 </body>
 </html>

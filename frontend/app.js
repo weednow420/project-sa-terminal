@@ -363,9 +363,13 @@ async function selectCategoryTab(category) {
     STATE.currentCategoryCards = res.data || [];
     STATE.currentSubcategories = res.subcategories || [];
 
-    if (subcatsMenu) subcatsMenu.style.display = 'none';
-    if (list) list.style.display = 'flex';
-    renderCardsForCurrentTab(STATE.currentCategoryCards);
+    if (STATE.currentSubcategories && STATE.currentSubcategories.length > 0) {
+      showSubcategoriesMenu();
+    } else {
+      if (subcatsMenu) subcatsMenu.style.display = 'none';
+      if (list) list.style.display = 'flex';
+      renderCardsForCurrentTab(STATE.currentCategoryCards);
+    }
   } catch (err) {
     renderEmptyCards(`[b181] СБОЙ ЗАГРУЗКИ КАРТОЧЕК: ${err.message}`);
   }
@@ -391,12 +395,28 @@ function showSubcategoriesMenu() {
   subcatsMenu.innerHTML = '';
 
   const subcatDescriptions = {
-    'classic': 'В традиционном понимании соматика — это область телесных практик и терапии, направленная на переобучение нервной системы. Главная идея заключается в том, что стресс, травмы и привычки создают хроническое мышечное напряжение («сенсомоторную амнезию»), которое человек перестает замечать.',
-    'esoterics': 'Эзотерические и духовные традиции рассматривают соматику через призму энергетической анатомии. В этой парадигме физическое тело — это лишь самый плотный слой человеческого существа, который неразрывно связан с тонкими телами (эфирным, астральным, ментальным).',
-    'quantum': 'В последние десятилетия на стыке науки и философии нью-эйдж возникло направление, которое часто называют «квантовым исцелением» (популяризировано такими авторами, как Дипак Чопра или Джо Диспенза).',
+    // 1_somatics
+    'neurobiology': 'Нейробиология и ЦНС: нейропластичность, блуждающий нерв, дефолт-система мозга (DMN), вегетативная регуляция.',
+    'interoception': 'Интероцепция и висцеральная чувствительность: картирование внутренних сигналов, сердечный ритм, стресс-маркеры.',
+    'kinesthetics': 'Кинестезия и проприоцепция: ощущение положения тела в пространстве, миофасциальный тонус, координация.',
+    'embodiment': 'Эмбодимент и заземление: телесно-ориентированное присутствие, работа с панцирем Райха, интеграция с психикой.',
+    // 2_cognitivism
+    'attention': 'Внимание и концентрация: селективный фокус, волевое торможение, протоколы удержания объекта и управление вниманием.',
+    'learning': 'Обучение и нейропластичность: кривая забывания, интервальные повторения, метод Фейнмана, синаптическая консолидация.',
+    'biases': 'Когнитивные искажения и фреймы: эвристики мышления, системные ошибки восприятия, деконструкция установок.',
+    'metacognition': 'Метапознание и самонаблюдение: свидетельствующее сознание, концепция Человек-Машина (Гурджиев/Успенский), рефлексия.',
+    // 3_isolation
+    'sensory': 'Сенсорная депривация: светозвуковая изоляция, флоатинг, отключение афферентных стимулов, перезагрузка коры.',
+    'social': 'Социальная изоляция: автономия от групповой конформности, ретриты молчания, фильтрация внешних нарративов.',
+    'psychological': 'Психологическая автономия: внутренний локус контроля, суверенитет личности, преодоление выученной беспомощности.',
+    'asceticism': 'Аскеза и дофаминовый детокс: сенсорный и информационный пост, перезагрузка рецепторов, воздержание.',
+    // Legacy support
+    'classic': 'Традиционная соматика: телесные практики и терапия переобучения нервной системы.',
+    'esoterics': 'Эзотерические традиции: энергетическая анатомия и тонкие тела.',
+    'quantum': 'Квантовое исцеление: ментальные модели и нейробиология намерения.'
   };
 
-  STATE.currentSubcategories.forEach((sub, idx) => {
+  STATE.currentSubcategories.forEach((sub) => {
     const desc = subcatDescriptions[sub.subcategory] || `Карточек протокола: ${sub.count}`;
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -469,13 +489,16 @@ function renderCardsForCurrentTab(cards) {
   cards.forEach((card) => {
     const li = document.createElement('li');
     li.className = 'card-item';
+    const cardTags = card.tags ? card.tags.split(',').map(t => `#${t.trim()}`).join(' ') : '';
+
     li.innerHTML = `
       <button aria-label="Карточка §${card.sequence_index}: ${card.title}">
-        <span class="card-seq">§${String(card.sequence_index).padStart(2, '0')}</span>
+        <span class="card-seq">§${String(card.sequence_index || 1).padStart(2, '0')}</span>
         <span class="card-title-preview">${escHtml(card.title)}</span>
+        ${cardTags ? `<div style="font-size:0.65rem; color:var(--text-dim); margin-top:4px;">${escHtml(cardTags)}</div>` : ''}
       </button>`;
     li.querySelector('button').addEventListener('click', () => {
-      openCard(card);
+      openCard(card, true);
     });
     list.appendChild(li);
   });
@@ -492,39 +515,320 @@ function renderEmptyCards(message) {
     </li>`;
 }
 
-// ── РЕНДЕР ОДНОЙ КАРТОЧКИ ─────────────────────────────────────
-function openCard(card) {
+// ── ZETTELKASTEN ТЕКСТОВЫЙ ПАРСЕР И РЕНДЕР КАРТОЧКИ ─────────
+function formatZettelText(text) {
+  if (!text) return '';
+  let html = escHtml(text);
+  // Замена [[...]] на интерактивные ссылки
+  html = html.replace(/\[\[(.*?)\]\]/g, (match, title) => {
+    const cleanTitle = title.trim();
+    return `<button type="button" class="zettel-link-btn" data-zettel-title="${cleanTitle}">[[ ${cleanTitle} ]] ↗</button>`;
+  });
+  return html;
+}
+
+function renderGrimoireCardBody(card) {
+  const body = card.body_text || '';
+
+  // Сбор тегов: из поля БД либо из секции [МЕТАДАННЫЕ]
+  let tags = [];
+  if (card.tags && typeof card.tags === 'string' && card.tags.trim()) {
+    tags = card.tags.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean);
+  }
+  if (tags.length === 0) {
+    const matchTags = body.match(/ТЕГИ:\s*([^\n\r]+)/i);
+    if (matchTags) {
+      tags = matchTags[1].split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean);
+    }
+  }
+
+  let tagsHtml = '';
+  if (tags.length > 0) {
+    tagsHtml = `
+      <div class="card-tags-strip">
+        <span class="card-tags-label">КЛАСТЕРЫ:</span>
+        ${tags.map(t => `<button type="button" class="card-tag-badge" data-tag="${escHtml(t)}">#${escHtml(t)}</button>`).join('')}
+      </div>
+    `;
+  }
+
+  // Парсинг 5-блочной структуры Гримуара
+  const blockRegex = /\[(МЕТАДАННЫЕ|TL;DR[^\]]*|МЕХАНИКА[^\]]*|ПРАКТИКА[^\]]*|СВЯЗИ[^\]]*)\]([\s\S]*?)(?=\[(?:МЕТАДАННЫЕ|TL;DR|МЕХАНИКА|ПРАКТИКА|СВЯЗИ)[^\]]*\]|$)/gi;
+  const blocks = [];
+  let match;
+  while ((match = blockRegex.exec(body)) !== null) {
+    blocks.push({
+      header: match[1].trim(),
+      content: match[2].trim()
+    });
+  }
+
+  if (blocks.length === 0) {
+    return `
+      ${tagsHtml}
+      <div class="card-detail-body">${formatZettelText(body)}</div>
+    `;
+  }
+
+  let blocksHtml = '';
+  blocks.forEach(b => {
+    const upper = b.header.toUpperCase();
+    if (upper.startsWith('МЕТАДАННЫЕ')) {
+      return; // Уже отображено в плашке тегов и заголовке
+    }
+
+    if (upper.startsWith('TL;DR')) {
+      blocksHtml += `
+        <div class="card-tldr-box">
+          <div class="card-tldr-header">[ ВЫЖИМКА // TL;DR ]</div>
+          <div class="card-tldr-content">${formatZettelText(b.content)}</div>
+        </div>
+      `;
+    } else if (upper.startsWith('МЕХАНИКА')) {
+      blocksHtml += `
+        <div class="card-section-box">
+          <div class="card-section-header">
+            <span>[ СУТЬ И МЕХАНИЗМЫ ]</span>
+            <span style="font-size:0.6rem; color:var(--text-dim); letter-spacing:0.1em;">АРХИТЕКТУРА</span>
+          </div>
+          <div class="card-section-body-text">${formatZettelText(b.content)}</div>
+        </div>
+      `;
+    } else if (upper.startsWith('ПРАКТИКА')) {
+      blocksHtml += `
+        <div class="card-section-box">
+          <div class="card-section-header">
+            <span>[ ${escHtml(b.header)} ]</span>
+            <span style="font-size:0.6rem; color:var(--text-dim); letter-spacing:0.1em;">ПРОТОКОЛ</span>
+          </div>
+          <div class="card-section-body-text">${formatZettelText(b.content)}</div>
+        </div>
+      `;
+    } else if (upper.startsWith('СВЯЗИ')) {
+      blocksHtml += `
+        <div class="card-zettel-box">
+          <div class="card-zettel-header">[ СВЯЗИ В СЕТИ // ZETTELKASTEN ]</div>
+          <div class="card-zettel-body-text">${formatZettelText(b.content)}</div>
+        </div>
+      `;
+    } else {
+      blocksHtml += `
+        <div class="card-section-box">
+          <div class="card-section-header">[ ${escHtml(b.header)} ]</div>
+          <div class="card-section-body-text">${formatZettelText(b.content)}</div>
+        </div>
+      `;
+    }
+  });
+
+  return `
+    ${tagsHtml}
+    <div class="card-grimoire-layout">
+      ${blocksHtml}
+    </div>
+  `;
+}
+
+function showZettelToast(msg) {
+  let toast = document.getElementById('zettel-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'zettel-toast';
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-hard);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 8px 14px;
+      z-index: 9999;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.style.display = 'none';
+  }, 2400);
+}
+
+async function navigateZettelLink(targetTitle) {
+  if (!targetTitle) return;
+  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
+  try {
+    const res = await apiGet(`/cards/find?title=${encodeURIComponent(targetTitle)}`);
+    if (res && res.data) {
+      if (res.data.category_slug && (!STATE.currentCategory || STATE.currentCategory.slug !== res.data.category_slug)) {
+        const cat = STATE.categories.find(c => c.slug === res.data.category_slug);
+        if (cat) STATE.currentCategory = cat;
+      }
+      openCard(res.data, true);
+    } else {
+      showZettelToast(`[СВЯЗАННАЯ КАРТОЧКА В РАЗРАБОТКЕ: ${targetTitle}]`);
+    }
+  } catch (err) {
+    showZettelToast(`[ПРОТОКОЛ В РАЗРАБОТКЕ: ${targetTitle}]`);
+  }
+}
+
+async function showCardsByTag(tag) {
+  if (!tag) return;
+  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+  // Запоминаем текущий экран для кнопки «Назад»
+  STATE.navHistory = STATE.navHistory || [];
+  STATE.navHistory.push({
+    view: document.querySelector('.view.active')?.id || 'view-card-detail',
+    card: STATE.currentCard,
+    category: STATE.currentCategory,
+    subcategory: STATE.currentSubcategory
+  });
+
+  const titleEl = document.getElementById('tag-results-title');
+  const countEl = document.getElementById('tag-results-count');
+  const list = document.getElementById('tag-cards-list');
+
+  if (titleEl) titleEl.textContent = `ИНДЕКС ТЕГА // #${tag.toUpperCase()}`;
+  if (countEl) countEl.textContent = 'ПОИСК...';
+  if (list) {
+    list.innerHTML = `
+      <li class="card-item">
+        <div style="padding:16px; color:var(--text-dim); font-size:0.75rem; text-align:center;">
+          СКАНИРОВАНИЕ ИНДЕКСА ПО КЛАСТЕРУ #${escHtml(tag.toUpperCase())}...
+        </div>
+      </li>
+    `;
+  }
+
+  showView('view-tag-results');
+
+  try {
+    const res = await apiGet(`/cards/find?tag=${encodeURIComponent(tag)}`);
+    const cards = res.data || [];
+    if (countEl) countEl.textContent = `КАРТОЧЕК: ${cards.length}`;
+
+    if (!cards || cards.length === 0) {
+      if (list) {
+        list.innerHTML = `
+          <li class="card-item">
+            <div style="padding:16px; color:var(--text-dim); font-size:0.75rem; text-align:center;">
+              НЕТ КАРТОЧЕК С ТЕГОМ #${escHtml(tag.toUpperCase())}
+            </div>
+          </li>
+        `;
+      }
+      return;
+    }
+
+    if (list) {
+      list.innerHTML = '';
+      cards.forEach(card => {
+        const li = document.createElement('li');
+        li.className = 'card-item';
+        const catBadge = card.category_title ? `<span class="tag-result-category-badge">[${escHtml(card.category_title.toUpperCase())}]</span>` : '';
+        const cardTags = card.tags ? card.tags.split(',').map(t => `#${t.trim()}`).join(' ') : '';
+
+        li.innerHTML = `
+          <button aria-label="Карточка ${escHtml(card.title)}">
+            <div class="tag-result-card-top">
+              <span class="card-seq">§${String(card.sequence_index || 1).padStart(2, '0')}</span>
+              ${catBadge}
+            </div>
+            <span class="card-title-preview">${escHtml(card.title)}</span>
+            ${cardTags ? `<div style="font-size:0.65rem; color:var(--text-dim); margin-top:4px;">${escHtml(cardTags)}</div>` : ''}
+          </button>
+        `;
+
+        li.querySelector('button').addEventListener('click', () => {
+          openCard(card, true);
+        });
+        list.appendChild(li);
+      });
+    }
+  } catch (err) {
+    if (list) {
+      list.innerHTML = `
+        <li class="card-item">
+          <div style="padding:16px; color:var(--text-dim); font-size:0.75rem; text-align:center;">
+            [b181] ОШИБКА ПОИСКА ПО ТЕГУ: ${escHtml(err.message)}
+          </div>
+        </li>
+      `;
+    }
+  }
+}
+
+// ── РЕНДЕР ОДНОЙ КАРТОЧКИ (5 БЛОКОВ SWISS MONO ZETTELKASTEN) ──
+function openCard(card, addToHistory = true) {
+  if (addToHistory && STATE.currentCard && STATE.currentCard.id !== card.id) {
+    STATE.navHistory = STATE.navHistory || [];
+    STATE.navHistory.push({
+      view: 'view-card-detail',
+      card: STATE.currentCard,
+      category: STATE.currentCategory,
+      subcategory: STATE.currentSubcategory
+    });
+  }
+
   STATE.currentCard = card;
 
   // Breadcrumb
   const bc = document.getElementById('breadcrumb-card-category');
   if (bc) {
     if (card.subcategory_title) {
-      bc.textContent = `${STATE.currentCategory?.title?.toUpperCase()} / ${card.subcategory_title.toUpperCase()}`;
+      bc.textContent = `${(card.category_title || STATE.currentCategory?.title || '').toUpperCase()} / ${card.subcategory_title.toUpperCase()}`;
     } else {
-      bc.textContent = STATE.currentCategory?.title?.toUpperCase() || 'РАЗДЕЛ';
+      bc.textContent = (card.category_title || STATE.currentCategory?.title || 'РАЗДЕЛ').toUpperCase();
     }
   }
 
   // Контент карточки
   const content = document.getElementById('card-detail-content');
   if (content) {
+    const catTitle = card.category_title || STATE.currentCategory?.title || '';
     const subcatPart = card.subcategory_title ? ` // ${escHtml(card.subcategory_title.toUpperCase())}` : '';
     content.innerHTML = `
       <div class="card-detail-header">
         <div class="card-detail-seq">
-          ПОСЛЕДОВАТЕЛЬНОСТЬ: §${String(card.sequence_index).padStart(2, '0')}
+          ПОСЛЕДОВАТЕЛЬНОСТЬ: §${String(card.sequence_index || 1).padStart(2, '0')}
           &nbsp;&nbsp;|&nbsp;&nbsp;
-          РАЗДЕЛ: ${escHtml(STATE.currentCategory?.title || '')}${subcatPart}
+          РАЗДЕЛ: ${escHtml(catTitle.toUpperCase())}${subcatPart}
         </div>
         <h1 class="card-detail-title">${escHtml(card.title)}</h1>
       </div>
       <div class="dot-grid-divider"></div>
-      <pre class="card-detail-body">${escHtml(card.body_text)}</pre>`;
+      ${renderGrimoireCardBody(card)}`;
+
+    // Клик по Zettelkasten-ссылкам [[...]]
+    content.querySelectorAll('.zettel-link-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetTitle = btn.getAttribute('data-zettel-title');
+        navigateZettelLink(targetTitle);
+      });
+    });
+
+    // Клик по тегам
+    content.querySelectorAll('.card-tag-badge').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetTag = btn.getAttribute('data-tag');
+        showCardsByTag(targetTag);
+      });
+    });
   }
 
   showView('view-card-detail');
   updateCardBookmarkButton(card.id);
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 // ── ЭКРАН ОШИБКИ b181 ─────────────────────────────────────────
@@ -554,7 +858,37 @@ function setupBackButtons() {
   const btnBack = document.getElementById('btn-back-to-tab');
   if (btnBack) {
     btnBack.addEventListener('click', () => {
+      if (STATE.navHistory && STATE.navHistory.length > 0) {
+        const prev = STATE.navHistory.pop();
+        if (prev.view === 'view-card-detail' && prev.card) {
+          openCard(prev.card, false);
+          return;
+        } else if (prev.view === 'view-tag-results') {
+          showView('view-tag-results');
+          return;
+        }
+      }
+      if (STATE.currentSubcategory) {
+        showSubcategoriesMenu();
+      } else {
+        showView('view-categories');
+      }
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+  }
+
+  const btnBackTag = document.getElementById('btn-back-tag-results');
+  if (btnBackTag) {
+    btnBackTag.addEventListener('click', () => {
+      if (STATE.navHistory && STATE.navHistory.length > 0) {
+        const prev = STATE.navHistory.pop();
+        if (prev.view === 'view-card-detail' && prev.card) {
+          openCard(prev.card, false);
+          return;
+        }
+      }
       showView('view-categories');
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     });
   }
 

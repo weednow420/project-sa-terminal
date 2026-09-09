@@ -20,7 +20,7 @@ export default async function cardsRoutes(fastify) {
       const { subcategory } = request.query || {};
 
       let sql = `
-        SELECT id, title, body_text, sequence_index, subcategory, subcategory_title
+        SELECT id, title, body_text, sequence_index, subcategory, subcategory_title, tags
         FROM cards
         WHERE category_id = ? AND is_active = 1
       `;
@@ -58,13 +58,92 @@ export default async function cardsRoutes(fastify) {
     }
   });
 
+  // GET /api/cards/find (Поиск по заголовку для Zettelkasten или по тегу)
+  fastify.get('/cards/find', async (request, reply) => {
+    const db = await getDb();
+    try {
+      const { title, tag, q } = request.query || {};
+
+      if (title) {
+        const cleanQuery = title.trim().toLowerCase().replace(/^\[.*?\]\s*/, '');
+        const rows = queryAll(db,
+          `SELECT c.id, c.title, c.body_text, c.sequence_index,
+                  c.subcategory, c.subcategory_title, c.tags,
+                  cat.slug as category_slug, cat.title as category_title
+           FROM cards c
+           JOIN categories cat ON cat.id = c.category_id
+           WHERE c.is_active = 1
+           ORDER BY cat.sort_order ASC, c.sequence_index ASC`
+        );
+
+        // 1. Точное совпадение (без учета регистра и префикса [X-000])
+        let match = rows.find(r => {
+          const cardClean = r.title.toLowerCase().replace(/^\[.*?\]\s*/, '').trim();
+          return cardClean === cleanQuery || r.title.toLowerCase().trim() === title.trim().toLowerCase();
+        });
+
+        // 2. Частичное совпадение (подстрока)
+        if (!match) {
+          match = rows.find(r => {
+            const cardClean = r.title.toLowerCase().replace(/^\[.*?\]\s*/, '').trim();
+            return cardClean.includes(cleanQuery) || cleanQuery.includes(cardClean);
+          });
+        }
+
+        if (match) return { status: 'OK', data: match };
+        return reply.status(404).send({ status: 'b181', error: 'CARD_NOT_FOUND' });
+      }
+
+      if (tag) {
+        const cleanTag = tag.trim().toLowerCase().replace(/^#/, '');
+        const rows = queryAll(db,
+          `SELECT c.id, c.title, c.body_text, c.sequence_index,
+                  c.subcategory, c.subcategory_title, c.tags,
+                  cat.slug as category_slug, cat.title as category_title
+           FROM cards c
+           JOIN categories cat ON cat.id = c.category_id
+           WHERE c.is_active = 1
+           ORDER BY cat.sort_order ASC, c.sequence_index ASC`
+        );
+        const filtered = rows.filter(r => {
+          if (!r.tags) return false;
+          const tagsList = r.tags.toLowerCase().split(',').map(t => t.trim().replace(/^#/, ''));
+          return tagsList.some(t => t === cleanTag || t.includes(cleanTag) || cleanTag.includes(t));
+        });
+        return { status: 'OK', tag: cleanTag, count: filtered.length, data: filtered };
+      }
+
+      if (q) {
+        const cleanQ = q.trim().toLowerCase();
+        const rows = queryAll(db,
+          `SELECT c.id, c.title, c.body_text, c.sequence_index,
+                  c.subcategory, c.subcategory_title, c.tags,
+                  cat.slug as category_slug, cat.title as category_title
+           FROM cards c
+           JOIN categories cat ON cat.id = c.category_id
+           WHERE c.is_active = 1
+           ORDER BY cat.sort_order ASC, c.sequence_index ASC`
+        );
+        const filtered = rows.filter(r =>
+          r.title.toLowerCase().includes(cleanQ) || (r.body_text && r.body_text.toLowerCase().includes(cleanQ))
+        );
+        return { status: 'OK', query: q, count: filtered.length, data: filtered };
+      }
+
+      return { status: 'OK', data: [] };
+    } catch (err) {
+      logIncident(db, null, err.message);
+      return reply.status(500).send({ status: 'b181', error: 'QUERY_FAILED' });
+    }
+  });
+
   // GET /api/cards/:id
   fastify.get('/cards/:id', async (request, reply) => {
     const db = await getDb();
     try {
       const row = queryOne(db,
         `SELECT c.id, c.title, c.body_text, c.sequence_index,
-                c.subcategory, c.subcategory_title,
+                c.subcategory, c.subcategory_title, c.tags,
                 cat.slug as category_slug, cat.title as category_title
          FROM cards c
          JOIN categories cat ON cat.id = c.category_id

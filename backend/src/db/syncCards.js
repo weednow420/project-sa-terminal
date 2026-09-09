@@ -30,6 +30,14 @@ export async function syncCardsFromFiles(passedDb = null, helpers = {}) {
 
   console.log('[SYNC] Сканирование папки cards/ для обновления карточек...');
 
+  try {
+    const cols = db.exec("PRAGMA table_info(cards);")[0]?.values.map(r => r[1]) || [];
+    if (!cols.includes('tags')) {
+      db.run("ALTER TABLE cards ADD COLUMN tags TEXT NOT NULL DEFAULT '';");
+      console.log('[SYNC] Добавлена колонка tags в cards.');
+    }
+  } catch (e) {}
+
   const entries = readdirSync(CARDS_ROOT);
   let totalCardsSynced = 0;
 
@@ -93,17 +101,19 @@ export async function syncCardsFromFiles(passedDb = null, helpers = {}) {
           const bodyText = readFileSync(filePath, 'utf8').trim();
 
           if (!title || !bodyText) continue;
+          const tags = extractTags(bodyText);
 
           runFn(
             db,
-            `INSERT INTO cards (category_id, title, body_text, sequence_index, subcategory, subcategory_title, is_active)
-             VALUES (?, ?, ?, ?, ?, ?, 1)
+            `INSERT INTO cards (category_id, title, body_text, sequence_index, subcategory, subcategory_title, tags, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 1)
              ON CONFLICT(category_id, subcategory, sequence_index) DO UPDATE SET
                title = excluded.title,
                body_text = excluded.body_text,
                subcategory_title = excluded.subcategory_title,
+               tags = excluded.tags,
                is_active = 1`,
-            [categoryId, title, bodyText, seqIndex, subInfo.slug, subInfo.title]
+            [categoryId, title, bodyText, seqIndex, subInfo.slug, subInfo.title, tags]
           );
 
           seqIndex++;
@@ -158,17 +168,19 @@ export async function syncCardsFromFiles(passedDb = null, helpers = {}) {
         const bodyText = readFileSync(filePath, 'utf8').trim();
 
         if (!title || !bodyText) continue;
+        const tags = extractTags(bodyText);
 
         runFn(
           db,
-          `INSERT INTO cards (category_id, title, body_text, sequence_index, subcategory, subcategory_title, is_active)
-           VALUES (?, ?, ?, ?, '', '', 1)
+          `INSERT INTO cards (category_id, title, body_text, sequence_index, subcategory, subcategory_title, tags, is_active)
+           VALUES (?, ?, ?, ?, '', '', ?, 1)
            ON CONFLICT(category_id, subcategory, sequence_index) DO UPDATE SET
              title = excluded.title,
              body_text = excluded.body_text,
              subcategory_title = excluded.subcategory_title,
+             tags = excluded.tags,
              is_active = 1`,
-          [categoryId, title, bodyText, rootSeqIndex]
+          [categoryId, title, bodyText, rootSeqIndex, tags]
         );
 
         rootSeqIndex++;
@@ -193,6 +205,23 @@ export async function syncCardsFromFiles(passedDb = null, helpers = {}) {
   persistDbFn();
   console.log(`[SYNC] Синхронизация завершена. Всего актуальных карточек: ${totalCardsSynced}.\n`);
   return totalCardsSynced;
+}
+
+function extractTags(bodyText) {
+  if (!bodyText) return '';
+  const tagsMatch = bodyText.match(/ТЕГИ:\s*([^\n\r]+)/i);
+  if (tagsMatch) {
+    return tagsMatch[1]
+      .split(',')
+      .map(t => t.trim().replace(/^#/, ''))
+      .filter(Boolean)
+      .join(',');
+  }
+  const hashMatches = bodyText.match(/#([\p{L}\d_]+)/gu);
+  if (hashMatches) {
+    return Array.from(new Set(hashMatches.map(h => h.slice(1)))).join(',');
+  }
+  return '';
 }
 
 function resolveCategoryInfo(folderName) {
@@ -242,7 +271,50 @@ function resolveSubcategoryInfo(folderName) {
   let slug = lower.replace(/[^a-z0-9_-]/g, '-');
   let title = rawName.toUpperCase().replace(/[-_]/g, ' ');
 
-  if (lower.includes('classic') || lower.includes('класс')) {
+  // 1_somatics
+  if (lower.includes('neurobio') || lower.includes('нейробио')) {
+    slug = 'neurobiology';
+    title = 'НЕЙРОБИОЛОГИЯ И РЕГУЛЯЦИЯ';
+  } else if (lower.includes('interocept') || lower.includes('интероцеп')) {
+    slug = 'interoception';
+    title = 'ИНТЕРОЦЕПЦИЯ И МЕТАБОЛИЗМ';
+  } else if (lower.includes('kinesthet') || lower.includes('кинест')) {
+    slug = 'kinesthetics';
+    title = 'КИНЕСТЕТИКА И БИОМЕХАНИКА';
+  } else if (lower.includes('embodi') || lower.includes('эмбоди')) {
+    slug = 'embodiment';
+    title = 'ЭМБОДИМЕНТ';
+  }
+  // 2_cognitivism
+  else if (lower.includes('attent') || lower.includes('вниман')) {
+    slug = 'attention';
+    title = 'ВНИМАНИЕ И ФОКУС';
+  } else if (lower.includes('learn') || lower.includes('обучен') || lower.includes('нейропласт')) {
+    slug = 'learning';
+    title = 'ОБУЧЕНИЕ И НЕЙРОПЛАСТИЧНОСТЬ';
+  } else if (lower.includes('bias') || lower.includes('искажен')) {
+    slug = 'biases';
+    title = 'КОГНИТИВНЫЕ ИСКАЖЕНИЯ';
+  } else if (lower.includes('metacog') || lower.includes('метапозн')) {
+    slug = 'metacognition';
+    title = 'МЕТАПОЗНАНИЕ';
+  }
+  // 3_isolation
+  else if (lower.includes('sensor') || lower.includes('сенсор')) {
+    slug = 'sensory';
+    title = 'СЕНСОРНАЯ ДЕПРИВАЦИЯ';
+  } else if (lower.includes('social') || lower.includes('социальн')) {
+    slug = 'social';
+    title = 'СОЦИАЛЬНАЯ ДИНАМИКА';
+  } else if (lower.includes('psychol') || lower.includes('психолог')) {
+    slug = 'psychological';
+    title = 'ПСИХОЛОГИЧЕСКИЕ БАРЬЕРЫ';
+  } else if (lower.includes('ascetic') || lower.includes('аскез') || lower.includes('ограничен')) {
+    slug = 'asceticism';
+    title = 'ПРАКТИКИ ОГРАНИЧЕНИЙ';
+  }
+  // Совместимость со старыми папками
+  else if (lower.includes('classic') || lower.includes('класс')) {
     slug = 'classic';
     title = 'КЛАССИКА';
   } else if (lower.includes('esoteric') || lower.includes('эзотер')) {

@@ -556,6 +556,174 @@ body {
   text-underline-offset: 3px;
 }
 
+/* ── ЦИФРОВОЙ ГРИМУАР // SWISS MONO ZETTELKASTEN ───────────── */
+.card-tags-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 12px 0;
+}
+
+.card-tags-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  margin-right: 4px;
+}
+
+.card-tag-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 0 !important;
+  cursor: pointer;
+  transition: none;
+}
+
+.card-tag-badge:hover {
+  background: var(--text-primary);
+  color: var(--bg);
+  border-color: var(--text-primary);
+}
+
+.card-tag-badge:active {
+  transform: translateY(1px);
+}
+
+.card-grimoire-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* БЛОК 2: TL;DR / ВЫЖИМКА */
+.card-tldr-box {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-primary);
+  background-color: var(--bg-surface);
+  padding: 12px 14px;
+}
+
+.card-tldr-header {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.card-tldr-content {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* БЛОКИ 3 И 4: МЕХАНИКА И ПРАКТИКА */
+.card-section-box {
+  border: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  padding: 12px 14px;
+}
+
+.card-section-header {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-section-body-text {
+  font-size: 0.82rem;
+  line-height: 1.75;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  letter-spacing: 0.02em;
+}
+
+/* БЛОК 5: СВЯЗИ / ZETTELKASTEN */
+.card-zettel-box {
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+  padding: 12px 14px;
+}
+
+.card-zettel-header {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.card-zettel-body-text {
+  font-size: 0.82rem;
+  line-height: 1.8;
+  color: var(--text-primary);
+}
+
+/* ИНТЕРАКТИВНЫЕ ZETTELKASTEN ССЫЛКИ [[...]] */
+.zettel-link-btn {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--text-primary);
+  border-radius: 0 !important;
+  padding: 2px 7px;
+  margin: 2px 3px;
+  cursor: pointer;
+  vertical-align: baseline;
+  text-decoration: none;
+  transition: none;
+}
+
+.zettel-link-btn:hover {
+  background: var(--text-primary);
+  color: var(--bg);
+}
+
+.zettel-link-btn:active {
+  transform: translateY(1px);
+}
+
+.tag-result-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.tag-result-category-badge {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
 /* ── ЭКРАН ОШИБКИ b181 ────────────────────────────────────── */
 .error-block {
   padding: var(--spacing-lg) 0;
