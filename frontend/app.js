@@ -39,9 +39,13 @@ function applyTheme(scheme) {
   const theme = scheme === 'light' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', theme);
 
-  const btn = document.getElementById('btn-theme-toggle');
-  if (btn) {
-    btn.textContent = theme === 'light' ? '[ТЕМА: СВЕТЛАЯ]' : '[ТЕМА: ТЁМНАЯ]';
+  const themeBadge = document.getElementById('theme-badge');
+  if (themeBadge) {
+    themeBadge.textContent = theme === 'light' ? '#2' : '#1';
+  }
+  const themeSub = document.getElementById('theme-sub-label');
+  if (themeSub) {
+    themeSub.textContent = theme === 'light' ? 'INK // LIGHT' : 'INV // CRT';
   }
 
   // Обновляем цвет шапки Telegram
@@ -77,6 +81,99 @@ function setupThemeToggle() {
   const btn = document.getElementById('btn-theme-toggle');
   if (btn) {
     btn.addEventListener('click', toggleTheme);
+  }
+}
+
+// ── КИБЕРНЕТИЧЕСКАЯ КОШКА: 6 СОСТОЯНИЙ И CRT-МОНИТОР ──────────
+const CAT_CYBER_STATES = [
+  { key: 'IDLE', label: '[ПОКОЙ]', chip: '[CHIP: CAT-01]', tag: 'b181', sprite: 'assets/cat/cat_idle.png', status: 'АКТИВЕН', percent: '99.4%', state: '[ОНЛАЙН]' },
+  { key: 'PURR', label: '[МУРЧАНИЕ]', chip: '[CHIP: PURR-02]', tag: 'p100', sprite: 'assets/cat/cat_purr.png', status: 'СИНХРОН', percent: '100.0%', state: '[МУРЧАНИЕ]' },
+  { key: 'MISCHIEF', label: '[ШАЛОСТЬ]', chip: '[CHIP: PLAY-03]', tag: 'm098', sprite: 'assets/cat/cat_mischief.png', status: 'АКТИВНОСТЬ', percent: '98.1%', state: '[ШАЛОСТЬ]' },
+  { key: 'SLEEP', label: '[СОН]', chip: '[CHIP: SLEEP-00]', tag: 'z074', sprite: 'assets/cat/cat_sleep.png', status: 'ГИБЕРНАЦИЯ', percent: '74.0%', state: '[СОН]' },
+  { key: 'ALERT', label: '[ТРЕВОГА]', chip: '[CHIP: WARN-04]', tag: 'w085', sprite: 'assets/cat/cat_alert.png', status: 'ВНИМАНИЕ', percent: '85.5%', state: '[ТРЕВОГА]' },
+  { key: 'GLITCH', label: '[ГЛИТЧ]', chip: '[CHIP: ERR-05]', tag: 'x012', sprite: 'assets/cat/cat_glitch.png', status: 'СБОЙ ШИНЫ', percent: '12.3%', state: '[СБОЙ]' },
+];
+let currentCyberCatIndex = 0;
+
+function switchCatState(key) {
+  const idx = CAT_CYBER_STATES.findIndex(s => s.key.toLowerCase() === String(key).toLowerCase());
+  if (idx !== -1) {
+    currentCyberCatIndex = idx;
+  }
+  const cur = CAT_CYBER_STATES[currentCyberCatIndex];
+
+  const img = document.getElementById('symbiont-display');
+  if (img) img.src = cur.sprite;
+
+  const chipCite = document.getElementById('crt-frame-cite');
+  if (chipCite) chipCite.textContent = cur.chip;
+
+  const statusText = document.getElementById('crt-status-text');
+  if (statusText) statusText.textContent = cur.status;
+
+  const percent = document.getElementById('crt-percent');
+  if (percent) percent.textContent = cur.percent;
+
+  const activeState = document.getElementById('active-state-indicator');
+  if (activeState) activeState.textContent = cur.state;
+
+  const syncEl = document.getElementById('telemetry-sync');
+  if (syncEl) syncEl.textContent = cur.percent;
+
+  if (window.CatSymbiont && typeof window.CatSymbiont.setAnimation === 'function') {
+    window.CatSymbiont.setAnimation(cur.key.toLowerCase());
+  }
+
+  if (window.SoundFX && window.SoundFX.playKeyClick) {
+    window.SoundFX.playKeyClick();
+  }
+  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+}
+
+function cycleCatState() {
+  currentCyberCatIndex = (currentCyberCatIndex + 1) % CAT_CYBER_STATES.length;
+  switchCatState(CAT_CYBER_STATES[currentCyberCatIndex].key);
+}
+
+window.switchCatState = switchCatState;
+window.cycleCatState = cycleCatState;
+
+function updateHeaderSoundUI() {
+  const isEnabled = window.SoundFX ? window.SoundFX.isEnabled() : true;
+  const subLabel = document.getElementById('sound-sub-label');
+  if (subLabel) {
+    subLabel.textContent = isEnabled ? 'BEEP // ON' : 'MUTE // OFF';
+  }
+  const dot = document.getElementById('sound-indicator-dot');
+  if (dot) {
+    dot.style.opacity = isEnabled ? '1' : '0.2';
+  }
+}
+
+function setupCyberControls() {
+  const btnSound = document.getElementById('btn-sound-toggle-header');
+  if (btnSound) {
+    btnSound.addEventListener('click', () => {
+      if (window.SoundFX) {
+        window.SoundFX.toggle();
+        updateHeaderSoundUI();
+      }
+    });
+    updateHeaderSoundUI();
+  }
+
+  const crtCat = document.getElementById('crt-cat-monitor');
+  if (crtCat) {
+    crtCat.addEventListener('click', () => {
+      cycleCatState();
+    });
+  }
+
+  const btnResetCat = document.getElementById('btn-reset-cat');
+  if (btnResetCat) {
+    btnResetCat.addEventListener('click', () => {
+      switchCatState('IDLE');
+    });
   }
 }
 
@@ -209,7 +306,7 @@ function showView(viewId) {
     if (viewId === 'view-gate' || viewId === 'view-loading' || viewId === 'view-error') {
       bottomNav.style.display = 'none';
     } else {
-      bottomNav.style.display = 'grid';
+      bottomNav.style.display = 'flex';
     }
   }
 
@@ -222,6 +319,10 @@ function showView(viewId) {
     } else if (btnTarget === 'view-categories' && (viewId === 'view-categories' || (viewId === 'view-card-detail' && (!STATE.navHistory || STATE.navHistory[STATE.navHistory.length - 1]?.view !== 'view-tag-results')))) {
       isActive = true;
     } else if (btnTarget === 'view-tag-cloud' && (viewId === 'view-tag-cloud' || viewId === 'view-tag-results')) {
+      isActive = true;
+    } else if (btnTarget === 'view-bookmarks' && viewId === 'view-bookmarks') {
+      isActive = true;
+    } else if (btnTarget === 'view-terrarium-lab' && viewId === 'view-terrarium-lab') {
       isActive = true;
     }
     btn.classList.toggle('active', isActive);
@@ -280,6 +381,18 @@ async function loadCategories() {
   }
 }
 
+async function openDomainSubcategory(domainSlug, subcatSlug) {
+  const cat = STATE.categories.find(c => c.slug === domainSlug);
+  if (!cat) return;
+  await selectCategoryTab(cat);
+  if (STATE.currentSubcategories && STATE.currentSubcategories.length > 0) {
+    const sub = STATE.currentSubcategories.find(s => s.subcategory === subcatSlug);
+    if (sub) {
+      selectSubcategory(sub);
+    }
+  }
+}
+
 function renderTriadHub() {
   STATE.currentCategory = null;
   STATE.currentSubcategory = null;
@@ -291,8 +404,8 @@ function renderTriadHub() {
   // Метаданные
   const titleEl = document.getElementById('current-tab-label');
   const countEl = document.getElementById('current-tab-count');
-  if (titleEl) titleEl.textContent = 'ГРИМУАР // ТРИАДА ДОМЕНОВ';
-  if (countEl) countEl.textContent = '3 ДОМЕНА • 12 ПОДРАЗДЕЛОВ';
+  if (titleEl) titleEl.textContent = '// РАЗДЕЛЫ ГРИМУАРА // КАТАЛОГ КОНТУРА';
+  if (countEl) countEl.textContent = '[ 03 / РАЗДЕЛА ]';
 
   // Скрываем подкатегории и список карточек
   const subcatsMenu = document.getElementById('category-subcats-menu');
@@ -313,7 +426,12 @@ function renderTriadHub() {
       title: 'СОМАТИКА',
       meta: '4 ПОДРАЗДЕЛА',
       desc: 'Нейробиология, интероцепция, кинестезия и эмбодимент. Переобучение ЦНС и снятие мышечных зажимов.',
-      pills: ['ЦНС / DMN', 'Интероцепция', 'Проприоцепция', 'Заземление']
+      pills: [
+        { label: '[ ЦНС / DMN ]', slug: 'neurobiology' },
+        { label: '[ Интероцепция ]', slug: 'interoception' },
+        { label: '[ Проприоцепция ]', slug: 'kinesthetics' },
+        { label: '[ Заземление ]', slug: 'embodiment' }
+      ]
     },
     {
       num: '02',
@@ -321,7 +439,12 @@ function renderTriadHub() {
       title: 'КОГНИТИВИСТИКА',
       meta: '4 ПОДРАЗДЕЛА',
       desc: 'Внимание, память, когнитивные искажения и метапознание (концепция Человек-Машина Гурджиева и Успенского).',
-      pills: ['Медитация', 'Интервалы', 'Эвристики', 'Метапознание']
+      pills: [
+        { label: '[ Медитация ]', slug: 'attention' },
+        { label: '[ Интервалы ]', slug: 'learning' },
+        { label: '[ Эвристики ]', slug: 'biases' },
+        { label: '[ Метапознание ]', slug: 'metacognition' }
+      ]
     },
     {
       num: '03',
@@ -329,7 +452,12 @@ function renderTriadHub() {
       title: 'ИЗОЛЯЦИЯ',
       meta: '4 ПОДРАЗДЕЛА',
       desc: 'Сенсорная депривация, социальная тишина, психологическая автономия и аскеза дофаминового голодания.',
-      pills: ['Вакуум', 'Ретрит молчания', 'Автономия', 'Дофамин']
+      pills: [
+        { label: '[ Вакуум ]', slug: 'sensory' },
+        { label: '[ Ретрит молчания ]', slug: 'social' },
+        { label: '[ Автономия ]', slug: 'psychological' },
+        { label: '[ Дофамин ]', slug: 'asceticism' }
+      ]
     }
   ];
 
@@ -339,14 +467,14 @@ function renderTriadHub() {
     cardEl.innerHTML = `
       <div class="triad-domain-header">
         <div class="triad-domain-title-wrap">
-          <span class="triad-domain-num">[ ${d.num} ]</span>
-          <h2 class="triad-domain-title">${d.title}</h2>
+          <span class="domain-notch"></span>
+          <span class="triad-domain-title">[ ${d.num} ] ${d.title}</span>
         </div>
         <span class="triad-domain-meta">${d.meta} →</span>
       </div>
       <p class="triad-domain-desc">${d.desc}</p>
       <div class="triad-domain-subcats-tags">
-        ${d.pills.map(p => `<span class="triad-subcat-pill">${p}</span>`).join('')}
+        ${d.pills.map(p => `<span class="triad-subcat-pill" data-domain="${d.slug}" data-subcat="${p.slug}">${p.label}</span>`).join('')}
       </div>
     `;
 
@@ -356,6 +484,16 @@ function renderTriadHub() {
         selectCategoryTab(cat);
       }
       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+
+    cardEl.querySelectorAll('.triad-subcat-pill').forEach(pill => {
+      pill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const domain = pill.getAttribute('data-domain');
+        const subcatSlug = pill.getAttribute('data-subcat');
+        openDomainSubcategory(domain, subcatSlug);
+        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+      });
     });
 
     hub.appendChild(cardEl);
@@ -2358,6 +2496,7 @@ async function main() {
   setupPinGate();
   setupResetButtons();
   setupThemeToggle();
+  setupCyberControls();
   setupBottomNav();
   setupMainMenu();
   setupBookmarkButton();

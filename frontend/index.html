@@ -21,36 +21,27 @@
   <div class="crt-scanline-overlay" aria-hidden="true"></div>
 
   <!-- ══════════════════════════════════════════════
-       ШАПКА ТЕРМИНАЛА
+       TELEGRAM MINI APP TOP BAR
   ══════════════════════════════════════════════ -->
-  <header class="terminal-header">
-    <div class="header-top">
-      <span class="header-label">PROJECT S-A</span>
-      <div class="header-top-right">
-        <button type="button" class="btn-sound-toggle" id="btn-sound-toggle-header" onclick="SoundFX.toggle()" title="Звук терминала">[ 🔊 ЗВУК ]</button>
-        <button type="button" class="btn-theme-toggle" id="btn-theme-toggle" title="Переключить тему (ТЁМНАЯ / СВЕТЛАЯ)">[ТЕМА: ТЁМНАЯ]</button>
-        <span class="header-status" id="status-indicator">■ ONLINE</span>
-      </div>
+  <header class="telegram-top-bar" data-purpose="telegram-navigation-bar">
+    <div class="top-bar-title-wrap">
+      <span class="top-bar-title">Terminal S-A</span>
     </div>
-    <div class="header-bottom">
-      <span class="header-mode">MODE: НАБЛЮДАТЕЛЬ [READ-ONLY]</span>
-      <div class="header-bottom-right">
-        <span class="header-operator" id="operator-id">ОПЕРАТОР: ──────</span>
-        <button type="button" class="btn-reset-session" id="btn-reset-session" title="Сбросить сессию на этом устройстве">[СБРОС]</button>
-      </div>
+    <div class="top-bar-actions">
+      <button type="button" aria-label="Menu" class="top-bar-btn" id="btn-top-menu">
+        <svg class="top-bar-svg" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="1.75"></circle>
+          <circle cx="12" cy="12" r="1.75"></circle>
+          <circle cx="12" cy="19" r="1.75"></circle>
+        </svg>
+      </button>
+      <button type="button" aria-label="Close" class="top-bar-btn" id="btn-top-close">
+        <svg class="top-bar-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 18L18 6M6 6l12 12" stroke-linecap="square"></path>
+        </svg>
+      </button>
     </div>
-    <div class="header-divider">════════════════════════════════════════</div>
   </header>
-
-  <!-- ══════════════════════════════════════════════
-       КИБЕР-КОШКА CAT181b (ВЕРХНИЙ ХЕДЕР // ЛЕВЫЙ УГОЛ)
-  ══════════════════════════════════════════════ -->
-  <section class="bio-terrarium-wrapper" id="bio-terrarium" style="display: none;">
-    <div class="cat-header-container" id="cat-header-container" title="Кибер-кошка CAT181b // Нажмите для взаимодействия">
-      <img id="cat-header-sprite" class="cat-header-sprite" src="assets/cat/cat_idle.png" alt="CAT181b" />
-      <span class="cat-status-chip" id="cat-status-chip">[CAT181b // ПОКОЙ]</span>
-    </div>
-  </section>
 
   <!-- ══════════════════════════════════════════════
        ОСНОВНОЙ КОНТЕНТ (меняется при навигации)
@@ -156,24 +147,109 @@
 
     <!-- ГЛАВНЫЙ ЭКРАН: ТРИАДА ДОМЕНОВ И КАТАЛОГ -->
     <section id="view-categories" class="view">
+      <!-- БИО-МОНИТОР С ЧИПОМ КИБЕР-КОШКИ (HEADER BIO MONITOR) -->
+      <section class="bio-monitor-section" data-purpose="header-bio-monitor">
+        <div class="bio-monitor-grid">
+          <!-- Левая колонка: Проект, статус и телеметрия -->
+          <div class="bio-monitor-col-left">
+            <div>
+              <div class="bio-project-title">
+                <span class="bio-dot"></span>
+                <span>PROJECT S-A</span>
+              </div>
+              <div class="bio-info-rows">
+                <div class="bio-info-line">
+                  MODE: <span class="bio-val-bright">НАБЛЮДАТЕЛЬ</span>
+                </div>
+                <div class="bio-info-line">
+                  СТАТУС: <span class="bio-val-bright" id="active-state-indicator">[ОНЛАЙН]</span>
+                </div>
+                <div class="bio-info-sub" id="operator-id">
+                  ID: 0001-ALPHA // CYBER_CAT
+                </div>
+                <div class="bio-telemetry-cluster">
+                  <div class="bio-telemetry-row">
+                    <span>СИНХРОНИЗАЦИЯ:</span>
+                    <span class="bio-val-bright" id="telemetry-sync">99.4%</span>
+                  </div>
+                  <div class="bio-telemetry-row">
+                    <span>ШИНА:</span>
+                    <span class="bio-val-muted">PARALLEL-8 [OK]</span>
+                  </div>
+                  <div class="bio-telemetry-row">
+                    <span>ОТКЛИК ЯДРА:</span>
+                    <span class="bio-val-bright">12ms // STABLE</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Центральная колонка: Вертикальный стек из 3 кнопок управления -->
+          <div class="bio-monitor-col-center">
+            <button class="bio-ctrl-btn" id="btn-theme-toggle" type="button" title="Сменить тему">
+              <div class="bio-ctrl-top">
+                <span class="bio-ctrl-icon-label"><span class="bio-ctrl-icon">◐</span> ТЕМА</span>
+                <span class="bio-ctrl-badge" id="theme-badge">#1</span>
+              </div>
+              <div class="bio-ctrl-sub" id="theme-sub-label">INV // CRT</div>
+            </button>
+
+            <button class="bio-ctrl-btn" id="btn-sound-toggle-header" type="button" title="Вкл/выкл звук">
+              <div class="bio-ctrl-top">
+                <span class="bio-ctrl-icon-label"><span class="bio-ctrl-icon">∿</span> ЗВУК</span>
+                <span class="bio-ctrl-dot" id="sound-indicator-dot"></span>
+              </div>
+              <div class="bio-ctrl-sub" id="sound-sub-label">BEEP // ON</div>
+            </button>
+
+            <button class="bio-ctrl-btn" id="btn-reset-cat" type="button" title="Сбросить состояние кошки в покой">
+              <div class="bio-ctrl-top">
+                <span class="bio-ctrl-icon-label"><span class="bio-ctrl-icon">⟲</span> СБРОС</span>
+                <span class="bio-ctrl-badge">CLR</span>
+              </div>
+              <div class="bio-ctrl-sub">DEF // IDLE</div>
+            </button>
+          </div>
+
+          <!-- Правая колонка: CRT-монитор чипа кибер-кошки -->
+          <div class="bio-monitor-col-right cat-crt-chip" id="crt-cat-monitor" title="Нажмите для переключения режима кошки">
+            <div class="cat-crt-header">
+              <span id="crt-frame-cite">[CHIP: CAT-01]</span>
+              <span class="cat-crt-chip-tag">b181</span>
+            </div>
+            <div class="cat-crt-viewport">
+              <div class="cat-crt-screen">
+                <img id="symbiont-display" class="cat-crt-img pixel-art" src="assets/cat/cat_idle.png" alt="CAT-01 IDLE" />
+              </div>
+            </div>
+            <div class="cat-crt-footer">
+              <span id="crt-status-text">АКТИВЕН</span>
+              <span id="crt-percent" class="cat-crt-percent">99.4%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Хлебные крошки для перехода обратно к Триаде / Разделу -->
       <nav class="breadcrumb" id="subcat-breadcrumb" style="display:none;">
         <button type="button" class="btn-back" id="btn-back-to-subcats" aria-label="Назад">
-          ← ТРИАДА
+          ← БАЗИС
         </button>
         <span class="breadcrumb-sep">/</span>
         <span id="breadcrumb-subcat-title">РАЗДЕЛ</span>
       </nav>
 
-      <!-- Информационная полоса текущего состояния -->
-      <div class="category-meta-bar" id="category-meta-bar">
-        <span class="category-meta-title" id="current-tab-label">ГРИМУАР // ТРИАДА ДОМЕНОВ</span>
-        <span class="category-meta-count" id="current-tab-count">3 ДОМЕНА</span>
+      <!-- Секция: РАЗДЕЛЫ ГРИМУАРА // КАТАЛОГ КОНТУРА -->
+      <div class="grimoire-catalog-header" id="category-meta-bar">
+        <div class="grimoire-header-title">
+          <span class="grimoire-dot"></span>
+          <span id="current-tab-label">// РАЗДЕЛЫ ГРИМУАРА // КАТАЛОГ КОНТУРА</span>
+        </div>
+        <span class="grimoire-header-count" id="current-tab-count">[ 03 / РАЗДЕЛА ]</span>
       </div>
 
-      <div class="dot-grid-divider"></div>
-
-      <!-- ХАБ ТРИАДЫ (Отображает 3 чистых домена) -->
+      <!-- ХАБ ТРИАДЫ (Отображает 3 карточки доменов по макету) -->
       <div class="triad-hub-grid" id="triad-hub-grid">
         <!-- JS заполняет карточки доменов -->
       </div>
@@ -600,14 +676,6 @@
       </div>
     </section>
 
-    <!-- ПОДВАЛ ТЕРМИНАЛА -->
-    <footer class="terminal-footer">
-      <div class="footer-content">
-        <span class="footer-label">БИО-ДАТЧИК: АКТИВЕН</span>
-        <span class="footer-version" style="font-weight:700; color:var(--text-primary);">v1.2-alpha</span>
-      </div>
-    </footer>
-
   </main>
 
   <!-- БАННЕР-МОДАЛКА // ДОСТУП ОГРАНИЧЕН -->
@@ -687,42 +755,70 @@
   </div>
 
   <!-- ══════════════════════════════════════════════
-       НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK)
+       НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (CYBERNETIC FLOATING DOCK)
   ══════════════════════════════════════════════ -->
-  <nav class="terminal-bottom-nav" id="terminal-bottom-nav" style="display: none;">
-    <button type="button" class="bottom-nav-btn active" id="nav-btn-triad" data-view="view-categories">
-      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M3 10.5 12 3l9 7.5V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-        <path d="M9 22v-8h6v8"></path>
-      </svg>
-      <span class="bottom-nav-title">ТРИАДА</span>
-      <span class="bottom-nav-sub">ДОМЕНЫ</span>
-    </button>
-    <button type="button" class="bottom-nav-btn" id="nav-btn-tags" data-view="view-tag-cloud">
-      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
-        <path d="M4 17h16"></path>
-      </svg>
-      <span class="bottom-nav-title">ТЕГИ</span>
-      <span class="bottom-nav-sub">СВЯЗИ</span>
-    </button>
-    <button type="button" class="bottom-nav-btn" id="nav-btn-bookmarks" data-view="view-bookmarks">
-      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <polygon points="13 2 4 14 11 14 9 22 18 10 11 10 13 2"></polygon>
-      </svg>
-      <span class="bottom-nav-title">ПАМЯТЬ</span>
-      <span class="bottom-nav-sub">АРХИВ</span>
-    </button>
-    <button type="button" class="bottom-nav-btn" id="nav-btn-lab" data-view="view-terrarium-lab">
-      <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M10 2v6.5L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 8.5V2"></path>
-        <line x1="8" y1="2" x2="16" y2="2"></line>
-        <line x1="7" y1="16" x2="17" y2="16"></line>
-      </svg>
-      <span class="bottom-nav-title">ЛАБОРАТОРИЯ</span>
-      <span class="bottom-nav-sub">ΕΡΓΑΣТΗΡΙΟΝ</span>
-    </button>
-  </nav>
+  <footer class="terminal-dock-container" id="terminal-bottom-nav" style="display: none;" data-purpose="bottom-dock-container">
+    <div class="dock-floating-frame">
+      <!-- Corner Tech Accents -->
+      <div class="corner-tech-accent top-left"></div>
+      <div class="corner-tech-accent top-right"></div>
+      <div class="corner-tech-accent bottom-left"></div>
+      <div class="corner-tech-accent bottom-right"></div>
+
+      <nav aria-label="Нижняя навигация" class="terminal-bottom-nav">
+        <!-- Tab 1: БАЗИС (ACTIVE) -->
+        <button type="button" class="bottom-nav-btn active" id="nav-btn-triad" data-view="view-categories" data-purpose="nav-tab-basis">
+          <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span class="bottom-nav-title">БАЗИС</span>
+          <span class="bottom-nav-sub">ΒΑΣΙΣ</span>
+        </button>
+
+        <!-- Tab 2: ГРИМУАР -->
+        <button type="button" class="bottom-nav-btn" id="nav-btn-tags" data-view="view-tag-cloud" data-purpose="nav-tab-grimoire">
+          <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span class="bottom-nav-title">ГРИМУАР</span>
+          <span class="bottom-nav-sub">ГРАФИ</span>
+        </button>
+
+        <!-- Tab 3: КОНТУР -->
+        <button type="button" class="bottom-nav-btn" id="nav-btn-bookmarks" data-view="view-bookmarks" data-purpose="nav-tab-tools">
+          <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span class="bottom-nav-title">КОНТУР</span>
+          <span class="bottom-nav-sub">МОДУЛИ</span>
+        </button>
+
+        <!-- Tab 4: ЛАБ-181 -->
+        <button type="button" class="bottom-nav-btn" id="nav-btn-lab" data-view="view-terrarium-lab" data-purpose="nav-tab-laboratory">
+          <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10 2v7.31L4.15 19.3A2 2 0 0 0 5.86 22h12.28a2 2 0 0 0 1.71-2.7L14 9.31V2"></path>
+            <line x1="8.5" x2="15.5" y1="2" y2="2"></line>
+            <line x1="7" x2="17" y1="16" y2="16"></line>
+          </svg>
+          <span class="bottom-nav-title">ЛАБ-181</span>
+          <span class="bottom-nav-sub">РЕЗЕРВ</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- System Telemetry Footer Line -->
+    <div class="dock-telemetry-line">
+      <div>БИО-ДАТЧИК: <span class="dock-telemetry-status">АКТИВЕН</span></div>
+      <div class="dock-telemetry-ver">PROJECT S-A // v0.5a</div>
+    </div>
+
+    <!-- Official Bot Handle Label -->
+    <div class="dock-bot-handle">
+      @MyGeminiRuHelper_bot
+    </div>
+  </footer>
 
   <script src="audio.js?v=1.2-alpha"></script>
   <script src="app.js?v=1.2-alpha"></script>
