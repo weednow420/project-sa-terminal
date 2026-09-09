@@ -192,10 +192,10 @@ function showView(viewId) {
   // Полноэкранный моно-минималистичный шлюз (скрывает верхний/нижний хром)
   document.body.classList.toggle('gate-active', viewId === 'view-gate');
 
-  // Управление био-террариумом (скрыт до ввода пароля и авторизации)
+  // Управление био-террариумом (скрыт до ввода пароля, в загрузке, ошибке и в ЛАБОРАТОРИИ)
   const terrariumEl = document.getElementById('bio-terrarium');
   if (terrariumEl) {
-    if (viewId === 'view-gate' || viewId === 'view-loading' || viewId === 'view-error' || !isAuthorized()) {
+    if (viewId === 'view-gate' || viewId === 'view-loading' || viewId === 'view-error' || viewId === 'view-terrarium-lab' || !isAuthorized()) {
       terrariumEl.style.display = 'none';
     } else {
       terrariumEl.style.display = 'block';
