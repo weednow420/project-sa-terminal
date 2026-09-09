@@ -98,7 +98,9 @@
 
     // Настраиваем размер с учетом плотности пикселей
     function resize() {
+      if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
       const dpr = window.devicePixelRatio || 1;
       canvas.width = Math.floor(rect.width * dpr);
       canvas.height = Math.floor(rect.height * dpr);
@@ -280,6 +282,25 @@
   // Главный цикл рендеринга террариума
   function render(time) {
     if (!ctx || !canvas) return;
+
+    const terrariumEl = document.getElementById('bio-terrarium');
+    if (terrariumEl && (terrariumEl.style.display === 'none' || terrariumEl.offsetParent === null)) {
+      animId = requestAnimationFrame(render);
+      return;
+    }
+
+    if (canvas.width === 0 || canvas.height === 0) {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(rect.width * dpr);
+        canvas.height = Math.floor(rect.height * dpr);
+        ctx.imageSmoothingEnabled = false;
+      } else {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+    }
 
     const w = canvas.width;
     const h = canvas.height;

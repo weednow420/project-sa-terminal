@@ -19,28 +19,6 @@
 <body>
 
   <!-- ══════════════════════════════════════════════
-       БИО-ТЕРРАРИУМ АКСОЛОТЛЯ (ТАМАГОЧИ + КЛИКЕР)
-  ══════════════════════════════════════════════ -->
-  <section class="bio-terrarium-wrapper" id="bio-terrarium">
-    <div class="terrarium-glass">
-      <div class="terrarium-header-row">
-        <span class="terrarium-tag">[ БИО-КАМЕРА // b181 ]</span>
-        <div class="terrarium-stats-badge">
-          <span class="terrarium-impulses-val" id="terrarium-impulses-display">0 ⚡</span>
-          <button type="button" class="btn-terrarium-lab" id="btn-open-terrarium-lab" title="Лаборатория симбионта">[ 🧪 ЛАБОРАТОРИЯ ]</button>
-        </div>
-      </div>
-      <div class="terrarium-tank-area" id="terrarium-tank" title="Тап по террариуму генерирует импульсы">
-        <canvas id="axolotl-canvas"></canvas>
-      </div>
-      <div class="terrarium-sub-bar">
-        <span class="terrarium-sub-stat" id="terrarium-mood-label">СТАТУС: СПОКОЙСТВИЕ</span>
-        <span class="terrarium-sub-stat" id="terrarium-sync-label">СИНХР: 100%</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════════════════════════════════════════
        ШАПКА ТЕРМИНАЛА
   ══════════════════════════════════════════════ -->
   <header class="terminal-header">
@@ -60,6 +38,28 @@
     </div>
     <div class="header-divider">════════════════════════════════════════</div>
   </header>
+
+  <!-- ══════════════════════════════════════════════
+       БИО-ТЕРРАРИУМ АКСОЛОТЛЯ (ТАМАГОЧИ + КЛИКЕР)
+  ══════════════════════════════════════════════ -->
+  <section class="bio-terrarium-wrapper" id="bio-terrarium" style="display: none;">
+    <div class="terrarium-glass">
+      <div class="terrarium-header-row">
+        <span class="terrarium-tag">[ БИО-КАМЕРА // b181 ]</span>
+        <div class="terrarium-stats-badge">
+          <span class="terrarium-impulses-val" id="terrarium-impulses-display">0 ⚡</span>
+          <button type="button" class="btn-terrarium-lab" id="btn-open-terrarium-lab" title="Лаборатория симбионта">[ 🧪 ЛАБОРАТОРИЯ ]</button>
+        </div>
+      </div>
+      <div class="terrarium-tank-area" id="terrarium-tank" title="Тап по террариуму генерирует импульсы">
+        <canvas id="axolotl-canvas"></canvas>
+      </div>
+      <div class="terrarium-sub-bar">
+        <span class="terrarium-sub-stat" id="terrarium-mood-label">СТАТУС: СПОКОЙСТВИЕ</span>
+        <span class="terrarium-sub-stat" id="terrarium-sync-label">СИНХР: 100%</span>
+      </div>
+    </div>
+  </section>
 
   <!-- ══════════════════════════════════════════════
        ОСНОВНОЙ КОНТЕНТ (меняется при навигации)

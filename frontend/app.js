@@ -188,6 +188,17 @@ function showView(viewId) {
     if (mainEl) mainEl.scrollTop = 0;
   }
 
+  // Управление био-террариумом (скрыт до ввода пароля и авторизации)
+  const terrariumEl = document.getElementById('bio-terrarium');
+  if (terrariumEl) {
+    if (viewId === 'view-gate' || viewId === 'view-loading' || viewId === 'view-error' || !isAuthorized()) {
+      terrariumEl.style.display = 'none';
+    } else {
+      terrariumEl.style.display = 'block';
+      window.dispatchEvent(new Event('resize'));
+    }
+  }
+
   // Управление нижней панелью навигации (скрыта на экране авторизации/загрузки/ошибки)
   const bottomNav = document.getElementById('terminal-bottom-nav');
   if (bottomNav) {
@@ -642,6 +653,8 @@ function isAuthorized(serverVersion = null) {
 }
 
 function showGate(serverVersion = null) {
+  const terrariumEl = document.getElementById('bio-terrarium');
+  if (terrariumEl) terrariumEl.style.display = 'none';
   STATE.pinCode = '';
   STATE.pinBusy = false;
   updatePinSlots();
@@ -721,6 +734,8 @@ function setupResetButtons() {
   const btnResetSession = document.getElementById('btn-reset-session');
   if (btnResetSession) {
     btnResetSession.addEventListener('click', () => {
+      const terrariumEl = document.getElementById('bio-terrarium');
+      if (terrariumEl) terrariumEl.style.display = 'none';
       localStorage.removeItem(AUTH_STORAGE_KEY);
       localStorage.removeItem(AUTH_VERSION_KEY);
       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');

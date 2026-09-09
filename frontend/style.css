@@ -1733,7 +1733,7 @@ body {
 
 /* ── БИО-ТЕРРАРИУМ АКСОЛОТЛЯ ──────────────────────────────── */
 .bio-terrarium-wrapper {
-  padding: var(--spacing-sm) var(--spacing-md) 0;
+  padding: 0 var(--spacing-md) var(--spacing-sm);
   background-color: var(--bg);
 }
 
