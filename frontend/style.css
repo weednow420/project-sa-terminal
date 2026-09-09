@@ -913,7 +913,7 @@ body {
 /* ── НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK) ─────────────────────────── */
 .terminal-bottom-nav {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 6px;
   padding: 8px var(--spacing-md);
   background-color: var(--bg);
@@ -1731,83 +1731,57 @@ body {
   color: var(--bg);
 }
 
-/* ── БИО-ТЕРРАРИУМ АКСОЛОТЛЯ ──────────────────────────────── */
+/* ── БИО-ТЕРРАРИУМ АКСОЛОТЛЯ (УЗКАЯ ПОЛОСКА ВВЕРХУ) ──────── */
 .bio-terrarium-wrapper {
   padding: 0 var(--spacing-md) var(--spacing-sm);
   background-color: var(--bg);
 }
 
-.terrarium-glass {
-  background-color: var(--bg-surface);
-  border: 2px solid var(--border-hard);
-  border-radius: 0 !important;
-  overflow: hidden;
-  box-shadow: none !important;
-}
-
-.terrarium-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 8px;
-  background-color: var(--bg);
-  border-bottom: 1px solid var(--border);
-  font-size: 0.68rem;
-  font-family: var(--font-mono);
-}
-
-.terrarium-tag {
-  color: var(--text-dim);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-
-.terrarium-stats-badge {
+.terrarium-strip-glass {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.terrarium-impulses-val {
-  font-weight: 700;
-  color: var(--text-primary);
-  font-size: 0.75rem;
-}
-
-.btn-terrarium-lab {
-  background: transparent;
-  border: 1px solid var(--border-hard);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  cursor: pointer;
-  border-radius: 0 !important;
-  transition: all 0.1s ease;
-}
-
-.btn-terrarium-lab:hover {
-  background-color: var(--text-primary);
-  color: var(--bg);
-}
-
-.terrarium-tank-area {
-  position: relative;
-  width: 100%;
-  height: 95px;
-  cursor: pointer;
+  height: 38px;
   background-color: #0e0e0e;
-  overflow: hidden;
+  border: 1px solid var(--border-hard);
+  border-radius: 0 !important;
+  padding: 0 10px;
+  gap: 10px;
+  cursor: pointer;
   user-select: none;
   touch-action: manipulation;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-[data-theme="light"] .terrarium-tank-area {
+[data-theme="light"] .terrarium-strip-glass {
   background-color: #f2f2eb;
 }
 
-.terrarium-tank-area canvas {
+.terrarium-strip-glass:hover {
+  border-color: var(--text-primary);
+}
+
+.terrarium-strip-glass:active {
+  background-color: var(--bg-hover);
+}
+
+.terrarium-strip-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.terrarium-strip-tank {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.terrarium-strip-tank canvas {
   display: block;
   width: 100%;
   height: 100%;
@@ -1815,15 +1789,232 @@ body {
   image-rendering: crisp-edges;
 }
 
-.terrarium-sub-bar {
+.terrarium-strip-counter {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+}
+
+/* ── ЭКРАН ЛАБОРАТОРИИ СИМБИОНТА ─────────────────────────── */
+.lab-tank-card {
+  border: 1px solid var(--border-hard);
+  background-color: var(--bg-surface);
+  margin-bottom: var(--spacing-sm);
+}
+
+.lab-tank-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 3px 8px;
+  padding: 6px 10px;
+  background-color: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+
+.lab-tank-tag {
+  color: var(--text-dim);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.lab-tank-impulses {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.lab-tank-canvas-wrap {
+  width: 100%;
+  height: 140px;
+  background-color: #0e0e0e;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  overflow: hidden;
+}
+
+[data-theme="light"] .lab-tank-canvas-wrap {
+  background-color: #f2f2eb;
+}
+
+.lab-tank-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.lab-tank-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 10px;
   background-color: var(--bg);
   border-top: 1px solid var(--border);
-  font-size: 0.62rem;
   font-family: var(--font-mono);
+}
+
+.lab-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.lab-metric-box {
+  border: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lab-metric-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+}
+
+.lab-metric-label {
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+
+.lab-metric-pct {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.lab-metric-bar {
+  width: 100%;
+  height: 6px;
+  background-color: var(--border);
+  overflow: hidden;
+}
+
+.lab-metric-fill {
+  height: 100%;
+  width: 100%;
+  background-color: var(--text-primary);
+  transition: width 0.3s ease;
+}
+
+.lab-protocols-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.btn-protocol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 10px 10px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hard);
+  cursor: pointer;
+  border-radius: 0 !important;
+  transition: all 0.12s ease;
+  font-family: var(--font-mono);
+}
+
+.btn-protocol:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--text-primary);
+}
+
+.btn-protocol:active {
+  background-color: var(--text-primary);
+  color: var(--bg);
+}
+
+.btn-protocol:active .btn-protocol-title,
+.btn-protocol:active .btn-protocol-desc {
+  color: var(--bg) !important;
+}
+
+.btn-protocol-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.btn-protocol-desc {
+  font-size: 0.64rem;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
+.lab-upgrades-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.btn-upgrade-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 12px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  border-radius: 0 !important;
+  transition: all 0.12s ease;
+  font-family: var(--font-mono);
+  text-align: left;
+  width: 100%;
+}
+
+.btn-upgrade-card:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-hard);
+}
+
+.btn-upgrade-card:active {
+  border-color: var(--text-primary);
+}
+
+.btn-upgrade-top {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.btn-upgrade-name {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.06em;
+}
+
+.btn-upgrade-cost {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.btn-upgrade-desc {
+  font-size: 0.67rem;
   color: var(--text-dim);
 }
 

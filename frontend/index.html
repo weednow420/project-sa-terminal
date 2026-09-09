@@ -40,24 +40,15 @@
   </header>
 
   <!-- ══════════════════════════════════════════════
-       БИО-ТЕРРАРИУМ АКСОЛОТЛЯ (ТАМАГОЧИ + КЛИКЕР)
+       УЗКАЯ ПОЛОСКА БИО-ТЕРРАРИУМА (СИМБИОНТ b181)
   ══════════════════════════════════════════════ -->
   <section class="bio-terrarium-wrapper" id="bio-terrarium" style="display: none;">
-    <div class="terrarium-glass">
-      <div class="terrarium-header-row">
-        <span class="terrarium-tag">[ БИО-КАМЕРА // b181 ]</span>
-        <div class="terrarium-stats-badge">
-          <span class="terrarium-impulses-val" id="terrarium-impulses-display">0 ⚡</span>
-          <button type="button" class="btn-terrarium-lab" id="btn-open-terrarium-lab" title="Лаборатория симбионта">[ 🧪 ЛАБОРАТОРИЯ ]</button>
-        </div>
+    <div class="terrarium-strip-glass" id="terrarium-strip-area" title="Био-камера // b181 — кликните для перехода в Лабораторию">
+      <span class="terrarium-strip-tag">[ b181 ]</span>
+      <div class="terrarium-strip-tank">
+        <canvas id="axolotl-canvas-strip"></canvas>
       </div>
-      <div class="terrarium-tank-area" id="terrarium-tank" title="Тап по террариуму генерирует импульсы">
-        <canvas id="axolotl-canvas"></canvas>
-      </div>
-      <div class="terrarium-sub-bar">
-        <span class="terrarium-sub-stat" id="terrarium-mood-label">СТАТУС: СПОКОЙСТВИЕ</span>
-        <span class="terrarium-sub-stat" id="terrarium-sync-label">СИНХР: 100%</span>
-      </div>
+      <span class="terrarium-strip-counter" id="terrarium-strip-impulses">0 ⚡</span>
     </div>
   </section>
 
@@ -450,6 +441,99 @@
       </div>
     </section>
 
+    <!-- ══════════════════════════════════════════════
+         ЛАБОРАТОРИЯ СИМБИОНТА (ТАМАГОЧИ + КЛИКЕР)
+    ══════════════════════════════════════════════ -->
+    <section id="view-terrarium-lab" class="view">
+      <div class="view-title">
+        <span class="bracket">[</span>ЛАБОРАТОРИЯ СИМБИОНТА // b181<span class="bracket">]</span>
+      </div>
+      <div class="view-subtitle" style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 12px; letter-spacing: 0.06em;">
+        АВТОНОМНЫЙ БИО-РЕЗЕРВУАР РЕГЕНЕРАЦИИ
+      </div>
+
+      <!-- Большой резервуар аксолотля -->
+      <div class="lab-tank-card">
+        <div class="lab-tank-header">
+          <span class="lab-tank-tag" id="lab-tank-status-tag">СТАТУС: СПОКОЙСТВИЕ</span>
+          <span class="lab-tank-impulses" id="lab-impulses-val">0 ⚡</span>
+        </div>
+        <div class="lab-tank-canvas-wrap" id="lab-tank-area" title="Тап по резервуару генерирует нейро-импульсы ⚡">
+          <canvas id="axolotl-canvas-lab"></canvas>
+        </div>
+        <div class="lab-tank-footer">
+          <span style="font-size:0.65rem; color:var(--text-dim);">ТАП ГЕНЕРИРУЕТ НЕЙРО-ИМПУЛЬСЫ</span>
+          <span style="font-size:0.65rem; color:var(--text-primary); font-weight:700;" id="lab-click-power-badge">+1 ⚡/ТАП</span>
+        </div>
+      </div>
+
+      <!-- Показатели состояния (Био-тонус и Энтропия) -->
+      <div class="lab-metrics-grid">
+        <div class="lab-metric-box">
+          <div class="lab-metric-top">
+            <span class="lab-metric-label">БИО-ТОНУС (СЫТОСТЬ)</span>
+            <span class="lab-metric-pct" id="lab-satiety-val">100%</span>
+          </div>
+          <div class="lab-metric-bar">
+            <div class="lab-metric-fill" id="lab-satiety-bar" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <div class="lab-metric-box">
+          <div class="lab-metric-top">
+            <span class="lab-metric-label">ЧИСТОТА СРЕДЫ (ЭНТРОПИЯ)</span>
+            <span class="lab-metric-pct" id="lab-cleanliness-val">100%</span>
+          </div>
+          <div class="lab-metric-bar">
+            <div class="lab-metric-fill" id="lab-clean-bar" style="width: 100%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Протоколы взаимодействия (в точности по скриншоту) -->
+      <div class="dot-grid-divider"></div>
+      <div style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 8px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;">
+        ПРОТОКОЛЫ ВЗАИМОДЕЙСТВИЯ
+      </div>
+      <div class="lab-protocols-list">
+        <button type="button" class="btn-protocol" id="btn-feed-axolotl">
+          <div class="btn-protocol-title">[ ИНФУЗИЯ: ТАЛАЯ ВОДА ]</div>
+          <div class="btn-protocol-desc">Восстанавливает Био-тонус (+30%)</div>
+        </button>
+        <button type="button" class="btn-protocol" id="btn-clean-axolotl">
+          <div class="btn-protocol-title">[ ФИЛЬТРАЦИЯ КОНТУРА ]</div>
+          <div class="btn-protocol-desc">Сбрасывает накопленную энтропию</div>
+        </button>
+      </div>
+
+      <!-- Медленная прокачка контура -->
+      <div class="dot-grid-divider"></div>
+      <div style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 8px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;">
+        МЕДЛЕННАЯ ПРОКАЧКА КОНТУРА
+      </div>
+      <div class="lab-upgrades-list">
+        <button type="button" class="btn-upgrade-card" id="btn-upgrade-click">
+          <div class="btn-upgrade-top">
+            <span class="btn-upgrade-name">УСИЛИТЕЛЬ ИМПУЛЬСА</span>
+            <span class="btn-upgrade-cost" id="upgrade-click-cost">20 ⚡</span>
+          </div>
+          <div class="btn-upgrade-desc">
+            Сила импульса: <strong id="upgrade-click-val">+1</strong> к тапу
+          </div>
+        </button>
+
+        <button type="button" class="btn-upgrade-card" id="btn-upgrade-auto">
+          <div class="btn-upgrade-top">
+            <span class="btn-upgrade-name">ГЕНЕРАТОР ПУЗЫРЬКОВ</span>
+            <span class="btn-upgrade-cost" id="upgrade-auto-cost">50 ⚡</span>
+          </div>
+          <div class="btn-upgrade-desc">
+            Авто-приток: <strong id="upgrade-auto-val">+0.5</strong> ⚡/сек
+          </div>
+        </button>
+      </div>
+    </section>
+
   </main>
 
   <!-- БАННЕР-МОДАЛКА // ДОСТУП ОГРАНИЧЕН -->
@@ -504,6 +588,11 @@
           <span class="main-nav-title">ИНСТРУМЕНТЫ</span>
           <span class="main-nav-arrow">→</span>
         </button>
+        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="lab">
+          <span class="main-nav-num">[🦎]</span>
+          <span class="main-nav-title">ЛАБОРАТОРИЯ</span>
+          <span class="main-nav-arrow">→</span>
+        </button>
         <button type="button" class="main-nav-btn main-menu-item" data-menu-action="bookmarks">
           <span class="main-nav-num">[★]</span>
           <span class="main-nav-title">ЗАКЛАДКИ</span>
@@ -523,68 +612,17 @@
     </div>
   </div>
 
-  <!-- МОДАЛЬНОЕ ОКНО // ЛАБОРАТОРИЯ АКСОЛОТЛЯ -->
-  <div class="terminal-modal-overlay" id="modal-terrarium-lab" style="display:none;" role="dialog" aria-modal="true">
-    <div class="terminal-modal-box" style="max-width: 360px; padding: 14px;">
-      <div class="modal-header" style="margin-bottom: 6px;">
-        <span class="modal-badge">[ ЛАБОРАТОРИЯ // АКСОЛОТЛЬ ]</span>
-        <button type="button" class="btn-modal-close" id="btn-close-terrarium-lab" aria-label="Закрыть">✕</button>
-      </div>
-      <div class="modal-divider">══════════════════════════════</div>
-      
-      <!-- Показатели -->
-      <div class="lab-stats-group" style="margin: 10px 0; display: flex; flex-direction: column; gap: 6px;">
-        <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
-          <span style="color: var(--text-dim);">НЕЙРО-ИМПУЛЬСЫ:</span>
-          <strong style="color: var(--text-primary);" id="lab-impulses-val">0 ⚡</strong>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
-          <span style="color: var(--text-dim);">СЫТОСТЬ (БИО-ТОНУС):</span>
-          <span id="lab-satiety-val">100%</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
-          <span style="color: var(--text-dim);">ЧИСТОТА КОНТУРА:</span>
-          <span id="lab-cleanliness-val">100%</span>
-        </div>
-      </div>
-
-      <!-- Действия ухода -->
-      <div class="modal-divider" style="margin: 4px 0;">──────────────────────────────</div>
-      <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 6px;">ПРОТОКОЛЫ УХОДА</div>
-      <div style="display: flex; gap: 6px; margin-bottom: 10px;">
-        <button type="button" class="btn-action" id="btn-feed-axolotl" style="flex: 1; padding: 8px 4px; font-size: 0.72rem;">[ 🧪 ТАЛАЯ ВОДА ]<br><span style="font-size:0.65rem; color:var(--text-dim);">+30% Сытости</span></button>
-        <button type="button" class="btn-action" id="btn-clean-axolotl" style="flex: 1; padding: 8px 4px; font-size: 0.72rem;">[ 🛠 ОЧИСТКА ]<br><span style="font-size:0.65rem; color:var(--text-dim);">Сброс энтропии</span></button>
-      </div>
-
-      <!-- Прокачка кликера -->
-      <div class="modal-divider" style="margin: 4px 0;">──────────────────────────────</div>
-      <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 6px;">МЕДЛЕННАЯ ПРОКАЧКА КОНТУРА</div>
-      <div style="display: flex; flex-direction: column; gap: 6px;">
-        <button type="button" class="btn-action" id="btn-upgrade-click" style="text-align: left; padding: 8px 10px;">
-          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.75rem;">
-            <span>УСИЛИТЕЛЬ ИМПУЛЬСА</span>
-            <span id="upgrade-click-cost">20 ⚡</span>
-          </div>
-          <div style="font-size: 0.68rem; color: var(--text-dim);">Сила клика: <span id="upgrade-click-val">+1</span> к тапу</div>
-        </button>
-        <button type="button" class="btn-action" id="btn-upgrade-auto" style="text-align: left; padding: 8px 10px;">
-          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.75rem;">
-            <span>ГЕНЕРАТОР ПУЗЫРЬКОВ</span>
-            <span id="upgrade-auto-cost">50 ⚡</span>
-          </div>
-          <div style="font-size: 0.68rem; color: var(--text-dim);">Авто-приток: <span id="upgrade-auto-val">+0.5</span> ⚡/сек</div>
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- ══════════════════════════════════════════════
        НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK)
   ══════════════════════════════════════════════ -->
-  <nav class="terminal-bottom-nav" id="terminal-bottom-nav" style="display: none; justify-content: center;">
-    <button type="button" class="bottom-nav-btn active" id="nav-btn-basis" style="flex: 1;">
+  <nav class="terminal-bottom-nav" id="terminal-bottom-nav" style="display: none;">
+    <button type="button" class="bottom-nav-btn active" id="nav-btn-basis" data-view="view-categories" style="flex: 1;">
       <span>БАЗИС</span>
       <span class="bottom-nav-sub">ΒΑΣΙΣ</span>
+    </button>
+    <button type="button" class="bottom-nav-btn" id="nav-btn-lab" data-view="view-terrarium-lab" style="flex: 1;">
+      <span>ЛАБОРАТОРИЯ</span>
+      <span class="bottom-nav-sub">ΕΡΓΑΣТΗΡΙΟΝ</span>
     </button>
   </nav>
 

@@ -67,18 +67,19 @@
     state.lastUpdate = now;
   }
 
-  // ── ГРАФИКА И АНИМАЦИЯ АКСОЛОТЛЯ (CANVAS 2D) ──────────────────
-  let canvas = null;
-  let ctx = null;
+  // ── ГРАФИКА И ДВА ХОЛСТА (ПОЛОСКА ВВЕРХУ + ЛАБОРАТОРИЯ) ───────
+  let canvasStrip = null;
+  let ctxStrip = null;
+  let canvasLab = null;
+  let ctxLab = null;
   let animId = null;
 
-  // Положение и физика аксолотля
-  const axo = {
-    x: 160,
-    y: 42,
-    vx: 0.35,
-    targetX: 160,
-    facing: 1, // 1 вправо, -1 влево
+  // Физика аксолотля в узкой полоске
+  const axoStrip = {
+    x: 80,
+    y: 19,
+    vx: 0.45,
+    facing: 1,
     bobOffset: 0,
     blinkTimer: 0,
     isBlinking: false,
@@ -86,79 +87,129 @@
     reactionTimer: 0,
   };
 
-  // Пузырьки в террариуме
-  const bubbles = [];
-  // Всплывающие надписи (+1 ⚡)
-  const floaters = [];
+  // Физика аксолотля в лаборатории
+  const axoLab = {
+    x: 140,
+    y: 65,
+    vx: 0.35,
+    facing: 1,
+    bobOffset: 0,
+    blinkTimer: 0,
+    isBlinking: false,
+    wigglePhase: 0,
+    reactionTimer: 0,
+  };
 
-  function initCanvas() {
-    canvas = document.getElementById('axolotl-canvas');
-    if (!canvas) return;
-    ctx = canvas.getContext('2d');
+  // Пузырьки и флоатеры
+  const stripBubbles = [];
+  const stripFloaters = [];
 
-    // Настраиваем размер с учетом плотности пикселей
-    function resize() {
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
+  const labBubbles = [];
+  const labFloaters = [];
+
+  function initCanvases() {
+    canvasStrip = document.getElementById('axolotl-canvas-strip');
+    if (canvasStrip) ctxStrip = canvasStrip.getContext('2d');
+
+    canvasLab = document.getElementById('axolotl-canvas-lab');
+    if (canvasLab) ctxLab = canvasLab.getContext('2d');
+
+    function resizeAll() {
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.floor(rect.width * dpr);
-      canvas.height = Math.floor(rect.height * dpr);
-      ctx.imageSmoothingEnabled = false;
-    }
-    resize();
-    window.addEventListener('resize', resize);
 
-    // Инициализация фоновых пузырьков
-    bubbles.length = 0;
-    for (let i = 0; i < 7; i++) {
-      bubbles.push({
-        x: Math.random() * 320,
-        y: Math.random() * 80,
-        speed: 0.2 + Math.random() * 0.35,
-        r: 1 + Math.random() * 1.5,
+      if (canvasStrip) {
+        const rect = canvasStrip.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          canvasStrip.width = Math.floor(rect.width * dpr);
+          canvasStrip.height = Math.floor(rect.height * dpr);
+          if (ctxStrip) ctxStrip.imageSmoothingEnabled = false;
+        }
+      }
+
+      if (canvasLab) {
+        const rect = canvasLab.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          canvasLab.width = Math.floor(rect.width * dpr);
+          canvasLab.height = Math.floor(rect.height * dpr);
+          if (ctxLab) ctxLab.imageSmoothingEnabled = false;
+        }
+      }
+    }
+
+    resizeAll();
+    window.addEventListener('resize', resizeAll);
+
+    // Пузырьки для полоски
+    stripBubbles.length = 0;
+    for (let i = 0; i < 5; i++) {
+      stripBubbles.push({
+        x: Math.random() * 240,
+        y: Math.random() * 38,
+        speed: 0.2 + Math.random() * 0.3,
+        r: 1 + Math.random() * 0.8,
       });
     }
 
-    // Интерактив: клик по террариуму
-    const tankArea = document.getElementById('terrarium-tank');
-    if (tankArea) {
-      tankArea.addEventListener('click', onTankClick);
+    // Пузырьки для лаборатории
+    labBubbles.length = 0;
+    for (let i = 0; i < 9; i++) {
+      labBubbles.push({
+        x: Math.random() * 320,
+        y: Math.random() * 120,
+        speed: 0.3 + Math.random() * 0.4,
+        r: 1.2 + Math.random() * 1.5,
+      });
+    }
+
+    // Клик по верхней полоске
+    const stripArea = document.getElementById('terrarium-strip-area');
+    if (stripArea) {
+      stripArea.addEventListener('click', (e) => {
+        handleTap(e, canvasStrip, stripFloaters, stripBubbles, axoStrip);
+      });
+    }
+
+    // Клик по лаборатории
+    const labArea = document.getElementById('lab-tank-area');
+    if (labArea) {
+      labArea.addEventListener('click', (e) => {
+        handleTap(e, canvasLab, labFloaters, labBubbles, axoLab);
+      });
     }
   }
 
-  // Обработка клика по террариуму (генерация импульса)
-  function onTankClick(e) {
+  // Общий обработчик клика
+  function handleTap(e, targetCanvas, floatersList, bubblesList, axoObj) {
     state.impulses += state.clickPower;
     saveState();
     updateUI();
 
-    // Реакция аксолотля
-    axo.reactionTimer = 18; // кадра реакции
-    if (Math.random() > 0.5) axo.vx = -axo.vx; // иногда меняет направление
+    axoObj.reactionTimer = 20;
+    if (Math.random() > 0.5) axoObj.vx = -axoObj.vx;
 
-    // Всплывающий текст с координатами клика
-    const rect = canvas.getBoundingClientRect();
-    const clickX = e.clientX ? (e.clientX - rect.left) : (rect.width / 2);
-    const clickY = e.clientY ? (e.clientY - rect.top) : (rect.height / 2);
+    let clickX = 100;
+    let clickY = 20;
+    if (targetCanvas) {
+      const rect = targetCanvas.getBoundingClientRect();
+      clickX = e.clientX ? (e.clientX - rect.left) : (rect.width / 2);
+      clickY = e.clientY ? (e.clientY - rect.top) : (rect.height / 2);
+    }
 
-    floaters.push({
+    floatersList.push({
       x: clickX,
       y: clickY,
       text: `+${state.clickPower} ⚡`,
       alpha: 1.0,
-      vy: -1.2,
+      vy: -1.0,
     });
 
-    // Добавляем 2 пузырька на месте клика
-    bubbles.push({
-      x: clickX + (Math.random() * 12 - 6),
+    bubblesList.push({
+      x: clickX + (Math.random() * 10 - 5),
       y: clickY,
-      speed: 0.8 + Math.random() * 0.6,
-      r: 2,
+      speed: 0.7 + Math.random() * 0.5,
+      r: 1.8,
     });
 
-    // Виброотклик Telegram
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
     }
@@ -279,129 +330,215 @@
     c.restore();
   }
 
-  // Главный цикл рендеринга террариума
+  // ── РЕНДЕР ОБОИХ ХОЛСТОВ ──────────────────────────────────────
   function render(time) {
-    if (!ctx || !canvas) return;
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const bgCol = isLight ? '#f2f2eb' : '#0e0e0e';
+    const waveCol = isLight ? '#d4d4cc' : '#222222';
+    const bubbleCol = isLight ? 'rgba(0, 0, 0, 0.25)' : 'rgba(255, 255, 255, 0.35)';
+    const textCol = isLight ? 'rgba(10, 10, 10, ' : 'rgba(255, 255, 255, ';
 
-    const terrariumEl = document.getElementById('bio-terrarium');
-    if (terrariumEl && (terrariumEl.style.display === 'none' || terrariumEl.offsetParent === null)) {
-      animId = requestAnimationFrame(render);
-      return;
-    }
-
-    if (canvas.width === 0 || canvas.height === 0) {
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = Math.floor(rect.width * dpr);
-        canvas.height = Math.floor(rect.height * dpr);
-        ctx.imageSmoothingEnabled = false;
-      } else {
-        animId = requestAnimationFrame(render);
-        return;
-      }
-    }
-
-    const w = canvas.width;
-    const h = canvas.height;
     const dpr = window.devicePixelRatio || 1;
 
-    ctx.clearRect(0, 0, w, h);
-
-    // Фон террариума (чистая монохромная эстетика)
-    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-    ctx.fillStyle = isLight ? '#f2f2eb' : '#0e0e0e';
-    ctx.fillRect(0, 0, w, h);
-
-    // Водная рябь вверху (пиксельная тонкая линия)
-    ctx.fillStyle = isLight ? '#d4d4cc' : '#222222';
-    for (let x = 0; x < w; x += 8 * dpr) {
-      const waveY = Math.sin((time * 0.003) + (x * 0.05)) * 1.5 * dpr;
-      ctx.fillRect(x, 4 * dpr + waveY, 4 * dpr, 1 * dpr);
-    }
-
-    // Движение и отрисовка пузырьков
-    ctx.fillStyle = isLight ? 'rgba(0, 0, 0, 0.25)' : 'rgba(255, 255, 255, 0.35)';
-    bubbles.forEach(b => {
-      b.y -= b.speed * dpr;
-      if (b.y < 2) {
-        b.y = (h / dpr) + 4;
-        b.x = Math.random() * (w / dpr);
-      }
-      ctx.beginPath();
-      ctx.arc(b.x * dpr, b.y * dpr, b.r * dpr, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    // Обновление логики движения аксолотля
-    const logicalW = w / dpr;
-    const logicalH = h / dpr;
-
-    axo.wigglePhase = time * 0.004;
-
-    // Плавное парение по вертикали
-    axo.bobOffset = Math.sin(time * 0.003) * 3.5;
-
-    // Горизонтальное плавание
-    axo.x += axo.vx;
-    if (axo.x > logicalW - 55) {
-      axo.x = logicalW - 55;
-      axo.vx = -Math.abs(axo.vx);
-    } else if (axo.x < 55) {
-      axo.x = 55;
-      axo.vx = Math.abs(axo.vx);
-    }
-    axo.facing = axo.vx >= 0 ? 1 : -1;
-
-    // Таймер моргания
-    axo.blinkTimer++;
-    if (axo.blinkTimer > 160) {
-      axo.isBlinking = true;
-      if (axo.blinkTimer > 172) {
-        axo.isBlinking = false;
-        axo.blinkTimer = 0;
-      }
-    }
-
-    // Реакция на клик
-    let isHappy = false;
-    if (axo.reactionTimer > 0) {
-      axo.reactionTimer--;
-      isHappy = true;
-    }
-
-    // Отрисовываем аксолотля
-    const drawScale = 1.35 * dpr;
-    drawPixelAxolotl(
-      ctx,
-      axo.x * dpr,
-      (axo.y + axo.bobOffset) * dpr,
-      drawScale,
-      axo.facing,
-      isHappy,
-      axo.isBlinking,
-      axo.wigglePhase
-    );
-
-    // Отрисовка всплывающих надписей (+1 ⚡)
-    for (let i = floaters.length - 1; i >= 0; i--) {
-      const f = floaters[i];
-      f.y += f.vy;
-      f.alpha -= 0.025;
-
-      if (f.alpha <= 0) {
-        floaters.splice(i, 1);
-        continue;
+    // 1. РЕНДЕР ВЕРХНЕЙ ПОЛОСКИ
+    const terrariumStripWrapper = document.getElementById('bio-terrarium');
+    if (canvasStrip && ctxStrip && terrariumStripWrapper && terrariumStripWrapper.style.display !== 'none') {
+      if (canvasStrip.width === 0 || canvasStrip.height === 0) {
+        const rect = canvasStrip.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          canvasStrip.width = Math.floor(rect.width * dpr);
+          canvasStrip.height = Math.floor(rect.height * dpr);
+          ctxStrip.imageSmoothingEnabled = false;
+        }
       }
 
-      ctx.save();
-      ctx.fillStyle = isLight
-        ? `rgba(10, 10, 10, ${f.alpha})`
-        : `rgba(255, 255, 255, ${f.alpha})`;
-      ctx.font = `bold ${12 * dpr}px 'Space Mono', monospace`;
-      ctx.textAlign = 'center';
-      ctx.fillText(f.text, f.x * dpr, f.y * dpr);
-      ctx.restore();
+      if (canvasStrip.width > 0 && canvasStrip.height > 0) {
+        const w = canvasStrip.width;
+        const h = canvasStrip.height;
+        const logicalW = w / dpr;
+        const logicalH = h / dpr;
+
+        ctxStrip.clearRect(0, 0, w, h);
+        ctxStrip.fillStyle = bgCol;
+        ctxStrip.fillRect(0, 0, w, h);
+
+        // Пузырьки
+        ctxStrip.fillStyle = bubbleCol;
+        stripBubbles.forEach(b => {
+          b.y -= b.speed * dpr;
+          if (b.y < 2) {
+            b.y = (h / dpr) + 2;
+            b.x = Math.random() * logicalW;
+          }
+          ctxStrip.beginPath();
+          ctxStrip.arc(b.x * dpr, b.y * dpr, b.r * dpr, 0, Math.PI * 2);
+          ctxStrip.fill();
+        });
+
+        // Движение аксолотля в полоске
+        axoStrip.wigglePhase = time * 0.004;
+        axoStrip.bobOffset = Math.sin(time * 0.0035) * 2;
+        axoStrip.x += axoStrip.vx;
+
+        const boundPadding = 25;
+        if (axoStrip.x > logicalW - boundPadding) {
+          axoStrip.x = logicalW - boundPadding;
+          axoStrip.vx = -Math.abs(axoStrip.vx);
+        } else if (axoStrip.x < boundPadding) {
+          axoStrip.x = boundPadding;
+          axoStrip.vx = Math.abs(axoStrip.vx);
+        }
+        axoStrip.facing = axoStrip.vx >= 0 ? 1 : -1;
+
+        // Моргание
+        axoStrip.blinkTimer++;
+        if (axoStrip.blinkTimer > 170) {
+          axoStrip.isBlinking = true;
+          if (axoStrip.blinkTimer > 182) {
+            axoStrip.isBlinking = false;
+            axoStrip.blinkTimer = 0;
+          }
+        }
+
+        let isHappyStrip = false;
+        if (axoStrip.reactionTimer > 0) {
+          axoStrip.reactionTimer--;
+          isHappyStrip = true;
+        }
+
+        // Отрисовка маленького аксолотля
+        const scaleStrip = 0.68 * dpr;
+        drawPixelAxolotl(
+          ctxStrip,
+          axoStrip.x * dpr,
+          (logicalH / 2 + axoStrip.bobOffset) * dpr,
+          scaleStrip,
+          axoStrip.facing,
+          isHappyStrip,
+          axoStrip.isBlinking,
+          axoStrip.wigglePhase
+        );
+
+        // Флоатеры в полоске
+        for (let i = stripFloaters.length - 1; i >= 0; i--) {
+          const f = stripFloaters[i];
+          f.y += f.vy;
+          f.alpha -= 0.03;
+          if (f.alpha <= 0) {
+            stripFloaters.splice(i, 1);
+            continue;
+          }
+          ctxStrip.save();
+          ctxStrip.fillStyle = `${textCol}${f.alpha})`;
+          ctxStrip.font = `bold ${10 * dpr}px 'Space Mono', monospace`;
+          ctxStrip.textAlign = 'center';
+          ctxStrip.fillText(f.text, f.x * dpr, f.y * dpr);
+          ctxStrip.restore();
+        }
+      }
+    }
+
+    // 2. РЕНДЕР ЛАБОРАТОРИИ
+    const labView = document.getElementById('view-terrarium-lab');
+    if (canvasLab && ctxLab && labView && labView.classList.contains('active')) {
+      if (canvasLab.width === 0 || canvasLab.height === 0) {
+        const rect = canvasLab.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          canvasLab.width = Math.floor(rect.width * dpr);
+          canvasLab.height = Math.floor(rect.height * dpr);
+          ctxLab.imageSmoothingEnabled = false;
+        }
+      }
+
+      if (canvasLab.width > 0 && canvasLab.height > 0) {
+        const w = canvasLab.width;
+        const h = canvasLab.height;
+        const logicalW = w / dpr;
+        const logicalH = h / dpr;
+
+        ctxLab.clearRect(0, 0, w, h);
+        ctxLab.fillStyle = bgCol;
+        ctxLab.fillRect(0, 0, w, h);
+
+        // Рябь вверху
+        ctxLab.fillStyle = waveCol;
+        for (let x = 0; x < w; x += 8 * dpr) {
+          const waveY = Math.sin((time * 0.003) + (x * 0.05)) * 1.5 * dpr;
+          ctxLab.fillRect(x, 4 * dpr + waveY, 4 * dpr, 1 * dpr);
+        }
+
+        // Пузырьки
+        ctxLab.fillStyle = bubbleCol;
+        labBubbles.forEach(b => {
+          b.y -= b.speed * dpr;
+          if (b.y < 2) {
+            b.y = (h / dpr) + 4;
+            b.x = Math.random() * logicalW;
+          }
+          ctxLab.beginPath();
+          ctxLab.arc(b.x * dpr, b.y * dpr, b.r * dpr, 0, Math.PI * 2);
+          ctxLab.fill();
+        });
+
+        // Движение крупного аксолотля
+        axoLab.wigglePhase = time * 0.004;
+        axoLab.bobOffset = Math.sin(time * 0.003) * 4;
+        axoLab.x += axoLab.vx;
+
+        const labPadding = 55;
+        if (axoLab.x > logicalW - labPadding) {
+          axoLab.x = logicalW - labPadding;
+          axoLab.vx = -Math.abs(axoLab.vx);
+        } else if (axoLab.x < labPadding) {
+          axoLab.x = labPadding;
+          axoLab.vx = Math.abs(axoLab.vx);
+        }
+        axoLab.facing = axoLab.vx >= 0 ? 1 : -1;
+
+        axoLab.blinkTimer++;
+        if (axoLab.blinkTimer > 160) {
+          axoLab.isBlinking = true;
+          if (axoLab.blinkTimer > 172) {
+            axoLab.isBlinking = false;
+            axoLab.blinkTimer = 0;
+          }
+        }
+
+        let isHappyLab = false;
+        if (axoLab.reactionTimer > 0) {
+          axoLab.reactionTimer--;
+          isHappyLab = true;
+        }
+
+        const scaleLab = 1.45 * dpr;
+        drawPixelAxolotl(
+          ctxLab,
+          axoLab.x * dpr,
+          (axoLab.y + axoLab.bobOffset) * dpr,
+          scaleLab,
+          axoLab.facing,
+          isHappyLab,
+          axoLab.isBlinking,
+          axoLab.wigglePhase
+        );
+
+        // Флоатеры в лаборатории
+        for (let i = labFloaters.length - 1; i >= 0; i--) {
+          const f = labFloaters[i];
+          f.y += f.vy;
+          f.alpha -= 0.025;
+          if (f.alpha <= 0) {
+            labFloaters.splice(i, 1);
+            continue;
+          }
+          ctxLab.save();
+          ctxLab.fillStyle = `${textCol}${f.alpha})`;
+          ctxLab.font = `bold ${13 * dpr}px 'Space Mono', monospace`;
+          ctxLab.textAlign = 'center';
+          ctxLab.fillText(f.text, f.x * dpr, f.y * dpr);
+          ctxLab.restore();
+        }
+      }
     }
 
     animId = requestAnimationFrame(render);
@@ -426,42 +563,51 @@
 
   // ── ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ─────────────────────────────────────
   function updateUI() {
-    const impulsesDisp = document.getElementById('terrarium-impulses-display');
-    if (impulsesDisp) {
-      impulsesDisp.textContent = `${Math.floor(state.impulses)} ⚡`;
+    const formattedImpulses = `${Math.floor(state.impulses)} ⚡`;
+
+    // 1. Полоска вверху
+    const stripCounter = document.getElementById('terrarium-strip-impulses');
+    if (stripCounter) {
+      stripCounter.textContent = formattedImpulses;
     }
 
+    // 2. Экран лаборатории
     const labImpulses = document.getElementById('lab-impulses-val');
     if (labImpulses) {
-      labImpulses.textContent = `${Math.floor(state.impulses)} ⚡`;
+      labImpulses.textContent = formattedImpulses;
     }
 
-    const labSatiety = document.getElementById('lab-satiety-val');
-    if (labSatiety) {
-      labSatiety.textContent = `${Math.round(state.satiety)}%`;
+    const labClickBadge = document.getElementById('lab-click-power-badge');
+    if (labClickBadge) {
+      labClickBadge.textContent = `+${state.clickPower} ⚡/ТАП`;
     }
 
-    const labClean = document.getElementById('lab-cleanliness-val');
-    if (labClean) {
-      labClean.textContent = `${Math.round(state.cleanliness)}%`;
-    }
+    // Сытость
+    const satVal = Math.round(state.satiety);
+    const labSatVal = document.getElementById('lab-satiety-val');
+    if (labSatVal) labSatVal.textContent = `${satVal}%`;
 
-    // Статус и настроение
-    const moodLabel = document.getElementById('terrarium-mood-label');
-    if (moodLabel) {
+    const labSatBar = document.getElementById('lab-satiety-bar');
+    if (labSatBar) labSatBar.style.width = `${satVal}%`;
+
+    // Чистота
+    const cleanVal = Math.round(state.cleanliness);
+    const labCleanVal = document.getElementById('lab-cleanliness-val');
+    if (labCleanVal) labCleanVal.textContent = `${cleanVal}%`;
+
+    const labCleanBar = document.getElementById('lab-clean-bar');
+    if (labCleanBar) labCleanBar.style.width = `${cleanVal}%`;
+
+    // Статус настроения
+    const statusTag = document.getElementById('lab-tank-status-tag');
+    if (statusTag) {
       if (state.satiety < 25) {
-        moodLabel.textContent = 'СТАТУС: ГОЛОДЕН';
+        statusTag.textContent = 'СТАТУС: ГОЛОДЕН // СНИЖЕНИЕ ТОНУСА';
       } else if (state.cleanliness < 25) {
-        moodLabel.textContent = 'СТАТУС: ЭНТРОПИЯ';
+        statusTag.textContent = 'СТАТУС: ВЫСОКАЯ ЭНТРОПИЯ';
       } else {
-        moodLabel.textContent = 'СТАТУС: СПОКОЙСТВИЕ';
+        statusTag.textContent = 'СТАТУС: СПОКОЙСТВИЕ';
       }
-    }
-
-    const syncLabel = document.getElementById('terrarium-sync-label');
-    if (syncLabel) {
-      const avg = Math.round((state.satiety + state.cleanliness) / 2);
-      syncLabel.textContent = `СИНХР: ${avg}%`;
     }
 
     // Цены улучшений
@@ -478,33 +624,9 @@
     if (autoValEl) autoValEl.textContent = `+${state.autoRate.toFixed(1)}`;
   }
 
-  // ── НАСТРОЙКА КНОПОК ЛАБОРАТОРИИ ──────────────────────────────
-  function setupLabModal() {
-    const modal = document.getElementById('modal-terrarium-lab');
-    const btnOpen = document.getElementById('btn-open-terrarium-lab');
-    const btnClose = document.getElementById('btn-close-terrarium-lab');
-
-    if (btnOpen && modal) {
-      btnOpen.addEventListener('click', (e) => {
-        e.stopPropagation();
-        modal.style.display = 'flex';
-        updateUI();
-        if (window.Telegram?.WebApp?.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-        }
-      });
-    }
-
-    if (btnClose && modal) {
-      btnClose.addEventListener('click', () => {
-        modal.style.display = 'none';
-        if (window.Telegram?.WebApp?.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-        }
-      });
-    }
-
-    // Кормление
+  // ── НАСТРОЙКА КНОПОК ПРОТОКОЛОВ И ПРОКАЧКИ ─────────────────────
+  function setupLabControls() {
+    // Восполнение сытости: [ ИНФУЗИЯ: ТАЛАЯ ВОДА ]
     const btnFeed = document.getElementById('btn-feed-axolotl');
     if (btnFeed) {
       btnFeed.addEventListener('click', () => {
@@ -517,7 +639,7 @@
       });
     }
 
-    // Очистка
+    // Уборка среды: [ ФИЛЬТРАЦИЯ КОНТУРА ]
     const btnClean = document.getElementById('btn-clean-axolotl');
     if (btnClean) {
       btnClean.addEventListener('click', () => {
@@ -530,7 +652,7 @@
       });
     }
 
-    // Апгрейд силы клика
+    // Улучшение силы клика
     const btnUpClick = document.getElementById('btn-upgrade-click');
     if (btnUpClick) {
       btnUpClick.addEventListener('click', () => {
@@ -551,7 +673,7 @@
       });
     }
 
-    // Апгрейд авто-клика
+    // Улучшение авто-кликера
     const btnUpAuto = document.getElementById('btn-upgrade-auto');
     if (btnUpAuto) {
       btnUpAuto.addEventListener('click', () => {
@@ -576,16 +698,11 @@
   // ── ТОЧКА ВХОДА МОДУЛЯ ────────────────────────────────────────
   function initTerrarium() {
     loadState();
-    initCanvas();
-    setupLabModal();
+    initCanvases();
+    setupLabControls();
     updateUI();
 
-    // Запуск цикла отрисовки
-    if (canvas) {
-      animId = requestAnimationFrame(render);
-    }
-
-    // Секундный игровой такт
+    animId = requestAnimationFrame(render);
     setInterval(gameLoopTick, 1000);
   }
 

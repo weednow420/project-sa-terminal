@@ -212,7 +212,7 @@ function showView(viewId) {
   // Обновляем состояние кнопок нижнего меню
   document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
     const btnTarget = btn.getAttribute('data-view');
-    if (btnTarget === viewId || (btnTarget === 'view-categories' && (viewId === 'view-categories' || viewId === 'view-card-detail'))) {
+    if (btnTarget === viewId || (btn.id === 'nav-btn-basis' && viewId !== 'view-terrarium-lab')) {
       btn.classList.add('active');
     } else {
       btn.classList.remove('active');
@@ -1680,9 +1680,21 @@ function setupBottomNav() {
         renderBookmarks();
       } else if (targetView === 'view-tools') {
         selectTool('menu');
+      } else if (targetView === 'view-terrarium-lab') {
+        window.dispatchEvent(new Event('resize'));
       }
     });
   });
+
+  const stripTag = document.querySelector('.terrarium-strip-tag');
+  if (stripTag) {
+    stripTag.style.cursor = 'pointer';
+    stripTag.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showView('view-terrarium-lab');
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+  }
 }
 
 function setupMainMenu() {
@@ -1707,6 +1719,8 @@ function setupMainMenu() {
       } else if (action === 'tools') {
         showView('view-tools');
         selectTool('menu');
+      } else if (action === 'lab') {
+        showView('view-terrarium-lab');
       } else if (action === 'observations') {
         showView('view-observations');
         const activeObsTab = document.querySelector('.obs-tab-btn.active')?.getAttribute('data-subtab') || 'source';
