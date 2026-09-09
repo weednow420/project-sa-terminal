@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=0.4a" />
+  <link rel="stylesheet" href="style.css?v=0.3a" />
 </head>
 <body>
   <!-- Фоновый кинематографичный CRT-сканлайн (без оверхеда на GPU) -->
@@ -27,7 +27,6 @@
     <div class="header-top">
       <span class="header-label">PROJECT S-A</span>
       <div class="header-top-right">
-        <button type="button" class="btn-sound-toggle" id="btn-sound-toggle-header" onclick="SoundFX.toggle()" title="Звук терминала">[ 🔊 ЗВУК ]</button>
         <button type="button" class="btn-theme-toggle" id="btn-theme-toggle" title="Переключить тему (ТЁМНАЯ / СВЕТЛАЯ)">[ТЕМА: ТЁМНАЯ]</button>
         <span class="header-status" id="status-indicator">■ ONLINE</span>
       </div>
@@ -79,7 +78,6 @@
               <span class="gate-status-label">SYS_ONLINE // KB-181</span>
             </div>
             <div class="gate-node-id">
-              <button type="button" class="btn-sound-toggle" id="btn-sound-toggle-gate" onclick="SoundFX.toggle()" title="Звук терминала">[ 🔊 ЗВУК ]</button>
               NODE_ID: <span class="gate-node-highlight">#09-SU</span>
             </div>
           </div>
@@ -743,12 +741,11 @@
     <div class="footer-divider">════════════════════════════════════════</div>
     <div class="footer-content">
       <span class="footer-label">БИО-ДАТЧИК: АКТИВЕН</span>
-      <span class="footer-version" style="font-weight:700; color:var(--text-primary);">v0.4a</span>
+      <span class="footer-version" style="font-weight:700; color:var(--text-primary);">v0.3a</span>
     </div>
   </footer>
 
-  <script src="audio.js?v=0.4a"></script>
-  <script src="app.js?v=0.4a"></script>
-  <script src="terrarium.js?v=0.4a"></script>
+  <script src="app.js?v=0.3a"></script>
+  <script src="terrarium.js?v=0.3a"></script>
 </body>
 </html>

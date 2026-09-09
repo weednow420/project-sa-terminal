@@ -120,46 +120,6 @@ body {
   background: var(--bg-hover);
 }
 
-.btn-sound-toggle {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  background: transparent;
-  color: var(--text-dim);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  padding: 2px 6px;
-  cursor: pointer;
-  letter-spacing: 0.05em;
-  user-select: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.12s ease;
-}
-
-.btn-sound-toggle:hover,
-.btn-sound-toggle:active {
-  color: var(--text-primary);
-  border-color: var(--border-hard);
-  background: var(--bg-hover);
-}
-
-.btn-sound-toggle.sound-active {
-  color: var(--text-primary);
-  border-color: var(--border-hard);
-}
-
-.btn-sound-toggle.sound-muted {
-  color: var(--text-dim);
-  border-color: var(--border);
-  opacity: 0.7;
-}
-
-.btn-sound-toggle .sound-icon {
-  font-size: 0.75rem;
-  line-height: 1;
-}
-
 .header-label {
   font-size: 1rem;
   font-weight: 700;

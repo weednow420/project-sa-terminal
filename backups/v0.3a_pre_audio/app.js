@@ -64,7 +64,6 @@ function toggleTheme() {
   const next = current === 'light' ? 'dark' : 'light';
   localStorage.setItem(THEME_STORAGE_KEY, next);
   applyTheme(next);
-  if (window.SoundFX) window.SoundFX.playThemeSwitch();
   if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 
   // Сохраняем в БД предпочтение темы
@@ -764,7 +763,6 @@ function setupPinGate() {
     btnReset.addEventListener('click', () => {
       if (STATE.pinBusy) return;
       STATE.pinCode = '';
-      if (window.SoundFX) window.SoundFX.playKeyBackspace();
       triggerHaptic('light');
       updatePinSlots();
       appendSysLog('[GATE] Буфер ввода очищен вручную.');
@@ -778,7 +776,6 @@ function setupPinGate() {
       if (STATE.pinBusy) return;
       if (STATE.pinCode.length > 0) {
         STATE.pinCode = STATE.pinCode.slice(0, -1);
-        if (window.SoundFX) window.SoundFX.playKeyBackspace();
         triggerHaptic('light');
         updatePinSlots();
         appendSysLog('[GATE] Удаление последнего символа.');
@@ -790,7 +787,6 @@ function setupPinGate() {
   const btnEmergency = document.getElementById('btn-emergency-reset');
   if (btnEmergency) {
     btnEmergency.addEventListener('click', () => {
-      if (window.SoundFX) window.SoundFX.playEmergencyAbort();
       triggerHaptic('error');
       STATE.pinCode = '';
       STATE.pinBusy = false;
@@ -809,14 +805,12 @@ function setupPinGate() {
     } else if (e.key === 'Backspace') {
       if (STATE.pinCode.length > 0) {
         STATE.pinCode = STATE.pinCode.slice(0, -1);
-        if (window.SoundFX) window.SoundFX.playKeyBackspace();
         triggerHaptic('light');
         updatePinSlots();
         appendSysLog('[GATE] Удаление последнего символа.');
       }
     } else if (e.key === 'Escape' || e.key === 'Delete') {
       STATE.pinCode = '';
-      if (window.SoundFX) window.SoundFX.playKeyBackspace();
       triggerHaptic('light');
       updatePinSlots();
       appendSysLog('[GATE] Буфер ввода очищен клавишей Escape.');
@@ -833,7 +827,6 @@ function setupResetButtons() {
       if (terrariumEl) terrariumEl.style.display = 'none';
       localStorage.removeItem(AUTH_STORAGE_KEY);
       localStorage.removeItem(AUTH_VERSION_KEY);
-      if (window.SoundFX) window.SoundFX.playKeyBackspace();
       triggerHaptic('warning');
       showGate();
     });
@@ -843,7 +836,6 @@ function setupResetButtons() {
 function handleDigitInput(digit) {
   if (STATE.pinCode.length >= 4) return;
   STATE.pinCode += digit;
-  if (window.SoundFX) window.SoundFX.playKeyClick(840 + STATE.pinCode.length * 40);
   triggerHaptic('light');
   updatePinSlots();
 
@@ -867,7 +859,6 @@ async function submitPin(code) {
       const slot = document.getElementById(`slot-${i}`);
       if (slot) slot.classList.add('success');
     }
-    if (window.SoundFX) window.SoundFX.playAccessGranted();
     triggerHaptic('success');
     appendSysLog('[GATE] ДОСТУП РАЗРЕШЕН. РАСПЕЧАТЫВАНИЕ РЕЗЕРВУАРА...', 'success');
 
@@ -886,7 +877,6 @@ async function submitPin(code) {
       const slot = document.getElementById(`slot-${i}`);
       if (slot) slot.classList.add('error');
     }
-    if (window.SoundFX) window.SoundFX.playAccessDenied();
     triggerHaptic('error');
     appendSysLog(`[FAIL] Неверный вектор: #${code}. Отклонено.`, 'error');
 

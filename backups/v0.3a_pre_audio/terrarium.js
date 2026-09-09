@@ -168,7 +168,6 @@
     state.impulses += state.clickPower;
     saveState();
     updateUI();
-    if (window.SoundFX) window.SoundFX.playBioPulse();
 
     axoObj.reactionTimer = 32;
     axoObj.speedMultiplier = 2.4;
@@ -966,7 +965,6 @@
         state.satiety = Math.min(100, state.satiety + 30);
         saveState();
         updateUI();
-        if (window.SoundFX) window.SoundFX.playAccessGranted();
         if (window.Telegram?.WebApp?.HapticFeedback) {
           window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
         }
@@ -980,7 +978,6 @@
         state.cleanliness = 100;
         saveState();
         updateUI();
-        if (window.SoundFX) window.SoundFX.playKeyClick(1200);
         if (window.Telegram?.WebApp?.HapticFeedback) {
           window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
         }
@@ -997,12 +994,10 @@
           state.upgradeClickCost = Math.round(state.upgradeClickCost * 1.8);
           saveState();
           updateUI();
-          if (window.SoundFX) window.SoundFX.playAccessGranted();
           if (window.Telegram?.WebApp?.HapticFeedback) {
             window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
           }
         } else {
-          if (window.SoundFX) window.SoundFX.playAccessDenied();
           if (window.Telegram?.WebApp?.HapticFeedback) {
             window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
           }
@@ -1020,12 +1015,10 @@
           state.upgradeAutoCost = Math.round(state.upgradeAutoCost * 1.7);
           saveState();
           updateUI();
-          if (window.SoundFX) window.SoundFX.playAccessGranted();
           if (window.Telegram?.WebApp?.HapticFeedback) {
             window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
           }
         } else {
-          if (window.SoundFX) window.SoundFX.playAccessDenied();
           if (window.Telegram?.WebApp?.HapticFeedback) {
             window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
           }
