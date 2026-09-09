@@ -367,7 +367,7 @@ function renderTriadHub() {
   tagActionRow.innerHTML = `
     <button type="button" class="triad-action-btn" id="btn-open-tag-cloud" style="width: 100%;">
       <span>#</span>
-      <span>ОБЛАКО КЛАСТЕРОВ ТЕГОВ (ZETTELKASTEN)</span>
+      <span>СЕТЬ СВЯЗЕЙ S-A // СИНАПСЫ <span class="zettel-wip-badge">[ВРЕМЕННО: ТРЕБУЕТ РЕДАКТИРОВАНИЯ]</span></span>
       <span>→</span>
     </button>
   `;
@@ -700,7 +700,10 @@ function renderGrimoireCardBody(card) {
     } else if (upper.startsWith('СВЯЗИ')) {
       blocksHtml += `
         <div class="card-zettel-box">
-          <div class="card-zettel-header">[ СВЯЗИ В СЕТИ // ZETTELKASTEN ]</div>
+          <div class="card-zettel-header">
+            <span>[ СЕТЬ СВЯЗЕЙ S-A // СИНАПСЫ ]</span>
+            <span class="zettel-wip-badge">[ВРЕМЕННО // ТРЕБУЕТ РЕДАКТИРОВАНИЯ]</span>
+          </div>
           <div class="card-zettel-body-text">${formatZettelText(b.content)}</div>
         </div>
       `;

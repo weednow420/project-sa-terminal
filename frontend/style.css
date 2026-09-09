@@ -442,6 +442,31 @@ body {
   border-color: var(--border-hard);
 }
 
+.btn-action {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  border-radius: 0 !important;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.btn-action:hover {
+  color: var(--text-primary);
+  border-color: var(--border-hard);
+  background-color: var(--bg-hover);
+}
+
+.btn-action:active {
+  transform: translateY(1px);
+}
+
 .breadcrumb-sep {
   color: var(--border-hard);
 }
@@ -672,6 +697,10 @@ body {
 }
 
 .card-zettel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -682,34 +711,44 @@ body {
   border-bottom: 1px dashed var(--border);
 }
 
+.zettel-wip-badge {
+  font-size: 0.62rem;
+  color: var(--text-warn);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+}
+
 .card-zettel-body-text {
   font-size: 0.82rem;
   line-height: 1.8;
   color: var(--text-primary);
 }
 
-/* ИНТЕРАКТИВНЫЕ ZETTELKASTEN ССЫЛКИ [[...]] */
+/* ИНТЕРАКТИВНЫЕ ZETTELKASTEN / СИНАПТИЧЕСКИЕ ССЫЛКИ [[...]] */
 .zettel-link-btn {
-  display: inline-block;
+  display: inline;
   font-family: var(--font-mono);
-  font-size: 0.76rem;
-  font-weight: 600;
-  line-height: 1.3;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: inherit;
   color: var(--text-primary);
-  background: var(--bg-surface);
-  border: 1px solid var(--text-primary);
+  background: transparent;
+  border: none;
+  border-bottom: 1px dotted var(--border-hard);
   border-radius: 0 !important;
-  padding: 2px 7px;
-  margin: 2px 3px;
+  padding: 0 2px;
+  margin: 0 2px;
   cursor: pointer;
   vertical-align: baseline;
   text-decoration: none;
-  transition: none;
+  transition: all 0.12s ease;
 }
 
 .zettel-link-btn:hover {
-  background: var(--text-primary);
-  color: var(--bg);
+  border-bottom-color: var(--text-primary);
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 .zettel-link-btn:active {
@@ -825,6 +864,51 @@ body {
   letter-spacing: 0.04em;
 }
 
+.triad-hub-actions {
+  margin-top: var(--spacing-sm);
+  width: 100%;
+}
+
+.triad-action-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-radius: 0 !important;
+  transition: all 0.12s ease;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.triad-action-btn span:first-child,
+.triad-action-btn span:last-child {
+  color: var(--text-dim);
+}
+
+.triad-action-btn:hover {
+  border-color: var(--border-hard);
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.triad-action-btn:hover span:first-child,
+.triad-action-btn:hover span:last-child {
+  color: var(--text-primary);
+}
+
+.triad-action-btn:active {
+  transform: translateY(1px);
+}
+
 /* ── ОБЛАКО ТЕГОВ (ZETTELKASTEN CLUSTERS) ──────────────────── */
 .tag-cloud-container {
   display: flex;
@@ -859,32 +943,40 @@ body {
 .tag-cloud-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-family: var(--font-mono);
-  font-size: 0.74rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  background: var(--bg);
-  border: 1px solid var(--text-primary);
-  color: var(--text-primary);
-  padding: 6px 12px;
+  font-size: 0.76rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dotted transparent;
+  color: var(--text-dim);
+  padding: 3px 6px;
   cursor: pointer;
   border-radius: 0 !important;
-  transition: none;
+  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
 }
 
 .tag-cloud-pill:hover {
-  background: var(--text-primary);
-  color: var(--bg);
+  color: var(--text-primary);
+  border-bottom-color: var(--border-hard);
+  background: var(--bg-hover);
+}
+
+.tag-cloud-pill:active {
+  transform: translateY(1px);
 }
 
 .tag-cloud-pill-count {
   font-size: 0.62rem;
   color: var(--text-dim);
+  opacity: 0.7;
 }
 
 .tag-cloud-pill:hover .tag-cloud-pill-count {
-  color: var(--bg);
+  color: var(--text-primary);
+  opacity: 1;
 }
 
 /* ── ЭКРАН ОШИБКИ b181 ────────────────────────────────────── */
