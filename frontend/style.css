@@ -2320,37 +2320,55 @@ body.gate-active .terminal-main {
   color: var(--bg);
 }
 
-/* ── МОРДОЧКА СИМБИОНТА В ВЕРХНЕМ МЕНЮ (НЕКЛИКАБЕЛЬНАЯ) ────── */
+/* ── КИБЕР-КОШКА CAT181b В ВЕРХНЕМ МЕНЮ ─────────────────────── */
 .bio-terrarium-wrapper {
   display: block;
   text-align: center;
-  padding: 2px var(--spacing-md) 6px;
+  padding: 4px var(--spacing-md) 6px;
   background-color: var(--bg);
-  pointer-events: none !important;
   user-select: none;
 }
 
-.pet-face-container {
+.cat-header-container {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  width: 76px;
-  height: 36px;
+  height: 42px;
   margin: 0 auto;
-  pointer-events: none !important;
+  cursor: pointer;
   user-select: none;
-  cursor: default !important;
-  overflow: hidden;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  pointer-events: auto;
 }
 
-.pet-face-container canvas {
+.cat-header-container:hover {
+  transform: scale(1.08);
+}
+
+.cat-header-container:active {
+  transform: scale(0.95);
+  filter: brightness(1.2);
+}
+
+.cat-header-sprite {
   display: block;
-  width: 76px;
-  height: 36px;
+  height: 42px;
+  width: auto;
+  max-width: 54px;
+  object-fit: contain;
   image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  pointer-events: none !important;
-  cursor: default !important;
+  image-rendering: -webkit-optimize-contrast;
+  pointer-events: auto;
+}
+
+.cat-lab-sprite {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: -webkit-optimize-contrast;
+  display: block;
+  margin: 0 auto;
 }
 
 /* ── ЭКРАН ЛАБОРАТОРИИ СИМБИОНТА ─────────────────────────── */
@@ -2575,45 +2593,11 @@ body.gate-active .terminal-main {
 }
 
 /* ============================================================
-   КИБЕР-КОШКА CAT-01 // ЧИСТЫЙ МОНОХРОМ (БЕЗ ЗЕЛЕНОГО)
-   Анти-дофаминовый дизайн, аутентичный корпус микросхемы
+   КИБЕР-КОШКА CAT181b // ТЕРМИНАЛЬНЫЙ МОНОХРОМ И КИБЕРНЕТИКА
+   Стилизованные Steam-анимации, аутентичный корпус микросхемы
    ============================================================ */
 
-/* Переключатель активного симбионта в лаборатории */
-.symbiont-selector-strip {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.btn-symbiont-tab {
-  flex: 1;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 8px 4px;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.12s ease;
-  border-radius: 0 !important;
-}
-
-.btn-symbiont-tab:hover {
-  border-color: var(--border-hard);
-  color: var(--text-primary);
-}
-
-.btn-symbiont-tab.active {
-  background: var(--bg-hover);
-  border-color: var(--text-primary);
-  color: var(--text-primary);
-  box-shadow: inset 0 0 0 1px var(--text-primary);
-}
-
-/* Главная карточка чипа CAT-01 */
+/* Главная карточка чипа CAT181b */
 .cat-chip-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border);

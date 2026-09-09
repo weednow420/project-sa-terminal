@@ -43,11 +43,11 @@
   </header>
 
   <!-- ══════════════════════════════════════════════
-       МОРДОЧКА СИМБИОНТА (НЕКЛИКАБЕЛЬНАЯ АНИМАЦИЯ)
+       КИБЕР-КОШКА CAT181b (ВЕРХНИЙ ХЕДЕР)
   ══════════════════════════════════════════════ -->
   <section class="bio-terrarium-wrapper" id="bio-terrarium" style="display: none;">
-    <div class="pet-face-container" id="pet-face-container">
-      <canvas id="axolotl-canvas-face"></canvas>
+    <div class="cat-header-container" id="cat-header-container" title="Кибер-кошка CAT181b // Нажмите для взаимодействия">
+      <img id="cat-header-sprite" class="cat-header-sprite" src="assets/cat/cat_sit.png" alt="CAT181b" />
     </div>
   </section>
 
@@ -531,47 +531,35 @@
         АВТОНОМНЫЙ БИО-РЕЗЕРВУАР И МИКРОПРОЦЕССОРНЫЙ КОНТУР
       </div>
 
-      <!-- Переключатель активного спутника -->
-      <div class="symbiont-selector-strip">
-        <button type="button" class="btn-symbiont-tab active" id="tab-symbiont-cat" onclick="switchSymbiontTab('cat')">
-          [ 🐱 КИБЕР-КОШКА CAT-01 ]
-        </button>
-        <button type="button" class="btn-symbiont-tab" id="tab-symbiont-axolotl" onclick="switchSymbiontTab('axolotl')">
-          [ 🦎 АКСОЛОТЛЬ b181 ]
-        </button>
-      </div>
-
-      <!-- ── ОТСЕК 1: КИБЕР-КОШКА CAT-01 (ЧИСТЫЙ МОНОХРОМ) ── -->
+      <!-- ── ОТСЕК: КИБЕР-КОШКА CAT181b (ЧИСТЫЙ МОНОХРОМ) ── -->
       <div id="symbiont-section-cat" class="symbiont-pane">
         <div class="cat-chip-card" id="cat-chip-widget">
           <div class="cat-chip-header">
-            <span class="cat-chip-title">[CHIP: CAT-01] b181</span>
-            <span class="cat-chip-meta" id="cat-status-badge">[BASE]</span>
+            <span class="cat-chip-title">[CHIP: CAT181b] S-A TERMINAL</span>
+            <span class="cat-chip-meta" id="cat-status-badge">[НАБЛЮДЕНИЕ]</span>
           </div>
 
           <!-- Отсек микросхемы с контактами -->
           <div class="cat-display-bay" id="cat-chip-container" title="Нажмите, чтобы погладить кошку">
             <div class="cat-ic-pins-top">||||||||||||||||||||||||||||||||||||||||||||||||</div>
             <div class="cat-ic-package">
-              <div class="cat-avatar-frame">
-                <canvas id="cat-pixel-canvas" class="cat-pixel-canvas" width="160" height="160"></canvas>
-                <img id="cat-chip-img" class="cat-pixel-img" src="assets/cat/cat_idle.png" alt="CAT-01 BASE" style="display:none;" />
-                <span class="cat-sleep-indicator">z z Z</span>
+              <div class="cat-avatar-frame" style="min-height: 150px; display: flex; align-items: center; justify-content: center;">
+                <img id="cat-lab-sprite" class="cat-lab-sprite" src="assets/cat/cat_sit.png" alt="CAT181b" />
               </div>
             </div>
             <div class="cat-ic-pins-bottom">||||||||||||||||||||||||||||||||||||||||||||||||</div>
 
             <!-- Строка телеметрии чипа -->
             <div class="cat-telemetry-strip">
-              <span>СИНХРОНИЗАЦИЯ: 99.4%</span>
+              <span>СИНХРОНИЗАЦИЯ: 99.8%</span>
               <span class="cat-state-tag" id="cat-strip-state">АКТИВЕН</span>
-              <span>РЕВИЗИЯ: v0.7a</span>
+              <span>РЕВИЗИЯ: v1.0-alpha</span>
             </div>
           </div>
 
           <!-- Описание текущего действия -->
           <div class="cat-state-desc-line" id="cat-state-desc">
-            Базовый режим наблюдения. Фоновый био-скан.
+            Базовый режим наблюдения. Фоновый био-скан и удержание фокуса.
           </div>
 
           <!-- Быстрые действия по уходу -->
@@ -582,108 +570,24 @@
             <button type="button" class="btn-cat-action" onclick="CatSymbiont.clean()">[ 🧹 САНИТАРИЯ ]</button>
           </div>
 
-          <!-- Матрица состояний (9 кнопок) -->
+          <!-- Режимы Steam-анимаций кошки -->
           <div class="dot-grid-divider" style="margin-top: 12px;"></div>
-          <div style="font-size: 0.68rem; color: var(--text-dim); margin-top: 8px; margin-bottom: 4px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;">
-            // МАТРИЦА СОСТОЯНИЙ ЧИПА:
+          <div style="font-size: 0.68rem; color: var(--text-dim); margin-top: 8px; margin-bottom: 6px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;">
+            // РЕЖИМЫ АНИМАЦИИ КИБЕР-КОШКИ:
           </div>
-          <div class="cat-matrix-grid">
-            <button type="button" class="btn-cat-matrix active-cat-state" id="btn-cat-state-BASE" onclick="CatSymbiont.setState('BASE', true)">[BASE]</button>
-            <button type="button" class="btn-cat-matrix" id="btn-cat-state-WINK" onclick="CatSymbiont.setState('WINK', true)">[WINK]</button>
-            <button type="button" class="btn-cat-matrix" id="btn-cat-state-ALERT" onclick="CatSymbiont.setState('ALERT', true)">[ALERT]</button>
-            <button type="button" class="btn-cat-matrix" id="btn-cat-state-STRETCH" onclick="CatSymbiont.setState('STRETCH', true)">[STRETCH]</button>
-            <button type="button" class="btn-cat-matrix" id="btn-cat-state-PLAY" onclick="CatSymbiont.setState('PLAY', true)">[PLAY]</button>
-            <button type="button" class="btn-cat-matrix" id="btn-cat-state-CLEAN" onclick="CatSymbiont.setState('CLEAN', true)">[CLEAN]</button>
-            <button type="button" class="btn-cat-matrix" id="btn-cat-state-FEED" onclick="CatSymbiont.setState('FEED', true)">[FEED]</button>
-            <button type="button" class="btn-cat-matrix" id="btn-cat-state-BOX" onclick="CatSymbiont.setState('BOX', true)">[BOX]</button>
-            <button type="button" class="btn-cat-matrix" id="btn-cat-state-SLEEP" onclick="CatSymbiont.setState('SLEEP', true)">[SLEEP]</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── ОТСЕК 2: АКСОЛОТЛЬ b181 (БИО-РЕЗЕРВУАР) ── -->
-      <div id="symbiont-section-axolotl" class="symbiont-pane" style="display: none;">
-      <!-- Большой резервуар аксолотля -->
-      <div class="lab-tank-card">
-        <div class="lab-tank-header">
-          <span class="lab-tank-tag" id="lab-tank-status-tag">СТАТУС: СПОКОЙСТВИЕ</span>
-          <span class="lab-tank-impulses" id="lab-impulses-val">0 ⚡</span>
-        </div>
-        <div class="lab-tank-canvas-wrap" id="lab-tank-area" title="Тап по резервуару генерирует нейро-импульсы ⚡">
-          <canvas id="axolotl-canvas-lab"></canvas>
-        </div>
-        <div class="lab-tank-footer">
-          <span style="font-size:0.65rem; color:var(--text-dim);">ТАП ГЕНЕРИРУЕТ НЕЙРО-ИМПУЛЬСЫ</span>
-          <span style="font-size:0.65rem; color:var(--text-primary); font-weight:700;" id="lab-click-power-badge">+1 ⚡/ТАП</span>
-        </div>
-      </div>
-
-      <!-- Показатели состояния (Био-тонус и Энтропия) -->
-      <div class="lab-metrics-grid">
-        <div class="lab-metric-box">
-          <div class="lab-metric-top">
-            <span class="lab-metric-label">БИО-ТОНУС (СЫТОСТЬ)</span>
-            <span class="lab-metric-pct" id="lab-satiety-val">100%</span>
-          </div>
-          <div class="lab-metric-bar">
-            <div class="lab-metric-fill" id="lab-satiety-bar" style="width: 100%;"></div>
-          </div>
-        </div>
-
-        <div class="lab-metric-box">
-          <div class="lab-metric-top">
-            <span class="lab-metric-label">ЧИСТОТА СРЕДЫ (ЭНТРОПИЯ)</span>
-            <span class="lab-metric-pct" id="lab-cleanliness-val">100%</span>
-          </div>
-          <div class="lab-metric-bar">
-            <div class="lab-metric-fill" id="lab-clean-bar" style="width: 100%;"></div>
+          <div class="cat-matrix-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <button type="button" class="btn-cat-matrix active-cat-state" id="btn-cat-anim-sit" onclick="CatSymbiont.setSteamAnimation('sit')">
+              [ 01. НАБЛЮДЕНИЕ ]
+            </button>
+            <button type="button" class="btn-cat-matrix" id="btn-cat-anim-peek" onclick="CatSymbiont.setSteamAnimation('peek')">
+              [ 02. ВЫГЛЯДЫВАНИЕ ]
+            </button>
+            <button type="button" class="btn-cat-matrix" id="btn-cat-anim-action" onclick="CatSymbiont.setSteamAnimation('action')">
+              [ 03. АКТИВНОСТЬ ]
+            </button>
           </div>
         </div>
       </div>
-
-      <!-- Протоколы взаимодействия (в точности по скриншоту) -->
-      <div class="dot-grid-divider"></div>
-      <div style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 8px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;">
-        ПРОТОКОЛЫ ВЗАИМОДЕЙСТВИЯ
-      </div>
-      <div class="lab-protocols-list">
-        <button type="button" class="btn-protocol" id="btn-feed-axolotl">
-          <div class="btn-protocol-title">[ ИНФУЗИЯ: ТАЛАЯ ВОДА ]</div>
-          <div class="btn-protocol-desc">Восстанавливает Био-тонус (+30%)</div>
-        </button>
-        <button type="button" class="btn-protocol" id="btn-clean-axolotl">
-          <div class="btn-protocol-title">[ ФИЛЬТРАЦИЯ КОНТУРА ]</div>
-          <div class="btn-protocol-desc">Сбрасывает накопленную энтропию</div>
-        </button>
-      </div>
-
-      <!-- Медленная прокачка контура -->
-      <div class="dot-grid-divider"></div>
-      <div style="font-size: 0.72rem; color: var(--text-dim); margin-bottom: 8px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;">
-        МЕДЛЕННАЯ ПРОКАЧКА КОНТУРА
-      </div>
-      <div class="lab-upgrades-list">
-        <button type="button" class="btn-upgrade-card" id="btn-upgrade-click">
-          <div class="btn-upgrade-top">
-            <span class="btn-upgrade-name">УСИЛИТЕЛЬ ИМПУЛЬСА</span>
-            <span class="btn-upgrade-cost" id="upgrade-click-cost">20 ⚡</span>
-          </div>
-          <div class="btn-upgrade-desc">
-            Сила импульса: <strong id="upgrade-click-val">+1</strong> к тапу
-          </div>
-        </button>
-
-        <button type="button" class="btn-upgrade-card" id="btn-upgrade-auto">
-          <div class="btn-upgrade-top">
-            <span class="btn-upgrade-name">ГЕНЕРАТОР ПУЗЫРЬКОВ</span>
-            <span class="btn-upgrade-cost" id="upgrade-auto-cost">50 ⚡</span>
-          </div>
-          <div class="btn-upgrade-desc">
-            Авто-приток: <strong id="upgrade-auto-val">+0.5</strong> ⚡/сек
-          </div>
-        </button>
-      </div>
-      </div> <!-- /symbiont-section-axolotl -->
     </section>
 
   </main>
@@ -793,13 +697,12 @@
     <div class="footer-divider">════════════════════════════════════════</div>
     <div class="footer-content">
       <span class="footer-label">БИО-ДАТЧИК: АКТИВЕН</span>
-      <span class="footer-version" style="font-weight:700; color:var(--text-primary);">v0.8a</span>
+      <span class="footer-version" style="font-weight:700; color:var(--text-primary);">v1.0-alpha</span>
     </div>
   </footer>
 
-  <script src="audio.js?v=0.8a"></script>
-  <script src="app.js?v=0.8a"></script>
-  <script src="terrarium.js?v=0.8a"></script>
-  <script src="cat_symbiont.js?v=0.8a"></script>
+  <script src="audio.js?v=1.0-alpha"></script>
+  <script src="app.js?v=1.0-alpha"></script>
+  <script src="cat_symbiont.js?v=1.0-alpha"></script>
 </body>
 </html>
