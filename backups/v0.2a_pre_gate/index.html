@@ -14,11 +14,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=0.3a" />
+  <link rel="stylesheet" href="style.css?v=0.2a" />
 </head>
 <body>
-  <!-- Фоновый кинематографичный CRT-сканлайн (без оверхеда на GPU) -->
-  <div class="crt-scanline-overlay" aria-hidden="true"></div>
 
   <!-- ══════════════════════════════════════════════
        ШАПКА ТЕРМИНАЛА
@@ -65,151 +63,41 @@
       </div>
     </section>
 
-    <!-- ══════════════════════════════════════════════
-         ЭКРАН СИНХРОНИЗАЦИИ // ТЕРМИНАЛ ЗАЩИТЫ ГОСТ-КБ-181-СПЕЦ
-    ══════════════════════════════════════════════ -->
+    <!-- ЭКРАН СИНХРОНИЗАЦИИ (ВВОД 4-ЗНАЧНОГО КОДА) -->
     <section id="view-gate" class="view">
-      <div class="gate-wrapper">
-        <!-- Telemetry Header Bay (Module MOD-01 // SECURITY GATE) -->
-        <div class="gate-telemetry-bay">
-          <div class="gate-telemetry-top">
-            <div class="gate-status-indicator">
-              <span class="gate-status-led"></span>
-              <span class="gate-status-label">SYS_ONLINE // KB-181</span>
-            </div>
-            <div class="gate-node-id">
-              NODE_ID: <span class="gate-node-highlight">#09-SU</span>
-            </div>
-          </div>
+      <div class="gate-container">
+        <div class="view-title">
+          <span class="bracket">[</span>ПРОТОКОЛ СИНХРОНИЗАЦИИ<span class="bracket">]</span>
+        </div>
+        <div class="gate-subtitle">ТРЕБУЕТСЯ 4-ЗНАЧНЫЙ КЛЮЧ ДОСТУПА</div>
 
-          <!-- Machine Title Bar -->
-          <div class="gate-title-block">
-            <div class="gate-main-title">
-              PROJECT S-A // ТЕРМИНАЛ ЗАЩИТЫ
-            </div>
-            <div class="gate-sub-protocol">
-              ПРОТОКОЛ БЕЗОПАСНОСТИ: ГОСТ-КБ-181-СПЕЦ
-            </div>
-          </div>
-
-          <!-- Alert / State Strip -->
-          <div class="gate-alert-strip">
-            <span>[ СОСТОЯНИЕ: ТРЕБУЕТСЯ КАЛИБРОВКА ]</span>
-            <span class="gate-alert-alarm">● ТРЕВОГА-0</span>
-          </div>
-
-          <!-- Segmented Telemetry Table -->
-          <div class="gate-telemetry-grid">
-            <div class="gate-telem-cell">
-              <span class="gate-telem-label">БИО-ДАТЧИК:</span>
-              <span class="gate-telem-val gate-val-accent">ОЖИДАНИЕ</span>
-            </div>
-            <div class="gate-telem-cell">
-              <span class="gate-telem-label">ДЖИТТЕР:</span>
-              <span class="gate-telem-val">0.042 ms</span>
-            </div>
-            <div class="gate-telem-cell">
-              <span class="gate-telem-label">ЭНТРОПИЯ:</span>
-              <span class="gate-telem-val gate-val-good">18.4% [НОРМА]</span>
-            </div>
-            <div class="gate-telem-cell">
-              <span class="gate-telem-label">РЕВИЗИЯ:</span>
-              <span class="gate-telem-val gate-val-dim">v0.3a//С-09</span>
-            </div>
+        <div class="gate-display">
+          <div class="pin-slots" id="pin-slots">
+            <span class="pin-slot" data-index="0">_</span>
+            <span class="pin-slot" data-index="1">_</span>
+            <span class="pin-slot" data-index="2">_</span>
+            <span class="pin-slot" data-index="3">_</span>
           </div>
         </div>
 
-        <!-- Mechanical Divider Accent -->
-        <div class="gate-divider-double">
-          ════════════════════════════════════════════════════════════════
+        <div class="pin-keypad" id="pin-keypad">
+          <button type="button" class="pin-key" data-digit="1">1</button>
+          <button type="button" class="pin-key" data-digit="2">2</button>
+          <button type="button" class="pin-key" data-digit="3">3</button>
+          <button type="button" class="pin-key" data-digit="4">4</button>
+          <button type="button" class="pin-key" data-digit="5">5</button>
+          <button type="button" class="pin-key" data-digit="6">6</button>
+          <button type="button" class="pin-key" data-digit="7">7</button>
+          <button type="button" class="pin-key" data-digit="9">9</button>
+          <button type="button" class="pin-key" data-digit="0">0</button>
         </div>
 
-        <!-- Security Gate PIN Verification Section -->
-        <div class="gate-pin-section">
-          <div class="gate-prompt-box">
-            <div class="gate-prompt-title">
-              [ ВВЕДИТЕ 4-ЗНАЧНЫЙ СЕКРЕТНЫЙ КЛЮЧ ДОСТУПА ]
-            </div>
-            <div class="gate-prompt-sub">
-              АВТОРИЗАЦИЯ ОПЕРАТОРА ВЫСШЕЙ КАТЕГОРИИ СЕКТОРА
-            </div>
-          </div>
-
-          <!-- 4-Slot Monospace Visualizer -->
-          <div class="gate-slots-row" id="pin-slots">
-            <div class="gate-slot active-slot" id="slot-0" data-index="0"><span class="slot-char">_</span></div>
-            <div class="gate-slot" id="slot-1" data-index="1"><span class="slot-char">·</span></div>
-            <div class="gate-slot" id="slot-2" data-index="2"><span class="slot-char">·</span></div>
-            <div class="gate-slot" id="slot-3" data-index="3"><span class="slot-char">·</span></div>
-          </div>
-
-          <!-- Warning Strip -->
-          <div class="gate-warning-bar">
-            ДОСТУП К РЕЗЕРВУАРУ И ГРИМУАРУ ЗАБЛОКИРОВАН ДО СИНХРОНИЗАЦИИ
-          </div>
+        <div class="gate-controls">
+          <button type="button" class="btn-terminal-sm" id="btn-pin-clear">[ СБРОС / ⌫ ]</button>
         </div>
 
-        <!-- Terminal Hardware Keypad (3x4 Rigid Layout) -->
-        <div class="gate-keypad-container">
-          <div class="gate-keypad-grid" id="pin-keypad">
-            <button type="button" class="gate-key-btn" data-digit="1">[ 1 ]</button>
-            <button type="button" class="gate-key-btn" data-digit="2">[ 2 ]</button>
-            <button type="button" class="gate-key-btn" data-digit="3">[ 3 ]</button>
-            <button type="button" class="gate-key-btn" data-digit="4">[ 4 ]</button>
-            <button type="button" class="gate-key-btn" data-digit="5">[ 5 ]</button>
-            <button type="button" class="gate-key-btn" data-digit="6">[ 6 ]</button>
-            <button type="button" class="gate-key-btn" data-digit="7">[ 7 ]</button>
-            <button type="button" class="gate-key-btn" data-digit="8">[ 8 ]</button>
-            <button type="button" class="gate-key-btn" data-digit="9">[ 9 ]</button>
-            <button type="button" class="gate-key-btn gate-key-reset" id="btn-pin-reset">[ СБРОС ]</button>
-            <button type="button" class="gate-key-btn" data-digit="0">[ 0 ]</button>
-            <button type="button" class="gate-key-btn gate-key-backspace" id="btn-pin-backspace">[ ⌫ ]</button>
-          </div>
-          <div class="gate-haptic-notice">
-            * ИСПОЛЬЗУЕТСЯ ТАКТИЛЬНАЯ ВИБРООТДАЧА (HAPTIC FEEDBACK)
-          </div>
-        </div>
-
-        <!-- Mechanical Divider Accent -->
-        <div class="gate-divider-single">
-          ────────────────────────────────────────────────────────────────
-        </div>
-
-        <!-- Telemetry Diagnostic Bay & System Log Output -->
-        <div class="gate-diagnostic-bay">
-          <!-- Log Shell Frame -->
-          <div class="gate-log-frame">
-            <div class="gate-log-header">
-              <span>ТЕЛЕМЕТРИЯ КОНТУРА // ТРАНСЛЯТОР</span>
-              <span class="gate-log-rec">REC_ACTIVE</span>
-            </div>
-            <!-- Realtime Continuous Logs -->
-            <div class="gate-log-terminal" id="sys-log">
-              <div class="gate-log-entry gate-log-dim">&gt; 08:41:02 [SYS] Инициализация шины данных... <span class="gate-val-accent">OK</span></div>
-              <div class="gate-log-entry gate-log-dim">&gt; 08:41:03 [BIO] Синхронизация нейро-контура... <span class="gate-val-warn">ОЖИДАНИЕ</span></div>
-              <div class="gate-log-entry gate-log-warn">&gt; 08:41:05 [WARN] Инцидент b181: неавторизованный опрос</div>
-              <div class="gate-log-entry gate-log-active" id="dynamic-log-entry">&gt; 08:41:08 [GATE] Ожидание 4-значного вектора ключа_</div>
-            </div>
-          </div>
-
-          <!-- Diagnostic Segment Meter Strip -->
-          <div class="gate-buffer-strip">
-            <span class="gate-buffer-label">СТАТУС БУФЕРА:</span>
-            <span class="gate-buffer-meter" id="gate-buffer-meter">[ □ □ □ □ ]</span>
-            <span class="gate-buffer-pct" id="gate-buffer-pct">0%</span>
-          </div>
-
-          <!-- Emergency Abort Trigger -->
-          <div class="gate-emergency-wrap">
-            <button type="button" class="btn-emergency-abort" id="btn-emergency-reset">
-              [ ! ЭКСТРЕННЫЙ СБРОС СЕССИИ ! ]
-            </button>
-          </div>
-
-          <!-- Institutional Footer Mark -->
-          <div class="gate-institutional-footer">
-            СПЕЦ-НИИ "КИБЕРНЕТИКА" // УЧЕТНАЯ КАРТОЧКА #0093-X
-          </div>
+        <div class="gate-status" id="gate-status">
+          ОЖИДАНИЕ ВВОДА КЛЮЧА СИНХРОНИЗАЦИИ...
         </div>
       </div>
     </section>
@@ -741,11 +629,11 @@
     <div class="footer-divider">════════════════════════════════════════</div>
     <div class="footer-content">
       <span class="footer-label">БИО-ДАТЧИК: АКТИВЕН</span>
-      <span class="footer-version" style="font-weight:700; color:var(--text-primary);">v0.3a</span>
+      <span class="footer-version" style="font-weight:700; color:var(--text-primary);">v0.2a</span>
     </div>
   </footer>
 
-  <script src="app.js?v=0.3a"></script>
-  <script src="terrarium.js?v=0.3a"></script>
+  <script src="app.js?v=0.2a"></script>
+  <script src="terrarium.js?v=0.2a"></script>
 </body>
 </html>

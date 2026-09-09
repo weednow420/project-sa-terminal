@@ -658,140 +658,55 @@ function showGate(serverVersion = null) {
   STATE.pinCode = '';
   STATE.pinBusy = false;
   updatePinSlots();
-  appendSysLog('[GATE] Инициализация шлюза. Ожидание 4-значного ключа_');
+  setGateStatus('ОЖИДАНИЕ ВВОДА КЛЮЧА СИНХРОНИЗАЦИИ...', 'normal');
   showView('view-gate');
 }
 
-function triggerHaptic(type = 'light') {
-  try {
-    if (tg?.HapticFeedback) {
-      if (type === 'error') {
-        tg.HapticFeedback.notificationOccurred('error');
-      } else if (type === 'success') {
-        tg.HapticFeedback.notificationOccurred('success');
-      } else if (type === 'warning') {
-        tg.HapticFeedback.notificationOccurred('warning');
-      } else {
-        tg.HapticFeedback.impactOccurred('light');
-      }
-    } else if (navigator.vibrate) {
-      navigator.vibrate(type === 'error' ? [50, 40, 50] : 20);
-    }
-  } catch (_) {}
-}
-
-function appendSysLog(msg, type = 'normal') {
-  const logBox = document.getElementById('sys-log');
-  if (!logBox) return;
-
-  const now = new Date();
-  const timeStr = now.toTimeString().split(' ')[0];
-  const entry = document.createElement('div');
-  entry.className = 'gate-log-entry';
-
-  if (type === 'error') {
-    entry.className += ' gate-log-warn';
-    entry.innerHTML = `&gt; ${timeStr} <span style="color:#ff5555;">${escHtml(msg)}</span>`;
-  } else if (type === 'success') {
-    entry.className += ' gate-log-active';
-    entry.innerHTML = `&gt; ${timeStr} <span style="color:#38e892; font-weight:700;">${escHtml(msg)}</span>`;
-  } else {
-    entry.className += ' gate-log-dim';
-    entry.innerHTML = `&gt; ${timeStr} ${escHtml(msg)}`;
-  }
-
-  logBox.appendChild(entry);
-  while (logBox.children.length > 5) {
-    logBox.removeChild(logBox.children[0]);
-  }
+function setGateStatus(text, type = 'normal') {
+  const el = document.getElementById('gate-status');
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'gate-status';
+  if (type === 'error') el.classList.add('error');
+  if (type === 'success') el.classList.add('success');
 }
 
 function updatePinSlots() {
-  const MAX_LEN = 4;
-  for (let i = 0; i < MAX_LEN; i++) {
-    const slot = document.getElementById(`slot-${i}`);
-    if (!slot) continue;
-    const charSpan = slot.querySelector('.slot-char');
-    slot.classList.remove('filled', 'active-slot', 'success', 'error');
-
-    if (i < STATE.pinCode.length) {
+  const slots = document.querySelectorAll('.pin-slot');
+  slots.forEach((slot, idx) => {
+    if (idx < STATE.pinCode.length) {
       slot.classList.add('filled');
-      if (charSpan) charSpan.textContent = '■';
-    } else if (i === STATE.pinCode.length) {
-      slot.classList.add('active-slot');
-      if (charSpan) charSpan.textContent = '_';
+      slot.textContent = STATE.pinCode[idx];
     } else {
-      if (charSpan) charSpan.textContent = '·';
+      slot.classList.remove('filled');
+      slot.textContent = '_';
     }
-  }
-
-  // Обновление индикатора буфера
-  const meterEl = document.getElementById('gate-buffer-meter');
-  const pctEl = document.getElementById('gate-buffer-pct');
-  const len = STATE.pinCode.length;
-  const pcts = ['0%', '25%', '50%', '75%', '100%'];
-
-  if (pctEl) pctEl.textContent = pcts[len] || '0%';
-  if (meterEl) {
-    let bar = '[ ';
-    for (let b = 0; b < 4; b++) {
-      bar += (b < len ? '■ ' : '□ ');
-    }
-    bar += ']';
-    meterEl.textContent = bar;
-  }
+  });
 }
 
 function setupPinGate() {
   const keypad = document.getElementById('pin-keypad');
   if (keypad) {
     keypad.addEventListener('click', (e) => {
-      if (STATE.pinBusy) return;
-      const btn = e.target.closest('.gate-key-btn');
-      if (!btn) return;
-
+      const btn = e.target.closest('.pin-key');
+      if (!btn || STATE.pinBusy) return;
       const digit = btn.getAttribute('data-digit');
-      if (digit !== null && digit !== undefined) {
+      if (digit !== null) {
         handleDigitInput(digit);
       }
     });
   }
 
-  // Кнопка [ СБРОС ]
-  const btnReset = document.getElementById('btn-pin-reset');
-  if (btnReset) {
-    btnReset.addEventListener('click', () => {
-      if (STATE.pinBusy) return;
-      STATE.pinCode = '';
-      triggerHaptic('light');
-      updatePinSlots();
-      appendSysLog('[GATE] Буфер ввода очищен вручную.');
-    });
-  }
-
-  // Кнопка [ ⌫ ] (Backspace)
-  const btnBackspace = document.getElementById('btn-pin-backspace');
-  if (btnBackspace) {
-    btnBackspace.addEventListener('click', () => {
+  const clearBtn = document.getElementById('btn-pin-clear');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
       if (STATE.pinBusy) return;
       if (STATE.pinCode.length > 0) {
         STATE.pinCode = STATE.pinCode.slice(0, -1);
-        triggerHaptic('light');
+        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         updatePinSlots();
-        appendSysLog('[GATE] Удаление последнего символа.');
+        setGateStatus('ОЖИДАНИЕ ВВОДА КЛЮЧА СИНХРОНИЗАЦИИ...', 'normal');
       }
-    });
-  }
-
-  // Кнопка [ ! ЭКСТРЕННЫЙ СБРОС СЕССИИ ! ]
-  const btnEmergency = document.getElementById('btn-emergency-reset');
-  if (btnEmergency) {
-    btnEmergency.addEventListener('click', () => {
-      triggerHaptic('error');
-      STATE.pinCode = '';
-      STATE.pinBusy = false;
-      updatePinSlots();
-      appendSysLog('[EMERGENCY] СЕССИЯ СБРОШЕНА ОПЕРАТОРОМ. СБРОС РЕГИСТРОВ.', 'error');
     });
   }
 
@@ -800,20 +715,16 @@ function setupPinGate() {
     const gateView = document.getElementById('view-gate');
     if (!gateView || !gateView.classList.contains('active') || STATE.pinBusy) return;
 
-    if (/^[0-9]$/.test(e.key)) {
+    // Клавиши 0-7, 9 (восьмерки 8 нет в раскладке)
+    if (/^[0-79]$/.test(e.key)) {
       handleDigitInput(e.key);
     } else if (e.key === 'Backspace') {
       if (STATE.pinCode.length > 0) {
         STATE.pinCode = STATE.pinCode.slice(0, -1);
-        triggerHaptic('light');
+        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         updatePinSlots();
-        appendSysLog('[GATE] Удаление последнего символа.');
+        setGateStatus('ОЖИДАНИЕ ВВОДА КЛЮЧА СИНХРОНИЗАЦИИ...', 'normal');
       }
-    } else if (e.key === 'Escape' || e.key === 'Delete') {
-      STATE.pinCode = '';
-      triggerHaptic('light');
-      updatePinSlots();
-      appendSysLog('[GATE] Буфер ввода очищен клавишей Escape.');
     }
   });
 }
@@ -827,7 +738,7 @@ function setupResetButtons() {
       if (terrariumEl) terrariumEl.style.display = 'none';
       localStorage.removeItem(AUTH_STORAGE_KEY);
       localStorage.removeItem(AUTH_VERSION_KEY);
-      triggerHaptic('warning');
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
       showGate();
     });
   }
@@ -836,7 +747,7 @@ function setupResetButtons() {
 function handleDigitInput(digit) {
   if (STATE.pinCode.length >= 4) return;
   STATE.pinCode += digit;
-  triggerHaptic('light');
+  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
   updatePinSlots();
 
   if (STATE.pinCode.length === 4) {
@@ -846,7 +757,7 @@ function handleDigitInput(digit) {
 
 async function submitPin(code) {
   STATE.pinBusy = true;
-  appendSysLog('[GATE] Верификация контрольной суммы ключа...');
+  setGateStatus('ПРОВЕРКА КЛЮЧА ДОСТУПА...', 'normal');
 
   try {
     const res = await apiPost('/auth/verify', {
@@ -854,14 +765,9 @@ async function submitPin(code) {
       telegram_id: STATE.operator?.id || null,
     });
 
-    // Успешная авторизация
-    for (let i = 0; i < 4; i++) {
-      const slot = document.getElementById(`slot-${i}`);
-      if (slot) slot.classList.add('success');
-    }
-    triggerHaptic('success');
-    appendSysLog('[GATE] ДОСТУП РАЗРЕШЕН. РАСПЕЧАТЫВАНИЕ РЕЗЕРВУАРА...', 'success');
-
+    setGateStatus(res.message || 'СИНХРОНИЗАЦИЯ УСПЕШНА // ДОСТУП РАЗРЕШЕН', 'success');
+    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    
     localStorage.setItem(AUTH_STORAGE_KEY, 'synced');
     if (res.auth_version) {
       localStorage.setItem(AUTH_VERSION_KEY, String(res.auth_version));
@@ -869,26 +775,27 @@ async function submitPin(code) {
 
     setTimeout(async () => {
       await loadCategories();
-    }, 500);
+    }, 450);
 
   } catch (err) {
-    const errorMsg = err.message || `[${CONFIG.INCIDENT_CODE}] НЕВЕРНЫЙ ВЕКТОР`;
-    for (let i = 0; i < 4; i++) {
-      const slot = document.getElementById(`slot-${i}`);
-      if (slot) slot.classList.add('error');
-    }
-    triggerHaptic('error');
-    appendSysLog(`[FAIL] Неверный вектор: #${code}. Отклонено.`, 'error');
+    const errorMsg = err.message || `[${CONFIG.INCIDENT_CODE}] ДОСТУП ОТКЛОНЕН // НЕВЕРНЫЙ КЛЮЧ`;
+    setGateStatus(errorMsg, 'error');
+    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
 
-    const wrapper = document.querySelector('.gate-wrapper');
-    if (wrapper) wrapper.classList.add('gate-shake');
+    const isLocked = errorMsg.includes('ЗАБЛОКИРОВАН') || errorMsg.includes('ЛИМИТ') || errorMsg.includes('попыток');
+
+    const container = document.querySelector('.gate-container');
+    if (container) container.classList.add('gate-shake');
 
     setTimeout(() => {
-      if (wrapper) wrapper.classList.remove('gate-shake');
+      if (container) container.classList.remove('gate-shake');
       STATE.pinCode = '';
       STATE.pinBusy = false;
       updatePinSlots();
-    }, 700);
+      if (!isLocked) {
+        setGateStatus('ОЖИДАНИЕ ВВОДА КЛЮЧА СИНХРОНИЗАЦИИ...', 'normal');
+      }
+    }, isLocked ? 2500 : 950);
   }
 }
 

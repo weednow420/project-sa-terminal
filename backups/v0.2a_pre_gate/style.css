@@ -727,288 +727,76 @@ body {
 ::-webkit-scrollbar-track  { background: var(--bg); }
 ::-webkit-scrollbar-thumb  { background: var(--border-hard); }
 
-/* ── ФОНОВЫЙ КИНЕМАТОГРАФИЧНЫЙ CRT-СКАНЛАЙН ──────────────── */
-.crt-scanline-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 999;
-  opacity: 0.035;
-  background-image: repeating-linear-gradient(
-    0deg,
-    #000000 0px,
-    #000000 1px,
-    transparent 1px,
-    transparent 2px
-  );
-}
-
-[data-theme="light"] .crt-scanline-overlay {
-  opacity: 0.02;
-  background-image: repeating-linear-gradient(
-    0deg,
-    #1a1a1a 0px,
-    #1a1a1a 1px,
-    transparent 1px,
-    transparent 2px
-  );
-}
-
-/* ── ЭКРАН СИНХРОНИЗАЦИИ // ТЕРМИНАЛ ЗАЩИТЫ ГОСТ-КБ-181 ────── */
-.gate-wrapper {
-  max-width: 360px;
+/* ── ЭКРАН СИНХРОНИЗАЦИИ (GATE / PIN-LOCK) ────────────────── */
+.gate-container {
+  max-width: 340px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  padding: var(--spacing-xs) 0 var(--spacing-md) 0;
-  user-select: none;
-}
-
-.gate-telemetry-bay {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-hard);
-  padding: 6px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.gate-telemetry-top {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 3px 6px;
-  background-color: var(--bg);
-  font-size: 0.64rem;
-  font-family: var(--font-mono);
+  padding: var(--spacing-sm) 0;
 }
 
-.gate-status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.gate-status-led {
-  width: 7px;
-  height: 7px;
-  background-color: #38e892;
-  box-shadow: 0 0 6px rgba(56, 232, 146, 0.7);
-  display: inline-block;
-}
-
-.gate-status-label {
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-primary);
-}
-
-.gate-node-id {
+.gate-subtitle {
+  font-size: 0.72rem;
   color: var(--text-dim);
-}
-
-.gate-node-highlight {
-  color: var(--text-primary);
-  font-weight: 700;
-}
-
-.gate-title-block {
-  padding: 2px 4px;
-}
-
-.gate-main-title {
-  font-family: var(--font-mono);
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--text-primary);
-}
-
-.gate-sub-protocol {
-  font-size: 0.64rem;
-  color: var(--text-dim);
-  letter-spacing: 0.03em;
-  margin-top: 1px;
-}
-
-.gate-alert-strip {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 6px;
-  background-color: var(--bg-hover);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-
-.gate-alert-alarm {
-  color: #ff5555;
-  animation: pulseAlarm 1.5s infinite;
-}
-
-@keyframes pulseAlarm {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
-}
-
-.gate-telemetry-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px;
-  font-size: 0.62rem;
-  font-family: var(--font-mono);
-}
-
-.gate-telem-cell {
-  display: flex;
-  justify-content: space-between;
-  padding: 3px 6px;
-  background-color: var(--bg);
-}
-
-.gate-telem-label {
-  color: var(--text-dim);
-}
-
-.gate-telem-val {
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.gate-val-accent {
-  color: #38e892;
-}
-
-.gate-val-good {
-  color: var(--text-primary);
-}
-
-.gate-val-warn {
-  color: #ffaa00;
-}
-
-.gate-val-dim {
-  color: var(--text-dim);
-}
-
-.gate-divider-double,
-.gate-divider-single {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  color: var(--border-hard);
+  letter-spacing: 0.1em;
   text-align: center;
-  overflow: hidden;
-  white-space: nowrap;
-  margin: 6px 0;
-  line-height: 1;
-}
-
-.gate-pin-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.gate-prompt-title {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 0.06em;
-}
-
-.gate-prompt-sub {
-  font-size: 0.62rem;
-  color: var(--text-dim);
-  letter-spacing: 0.04em;
-  margin-top: 2px;
-}
-
-.gate-slots-row {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 12px 0 8px 0;
-}
-
-.gate-slot {
-  width: 54px;
-  height: 62px;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-hard);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.7rem;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  color: var(--text-primary);
-  border-radius: 0;
-  transition: background-color 0.1s, border-color 0.1s, color 0.1s;
-}
-
-.gate-slot.active-slot {
-  border-color: var(--text-primary);
-}
-
-.gate-slot.filled {
-  background-color: var(--bg-hover);
-  border-color: var(--border-hard);
-  color: #38e892;
-}
-
-.gate-slot.success {
-  background-color: #38e892 !important;
-  color: #071514 !important;
-  border-color: #38e892 !important;
-}
-
-.gate-slot.error {
-  background-color: #93000a !important;
-  color: #ffdad6 !important;
-  border-color: #ff5555 !important;
-}
-
-.gate-warning-bar {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border);
-  padding: 4px 8px;
-  font-size: 0.58rem;
-  font-weight: 700;
-  color: #ff5555;
-  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-md);
   text-transform: uppercase;
-  width: 100%;
-  max-width: 310px;
-  box-sizing: border-box;
 }
 
-.gate-keypad-container {
+.gate-display {
+  margin: var(--spacing-xs) 0 var(--spacing-lg) 0;
+  width: 100%;
+}
+
+.pin-slots {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 8px;
+  justify-content: center;
+  gap: 12px;
 }
 
-.gate-keypad-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  width: 100%;
-  max-width: 310px;
-}
-
-.gate-key-btn {
+.pin-slot {
+  width: 46px;
   height: 52px;
-  background-color: var(--bg-surface);
   border: 1px solid var(--border-hard);
+  background-color: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  border-radius: 0;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.pin-slot.filled {
+  border-color: var(--text-primary);
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  gap: 12px;
+  justify-content: center;
+  margin: 0 auto var(--spacing-md) auto;
+}
+
+.pin-key {
+  width: 72px;
+  height: 72px;
+  border: 1px solid var(--border-hard);
+  background-color: var(--bg-surface);
   color: var(--text-primary);
   font-family: var(--font-mono);
-  font-size: 1.15rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  border-radius: 0 !important;
+  border-radius: 0;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1016,164 +804,65 @@ body {
   outline: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.06s, color 0.06s;
+  transition: background-color 0.08s, color 0.08s, border-color 0.08s;
 }
 
-.gate-key-btn:hover {
-  background-color: var(--bg-hover);
-}
-
-.gate-key-btn:active {
+.pin-key:hover,
+.pin-key:active {
   background-color: var(--text-primary);
   color: var(--bg);
+  border-color: var(--text-primary);
 }
 
-.gate-key-reset {
-  font-size: 0.7rem !important;
-  letter-spacing: 0.06em;
-  color: #ff6b6b;
-  background-color: var(--bg-surface);
-}
-
-.gate-key-reset:active {
-  background-color: #ff5555;
-  color: #ffffff;
-}
-
-.gate-key-backspace {
-  font-size: 0.9rem !important;
-  color: var(--text-dim);
-}
-
-.gate-haptic-notice {
-  font-size: 0.58rem;
-  color: var(--text-dim);
-  text-align: center;
-  margin-top: 6px;
-  letter-spacing: 0.03em;
-}
-
-.gate-diagnostic-bay {
+.gate-controls {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.gate-log-frame {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-hard);
-  padding: 6px 8px;
-}
-
-.gate-log-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.6rem;
-  color: var(--text-dim);
-  letter-spacing: 0.06em;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 3px;
-  margin-bottom: 4px;
-}
-
-.gate-log-rec {
-  color: #38e892;
-  font-weight: 700;
-}
-
-.gate-log-terminal {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  line-height: 1.45;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-height: 60px;
-}
-
-.gate-log-entry {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.gate-log-dim {
-  color: var(--text-dim);
-}
-
-.gate-log-warn {
-  color: #ffaa00;
-}
-
-.gate-log-active {
-  color: #38e892;
-  animation: pulseLog 1.8s infinite;
-}
-
-@keyframes pulseLog {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.gate-buffer-strip {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border);
-  padding: 5px 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.64rem;
-  font-family: var(--font-mono);
-}
-
-.gate-buffer-label {
-  color: var(--text-dim);
-}
-
-.gate-buffer-meter {
-  color: #38e892;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-
-.gate-buffer-pct {
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.gate-emergency-wrap {
-  margin-top: 2px;
-}
-
-.btn-emergency-abort {
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
   width: 100%;
-  padding: 9px 8px;
-  background-color: var(--bg-surface);
-  border: 1px dashed var(--border-hard);
-  color: #ff5555;
+}
+
+.btn-terminal-sm {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  padding: 8px 18px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-dim);
+  border-radius: 0;
   cursor: pointer;
-  border-radius: 0 !important;
+  letter-spacing: 0.08em;
   transition: all 0.12s ease;
 }
 
-.btn-emergency-abort:hover,
-.btn-emergency-abort:active {
-  background-color: #ff5555;
-  color: #ffffff;
-  border-style: solid;
-  border-color: #ff5555;
+.btn-terminal-sm:hover,
+.btn-terminal-sm:active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hard);
 }
 
-.gate-institutional-footer {
-  font-size: 0.58rem;
-  color: var(--text-dim);
+.gate-status {
   text-align: center;
-  letter-spacing: 0.06em;
-  margin-top: 2px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  min-height: 24px;
+  padding: 4px 10px;
+  line-height: 1.4;
+  border-radius: 0;
+  transition: all 0.2s ease;
+}
+
+.gate-status.error {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--text-primary);
+  font-weight: 700;
+}
+
+.gate-status.success {
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 @keyframes gateShake {
@@ -1184,40 +873,6 @@ body {
 
 .gate-shake {
   animation: gateShake 0.35s ease-in-out;
-}
-
-/* Light Theme Overrides for Security Gate */
-[data-theme="light"] .gate-status-led {
-  background-color: #007128;
-  box-shadow: 0 0 4px rgba(0, 113, 40, 0.4);
-}
-
-[data-theme="light"] .gate-val-accent,
-[data-theme="light"] .gate-log-rec,
-[data-theme="light"] .gate-log-active,
-[data-theme="light"] .gate-buffer-meter {
-  color: #007128;
-}
-
-[data-theme="light"] .gate-alert-alarm,
-[data-theme="light"] .gate-warning-bar,
-[data-theme="light"] .gate-key-reset,
-[data-theme="light"] .btn-emergency-abort {
-  color: #b00020;
-}
-
-[data-theme="light"] .gate-slot.filled {
-  color: #007128;
-}
-
-[data-theme="light"] .gate-slot.success {
-  background-color: #007128 !important;
-  color: #ffffff !important;
-}
-
-[data-theme="light"] .gate-slot.error {
-  background-color: #b00020 !important;
-  color: #ffffff !important;
 }
 
 /* ── КНОПКИ СБРОСА СЕССИИ И АДМИН-СБРОСА ────────────────────── */
