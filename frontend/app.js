@@ -216,11 +216,15 @@ function showView(viewId) {
   // Обновляем состояние кнопок нижнего меню
   document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
     const btnTarget = btn.getAttribute('data-view');
-    if (btnTarget === viewId || (btn.id === 'nav-btn-basis' && viewId !== 'view-terrarium-lab')) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
+    let isActive = false;
+    if (btnTarget === viewId) {
+      isActive = true;
+    } else if (btnTarget === 'view-categories' && (viewId === 'view-categories' || (viewId === 'view-card-detail' && (!STATE.navHistory || STATE.navHistory[STATE.navHistory.length - 1]?.view !== 'view-tag-results')))) {
+      isActive = true;
+    } else if (btnTarget === 'view-tag-cloud' && (viewId === 'view-tag-cloud' || viewId === 'view-tag-results')) {
+      isActive = true;
     }
+    btn.classList.toggle('active', isActive);
   });
 }
 
@@ -260,63 +264,159 @@ async function apiPost(path, data) {
   return body;
 }
 
-// ── РЕНДЕР ГОРИЗОНТАЛЬНЫХ ВКЛАДОК И КАРТОЧЕК ──────────────────
+// ── РЕНДЕР ТРИАДЫ ДОМЕНОВ И КАТАЛОГА ГРИМУАРА ────────────────
 async function loadCategories() {
   showView('view-loading');
 
   try {
     const { data: categories } = await apiGet('/categories');
     STATE.categories = categories || [];
-    renderCategoryTabs(STATE.categories);
 
-    if (STATE.categories.length > 0) {
-      if (STATE.currentCategory) {
-        const cat = STATE.categories.find(c => c.slug === STATE.currentCategory.slug);
-        if (cat) await selectCategoryTab(cat);
-      } else {
-        // Не загружаем категорию по умолчанию, показываем приветствие
-        const list = document.getElementById('category-cards-list');
-        if (list) {
-          list.style.display = 'flex';
-          list.innerHTML = `
-            <li class="card-item" style="border: none; background: transparent; text-align: center; padding-top: 40px;">
-              <div style="font-size: 1.2rem; margin-bottom: 12px; color: var(--text-primary); font-weight: bold;">ТЕРМИНАЛ АКТИВЕН</div>
-              <div style="color: var(--text-dim); font-size: 0.8rem; line-height: 1.5;">ИСПОЛЬЗУЙТЕ КНОПКУ [ БАЗИС ] ВНИЗУ ЭКРАНА<br>ДЛЯ ДОСТУПА КО ВСЕМ МОДУЛЯМ СИСТЕМЫ.</div>
-            </li>
-          `;
-        }
-      }
-    } else {
-      renderEmptyCards('БАЗИС ПУСТ. РАЗДЕЛЫ НЕ ЗАГРУЖЕНЫ.');
-    }
-
+    // Мгновенно отображаем Хаб Триады
     showView('view-categories');
+    renderTriadHub();
   } catch (err) {
-    showError(`БАЗИС НЕДОСТУПЕН. ${err.message}`, loadCategories);
+    showError(`ГРИМУАР НЕДОСТУПЕН. ${err.message}`, loadCategories);
   }
 }
 
-function renderCategoryTabs(categories) {
-  const tabsBar = document.getElementById('category-tabs-bar');
-  if (!tabsBar) return;
-  tabsBar.innerHTML = '';
+function renderTriadHub() {
+  STATE.currentCategory = null;
+  STATE.currentSubcategory = null;
 
-  // В верхнем подменю отображаются только разделы: СОМАТИКА, КОГНИТИВИСТИКА, ИЗОЛЯЦИЯ.
-  // Переход в БАЗИС осуществляется исключительно через нижний док (кнопка БАЗИС / ΒΑΣΙΣ).
-  const subMenuCategories = categories.filter(cat => cat.slug !== 'basis');
+  // Скрываем breadcrumbs
+  const subcatBc = document.getElementById('subcat-breadcrumb');
+  if (subcatBc) subcatBc.style.display = 'none';
 
-  subMenuCategories.forEach((cat) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'category-tab-btn';
-    btn.setAttribute('data-slug', cat.slug);
-    btn.textContent = cat.title.toUpperCase();
-    btn.addEventListener('click', () => {
-      if (STATE.currentCategory?.slug === cat.slug) return;
-      selectCategoryTab(cat);
+  // Метаданные
+  const titleEl = document.getElementById('current-tab-label');
+  const countEl = document.getElementById('current-tab-count');
+  if (titleEl) titleEl.textContent = 'ГРИМУАР // ТРИАДА ДОМЕНОВ';
+  if (countEl) countEl.textContent = '3 ДОМЕНА • 12 ПОДРАЗДЕЛОВ';
+
+  // Скрываем подкатегории и список карточек
+  const subcatsMenu = document.getElementById('category-subcats-menu');
+  if (subcatsMenu) subcatsMenu.style.display = 'none';
+
+  const cardsList = document.getElementById('category-cards-list');
+  if (cardsList) cardsList.style.display = 'none';
+
+  const hub = document.getElementById('triad-hub-grid');
+  if (!hub) return;
+  hub.style.display = 'flex';
+  hub.innerHTML = '';
+
+  const domainData = [
+    {
+      num: '01',
+      slug: 'somatics',
+      title: 'СОМАТИКА',
+      meta: '4 ПОДРАЗДЕЛА',
+      desc: 'Нейробиология, интероцепция, кинестезия и эмбодимент. Переобучение ЦНС и снятие мышечных зажимов.',
+      pills: ['ЦНС / DMN', 'Интероцепция', 'Проприоцепция', 'Заземление']
+    },
+    {
+      num: '02',
+      slug: 'cognitivism',
+      title: 'КОГНИТИВИСТИКА',
+      meta: '4 ПОДРАЗДЕЛА',
+      desc: 'Внимание, память, когнитивные искажения и метапознание (концепция Человек-Машина Гурджиева и Успенского).',
+      pills: ['Медитация', 'Интервалы', 'Эвристики', 'Метапознание']
+    },
+    {
+      num: '03',
+      slug: 'isolation',
+      title: 'ИЗОЛЯЦИЯ',
+      meta: '4 ПОДРАЗДЕЛА',
+      desc: 'Сенсорная депривация, социальная тишина, психологическая автономия и аскеза дофаминового голодания.',
+      pills: ['Вакуум', 'Ретрит молчания', 'Автономия', 'Дофамин']
+    }
+  ];
+
+  domainData.forEach(d => {
+    const cardEl = document.createElement('div');
+    cardEl.className = 'triad-domain-card';
+    cardEl.innerHTML = `
+      <div class="triad-domain-header">
+        <div class="triad-domain-title-wrap">
+          <span class="triad-domain-num">[ ${d.num} ]</span>
+          <h2 class="triad-domain-title">${d.title}</h2>
+        </div>
+        <span class="triad-domain-meta">${d.meta} →</span>
+      </div>
+      <p class="triad-domain-desc">${d.desc}</p>
+      <div class="triad-domain-subcats-tags">
+        ${d.pills.map(p => `<span class="triad-subcat-pill">${p}</span>`).join('')}
+      </div>
+    `;
+
+    cardEl.addEventListener('click', () => {
+      const cat = STATE.categories.find(c => c.slug === d.slug);
+      if (cat) {
+        selectCategoryTab(cat);
+      }
       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     });
-    tabsBar.appendChild(btn);
+
+    hub.appendChild(cardEl);
+  });
+
+  // Быстрая кнопка перехода в Облако Тегов
+  const tagActionRow = document.createElement('div');
+  tagActionRow.className = 'triad-hub-actions';
+  tagActionRow.innerHTML = `
+    <button type="button" class="triad-action-btn" id="btn-open-tag-cloud" style="width: 100%;">
+      <span>#</span>
+      <span>ОБЛАКО КЛАСТЕРОВ ТЕГОВ (ZETTELKASTEN)</span>
+      <span>→</span>
+    </button>
+  `;
+  tagActionRow.querySelector('#btn-open-tag-cloud').addEventListener('click', () => {
+    showView('view-tag-cloud');
+    renderTagCloud();
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+  });
+  hub.appendChild(tagActionRow);
+}
+
+function renderTagCloud() {
+  const container = document.getElementById('tag-cloud-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const clusters = [
+    {
+      title: 'КЛАСТЕР 1: ТИП ЗНАНИЯ',
+      tags: ['Теория', 'Практика', 'Инструмент']
+    },
+    {
+      title: 'КЛАСТЕР 2: ПРОЦЕСС',
+      tags: ['Концентрация', 'Автопилот', 'Торможение', 'Адаптация', 'Обучение']
+    },
+    {
+      title: 'КЛАСТЕР 3: КОНТЕКСТ',
+      tags: ['Нейробиология', 'Изоляция', 'Автономия', 'Механизм']
+    }
+  ];
+
+  clusters.forEach(cl => {
+    const box = document.createElement('div');
+    box.className = 'tag-cluster-box';
+    box.innerHTML = `
+      <div class="tag-cluster-title">[ ${escHtml(cl.title)} ]</div>
+      <div class="tag-cluster-pills">
+        ${cl.tags.map(t => `<button type="button" class="tag-cloud-pill" data-tag="${escHtml(t)}">#${escHtml(t)}</button>`).join('')}
+      </div>
+    `;
+
+    box.querySelectorAll('.tag-cloud-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tag = btn.getAttribute('data-tag');
+        showCardsByTag(tag);
+      });
+    });
+
+    container.appendChild(box);
   });
 }
 
@@ -324,19 +424,13 @@ async function selectCategoryTab(category) {
   STATE.currentCategory = category;
   STATE.currentSubcategory = null;
 
-  // Обновляем активный класс на кнопках вкладок
-  const tabBtns = document.querySelectorAll('.category-tab-btn');
-  tabBtns.forEach(btn => {
-    if (btn.getAttribute('data-slug') === category.slug) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
-  });
-
-  // Скрываем breadcrumb подкатегории
+  // Настройка хлебных крошек
   const subcatBc = document.getElementById('subcat-breadcrumb');
-  if (subcatBc) subcatBc.style.display = 'none';
+  const btnBack = document.getElementById('btn-back-to-subcats');
+  const bcTitle = document.getElementById('breadcrumb-subcat-title');
+  if (subcatBc) subcatBc.style.display = 'flex';
+  if (btnBack) btnBack.textContent = '← ТРИАДА';
+  if (bcTitle) bcTitle.textContent = category.title.toUpperCase();
 
   // Заголовок раздела и статус загрузки
   const titleEl = document.getElementById('current-tab-label');
@@ -344,7 +438,10 @@ async function selectCategoryTab(category) {
   if (titleEl) titleEl.textContent = `РАЗДЕЛ // ${category.title.toUpperCase()}`;
   if (countEl) countEl.textContent = 'ЗАГРУЗКА...';
 
-  // Индикация загрузки карточек
+  // Скрываем Хаб Триады
+  const hub = document.getElementById('triad-hub-grid');
+  if (hub) hub.style.display = 'none';
+
   const subcatsMenu = document.getElementById('category-subcats-menu');
   const list = document.getElementById('category-cards-list');
   if (subcatsMenu) subcatsMenu.style.display = 'none';
@@ -378,13 +475,21 @@ async function selectCategoryTab(category) {
 function showSubcategoriesMenu() {
   STATE.currentSubcategory = null;
 
+  // Хлебные крошки: назад в Триаду
   const subcatBc = document.getElementById('subcat-breadcrumb');
-  if (subcatBc) subcatBc.style.display = 'none';
+  const btnBack = document.getElementById('btn-back-to-subcats');
+  const bcTitle = document.getElementById('breadcrumb-subcat-title');
+  if (subcatBc) subcatBc.style.display = 'flex';
+  if (btnBack) btnBack.textContent = '← ТРИАДА';
+  if (bcTitle) bcTitle.textContent = STATE.currentCategory?.title?.toUpperCase() || 'РАЗДЕЛ';
 
   const titleEl = document.getElementById('current-tab-label');
   const countEl = document.getElementById('current-tab-count');
   if (titleEl) titleEl.textContent = `РАЗДЕЛ // ${STATE.currentCategory?.title?.toUpperCase() || ''}`;
   if (countEl) countEl.textContent = `ПОДРАЗДЕЛОВ: ${STATE.currentSubcategories.length}`;
+
+  const hub = document.getElementById('triad-hub-grid');
+  if (hub) hub.style.display = 'none';
 
   const cardsList = document.getElementById('category-cards-list');
   if (cardsList) cardsList.style.display = 'none';
@@ -409,11 +514,7 @@ function showSubcategoriesMenu() {
     'sensory': 'Сенсорная депривация: светозвуковая изоляция, флоатинг, отключение афферентных стимулов, перезагрузка коры.',
     'social': 'Социальная изоляция: автономия от групповой конформности, ретриты молчания, фильтрация внешних нарративов.',
     'psychological': 'Психологическая автономия: внутренний локус контроля, суверенитет личности, преодоление выученной беспомощности.',
-    'asceticism': 'Аскеза и дофаминовый детокс: сенсорный и информационный пост, перезагрузка рецепторов, воздержание.',
-    // Legacy support
-    'classic': 'Традиционная соматика: телесные практики и терапия переобучения нервной системы.',
-    'esoterics': 'Эзотерические традиции: энергетическая анатомия и тонкие тела.',
-    'quantum': 'Квантовое исцеление: ментальные модели и нейробиология намерения.'
+    'asceticism': 'Аскеза и дофаминовый детокс: сенсорный и информационный пост, перезагрузка рецепторов, воздержание.'
   };
 
   STATE.currentSubcategories.forEach((sub) => {
@@ -431,10 +532,6 @@ function showSubcategoriesMenu() {
     `;
 
     btn.addEventListener('click', () => {
-      if (sub.subcategory === 'esoterics' || sub.subcategory === 'quantum') {
-        showRestrictedBanner(sub.subcategory_title || sub.subcategory);
-        return;
-      }
       selectSubcategory(sub);
       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     });
@@ -444,10 +541,6 @@ function showSubcategoriesMenu() {
 }
 
 function selectSubcategory(sub) {
-  if (sub.subcategory === 'esoterics' || sub.subcategory === 'quantum') {
-    showRestrictedBanner(sub.subcategory_title || sub.subcategory);
-    return;
-  }
   STATE.currentSubcategory = sub;
 
   // Настройка хлебных крошек
@@ -885,9 +978,14 @@ function setupBackButtons() {
         if (prev.view === 'view-card-detail' && prev.card) {
           openCard(prev.card, false);
           return;
+        } else if (prev.view === 'view-tag-cloud') {
+          showView('view-tag-cloud');
+          renderTagCloud();
+          return;
         }
       }
-      showView('view-categories');
+      showView('view-tag-cloud');
+      renderTagCloud();
       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     });
   }
@@ -895,7 +993,20 @@ function setupBackButtons() {
   const btnBackSubcats = document.getElementById('btn-back-to-subcats');
   if (btnBackSubcats) {
     btnBackSubcats.addEventListener('click', () => {
-      showSubcategoriesMenu();
+      if (STATE.currentSubcategory) {
+        showSubcategoriesMenu();
+      } else {
+        renderTriadHub();
+      }
+      if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    });
+  }
+
+  const btnBackTagCloud = document.getElementById('btn-back-tag-cloud');
+  if (btnBackTagCloud) {
+    btnBackTagCloud.addEventListener('click', () => {
+      showView('view-categories');
+      renderTriadHub();
       if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     });
   }
@@ -2122,19 +2233,12 @@ function setupBottomNav() {
   const navBtns = document.querySelectorAll('.bottom-nav-btn');
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      if (btn.id === 'nav-btn-basis') {
-        const modal = document.getElementById('modal-main-menu');
-        if (modal) modal.style.display = 'flex';
-        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-        return;
-      }
-
       const targetView = btn.getAttribute('data-view');
       if (!targetView) return;
 
       const currentActive = document.querySelector('.view.active')?.id;
 
-      if (currentActive === targetView) {
+      if (currentActive === targetView && targetView !== 'view-categories') {
         if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         return;
       }
@@ -2144,17 +2248,11 @@ function setupBottomNav() {
 
       // Инициализация контента при переходе
       if (targetView === 'view-categories') {
-        const basisCat = STATE.categories.find(c => c.slug === 'basis') || STATE.categories[0];
-        if (basisCat && STATE.currentCategory?.slug !== 'basis') {
-          selectCategoryTab(basisCat);
-        }
-      } else if (targetView === 'view-observations') {
-        const activeObsTab = document.querySelector('.obs-tab-btn.active')?.getAttribute('data-subtab') || 'source';
-        switchObservationsSubtab(activeObsTab);
+        renderTriadHub();
+      } else if (targetView === 'view-tag-cloud') {
+        renderTagCloud();
       } else if (targetView === 'view-bookmarks') {
         renderBookmarks();
-      } else if (targetView === 'view-tools') {
-        selectTool('menu');
       } else if (targetView === 'view-terrarium-lab') {
         window.dispatchEvent(new Event('resize'));
       }
@@ -2181,6 +2279,9 @@ function setupMainMenu() {
       if (action === 'bookmarks') {
         showView('view-bookmarks');
         renderBookmarks();
+      } else if (action === 'tags') {
+        showView('view-tag-cloud');
+        renderTagCloud();
       } else if (action === 'tools') {
         showView('view-tools');
         selectTool('menu');
@@ -2191,11 +2292,13 @@ function setupMainMenu() {
         const activeObsTab = document.querySelector('.obs-tab-btn.active')?.getAttribute('data-subtab') || 'source';
         switchObservationsSubtab(activeObsTab);
       } else {
-        // Это одна из категорий: somatics, cognitivism, isolation
+        // Это одна из категорий Триады: somatics, cognitivism, isolation
         showView('view-categories');
         const cat = STATE.categories.find(c => c.slug === action);
         if (cat) {
           selectCategoryTab(cat);
+        } else {
+          renderTriadHub();
         }
       }
       

@@ -153,37 +153,37 @@
       </div>
     </section>
 
-    <!-- ГЛАВНЫЙ ЭКРАН: ГОРИЗОНТАЛЬНЫЕ ВКЛАДКИ И СПИСОК КАРТОЧЕК -->
+    <!-- ГЛАВНЫЙ ЭКРАН: ТРИАДА ДОМЕНОВ И КАТАЛОГ -->
     <section id="view-categories" class="view">
-      <!-- Навигационная панель вкладок скрыта, так как доступ теперь через Главное Меню (БАЗИС) -->
-      <nav class="category-tabs-bar" id="category-tabs-bar" aria-label="Вкладки разделов" style="display:none;">
-        <!-- JS динамически заполняет вкладки, но мы их скрыли -->
-      </nav>
-
-      <!-- Хлебные крошки внутри подкатегории (отображаются при просмотре карточек подкатегории) -->
+      <!-- Хлебные крошки для перехода обратно к Триаде / Разделу -->
       <nav class="breadcrumb" id="subcat-breadcrumb" style="display:none;">
-        <button type="button" class="btn-back" id="btn-back-to-subcats" aria-label="Назад к списку подкатегорий">
-          ← РАЗДЕЛ
+        <button type="button" class="btn-back" id="btn-back-to-subcats" aria-label="Назад">
+          ← ТРИАДА
         </button>
         <span class="breadcrumb-sep">/</span>
-        <span id="breadcrumb-subcat-title">──────</span>
+        <span id="breadcrumb-subcat-title">РАЗДЕЛ</span>
       </nav>
 
-      <!-- Информационная полоса текущего раздела / подкатегории -->
-      <div class="category-meta-bar">
-        <span class="category-meta-title" id="current-tab-label">РАЗДЕЛ // СОМАТИКА</span>
-        <span class="category-meta-count" id="current-tab-count">ПОДРАЗДЕЛОВ: 0</span>
+      <!-- Информационная полоса текущего состояния -->
+      <div class="category-meta-bar" id="category-meta-bar">
+        <span class="category-meta-title" id="current-tab-label">ГРИМУАР // ТРИАДА ДОМЕНОВ</span>
+        <span class="category-meta-count" id="current-tab-count">3 ДОМЕНА</span>
       </div>
 
       <div class="dot-grid-divider"></div>
 
-      <!-- Меню подкатегорий раздела (КЛАССИКА, ЭЗОТЕРИКА, КВАНТОВАЯ) -->
+      <!-- ХАБ ТРИАДЫ (Отображает 3 чистых домена) -->
+      <div class="triad-hub-grid" id="triad-hub-grid">
+        <!-- JS заполняет карточки доменов -->
+      </div>
+
+      <!-- Меню 4 подкатегорий выбранного домена -->
       <div class="subcat-menu-list" id="category-subcats-menu" style="display:none;">
         <!-- JS заполняет кнопки подкатегорий -->
       </div>
 
-      <!-- Список карточек активной вкладки / подкатегории -->
-      <ul class="card-list" id="category-cards-list">
+      <!-- Список карточек выбранной подкатегории -->
+      <ul class="card-list" id="category-cards-list" style="display:none;">
         <!-- JS заполняет -->
       </ul>
     </section>
@@ -216,6 +216,22 @@
       <ul class="card-list" id="tag-cards-list">
         <!-- JS заполняет карточки с данным тегом -->
       </ul>
+    </section>
+
+    <!-- ОБЛАКО КЛАСТЕРОВ ТЕГОВ (ZETTELKASTEN НАВИГАТОР) -->
+    <section id="view-tag-cloud" class="view">
+      <div class="card-detail-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <button type="button" class="btn-action" id="btn-back-tag-cloud" style="width: auto; padding: 6px 14px; font-size: 0.75rem;">← ТРИАДА</button>
+        <span class="category-meta-count">КЛАСТЕРЫ ТЕГОВ</span>
+      </div>
+      <div class="dot-grid-divider"></div>
+      <div class="category-meta-bar" style="margin-top: 6px;">
+        <span class="category-meta-title">ИНДЕКС СВЯЗЕЙ // 3 КЛАСТЕРА</span>
+      </div>
+      <div class="dot-grid-divider"></div>
+      <div class="tag-cloud-container" id="tag-cloud-container">
+        <!-- JS заполняет 3 кластера тегов -->
+      </div>
     </section>
 
     <!-- НАБЛЮДЕНИЯ (ВКЛАДКИ: 1 - ИСТОЧНИК, 2 - ПОСЛАНИЕ) -->
@@ -719,14 +735,9 @@
           <span class="main-nav-arrow">→</span>
         </button>
         <div class="modal-divider" style="margin: 2px 0;">──────────────────────────────</div>
-        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="tools">
-          <span class="main-nav-num">[⚡]</span>
-          <span class="main-nav-title">ИНСТРУМЕНТЫ</span>
-          <span class="main-nav-arrow">→</span>
-        </button>
-        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="lab">
-          <span class="main-nav-num">[🦎]</span>
-          <span class="main-nav-title">ЛАБОРАТОРИЯ</span>
+        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="tags">
+          <span class="main-nav-num">[#]</span>
+          <span class="main-nav-title">ИНДЕКС ТЕГОВ</span>
           <span class="main-nav-arrow">→</span>
         </button>
         <button type="button" class="main-nav-btn main-menu-item" data-menu-action="bookmarks">
@@ -739,9 +750,14 @@
           <span class="main-nav-title">НАБЛЮДЕНИЯ</span>
           <span class="main-nav-arrow">→</span>
         </button>
-        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="basis">
-          <span class="main-nav-num">[i]</span>
-          <span class="main-nav-title">БАЗИС (ИНФО)</span>
+        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="tools">
+          <span class="main-nav-num">[⚡]</span>
+          <span class="main-nav-title">ИНСТРУМЕНТЫ</span>
+          <span class="main-nav-arrow">→</span>
+        </button>
+        <button type="button" class="main-nav-btn main-menu-item" data-menu-action="lab">
+          <span class="main-nav-num">[🦎]</span>
+          <span class="main-nav-title">ЛАБОРАТОРИЯ</span>
           <span class="main-nav-arrow">→</span>
         </button>
       </div>
@@ -752,9 +768,17 @@
        НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK)
   ══════════════════════════════════════════════ -->
   <nav class="terminal-bottom-nav" id="terminal-bottom-nav" style="display: none;">
-    <button type="button" class="bottom-nav-btn active" id="nav-btn-basis" data-view="view-categories" style="flex: 1;">
-      <span>БАЗИС</span>
-      <span class="bottom-nav-sub">ΒΑΣΙΣ</span>
+    <button type="button" class="bottom-nav-btn active" id="nav-btn-triad" data-view="view-categories" style="flex: 1;">
+      <span>ТРИАДА</span>
+      <span class="bottom-nav-sub">ДОМЕНЫ</span>
+    </button>
+    <button type="button" class="bottom-nav-btn" id="nav-btn-tags" data-view="view-tag-cloud" style="flex: 1;">
+      <span>ТЕГИ</span>
+      <span class="bottom-nav-sub">СВЯЗИ</span>
+    </button>
+    <button type="button" class="bottom-nav-btn" id="nav-btn-bookmarks" data-view="view-bookmarks" style="flex: 1;">
+      <span>ПАМЯТЬ</span>
+      <span class="bottom-nav-sub">АРХИВ</span>
     </button>
     <button type="button" class="bottom-nav-btn" id="nav-btn-lab" data-view="view-terrarium-lab" style="flex: 1;">
       <span>ЛАБОРАТОРИЯ</span>

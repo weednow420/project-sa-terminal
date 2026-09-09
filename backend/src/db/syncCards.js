@@ -227,7 +227,7 @@ function extractTags(bodyText) {
 function resolveCategoryInfo(folderName) {
   const clean = folderName.trim();
   const match = clean.match(/^(\d+)_(.+)$/);
-  let sortOrder = 99;
+  let sortOrder = 1;
   let rawName = clean;
   if (match) {
     sortOrder = parseInt(match[1], 10);
@@ -235,22 +235,18 @@ function resolveCategoryInfo(folderName) {
   }
 
   const lower = rawName.toLowerCase();
-  let slug = lower.replace(/[^a-z0-9_-]/g, '-');
-  let title = rawName.toUpperCase().replace(/[-_]/g, ' ');
+  let slug = lower;
+  let title = rawName.toUpperCase();
 
-  if (lower.includes('basis') || lower.includes('базис')) {
-    slug = 'basis';
-    title = 'БАЗИС';
-    sortOrder = 0;
-  } else if (lower.includes('somatic') || lower.includes('соматик') || lower.includes('anomaly') || lower.includes('аномали')) {
+  if (lower.includes('somatic') || lower.includes('соматик')) {
     slug = 'somatics';
     title = 'СОМАТИКА';
     sortOrder = 1;
-  } else if (lower.includes('cognitiv') || lower.includes('когнитив') || lower.includes('physics') || lower.includes('физик')) {
+  } else if (lower.includes('cognitiv') || lower.includes('когнитив')) {
     slug = 'cognitivism';
     title = 'КОГНИТИВИСТИКА';
     sortOrder = 2;
-  } else if (lower.includes('isolation') || lower.includes('изоляц') || lower.includes('protocol') || lower.includes('протокол')) {
+  } else if (lower.includes('isolation') || lower.includes('изоляц')) {
     slug = 'isolation';
     title = 'ИЗОЛЯЦИЯ';
     sortOrder = 3;
@@ -274,21 +270,21 @@ function resolveSubcategoryInfo(folderName) {
   // 1_somatics
   if (lower.includes('neurobio') || lower.includes('нейробио')) {
     slug = 'neurobiology';
-    title = 'НЕЙРОБИОЛОГИЯ И РЕГУЛЯЦИЯ';
+    title = 'НЕЙРОБИОЛОГИЯ И ЦНС';
   } else if (lower.includes('interocept') || lower.includes('интероцеп')) {
     slug = 'interoception';
-    title = 'ИНТЕРОЦЕПЦИЯ И МЕТАБОЛИЗМ';
+    title = 'ИНТЕРОЦЕПЦИЯ И ЧУВСТВИТЕЛЬНОСТЬ';
   } else if (lower.includes('kinesthet') || lower.includes('кинест')) {
     slug = 'kinesthetics';
-    title = 'КИНЕСТЕТИКА И БИОМЕХАНИКА';
+    title = 'КИНЕСТЕЗИЯ И ПРОПРИОЦЕПЦИЯ';
   } else if (lower.includes('embodi') || lower.includes('эмбоди')) {
     slug = 'embodiment';
-    title = 'ЭМБОДИМЕНТ';
+    title = 'ЭМБОДИМЕНТ И ЗАЗЕМЛЕНИЕ';
   }
   // 2_cognitivism
   else if (lower.includes('attent') || lower.includes('вниман')) {
     slug = 'attention';
-    title = 'ВНИМАНИЕ И ФОКУС';
+    title = 'ВНИМАНИЕ И КОНЦЕНТРАЦИЯ';
   } else if (lower.includes('learn') || lower.includes('обучен') || lower.includes('нейропласт')) {
     slug = 'learning';
     title = 'ОБУЧЕНИЕ И НЕЙРОПЛАСТИЧНОСТЬ';
@@ -297,7 +293,7 @@ function resolveSubcategoryInfo(folderName) {
     title = 'КОГНИТИВНЫЕ ИСКАЖЕНИЯ';
   } else if (lower.includes('metacog') || lower.includes('метапозн')) {
     slug = 'metacognition';
-    title = 'МЕТАПОЗНАНИЕ';
+    title = 'МЕТАПОЗНАНИЕ И САМОНАБЛЮДЕНИЕ';
   }
   // 3_isolation
   else if (lower.includes('sensor') || lower.includes('сенсор')) {
@@ -305,24 +301,13 @@ function resolveSubcategoryInfo(folderName) {
     title = 'СЕНСОРНАЯ ДЕПРИВАЦИЯ';
   } else if (lower.includes('social') || lower.includes('социальн')) {
     slug = 'social';
-    title = 'СОЦИАЛЬНАЯ ДИНАМИКА';
+    title = 'СОЦИАЛЬНАЯ ИЗОЛЯЦИЯ';
   } else if (lower.includes('psychol') || lower.includes('психолог')) {
     slug = 'psychological';
-    title = 'ПСИХОЛОГИЧЕСКИЕ БАРЬЕРЫ';
+    title = 'ПСИХОЛОГИЧЕСКАЯ АВТОНОМИЯ';
   } else if (lower.includes('ascetic') || lower.includes('аскез') || lower.includes('ограничен')) {
     slug = 'asceticism';
-    title = 'ПРАКТИКИ ОГРАНИЧЕНИЙ';
-  }
-  // Совместимость со старыми папками
-  else if (lower.includes('classic') || lower.includes('класс')) {
-    slug = 'classic';
-    title = 'КЛАССИКА';
-  } else if (lower.includes('esoteric') || lower.includes('эзотер')) {
-    slug = 'esoterics';
-    title = 'ЭЗОТЕРИКА';
-  } else if (lower.includes('quantum') || lower.includes('квант')) {
-    slug = 'quantum';
-    title = 'КВАНТОВАЯ';
+    title = 'АСКЕЗА И ДОФАМИНОВЫЙ ДЕТОКС';
   }
 
   return { slug, title };

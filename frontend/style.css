@@ -724,6 +724,164 @@ body {
   color: var(--text-dim);
 }
 
+/* ── ХАБ ТРИАДЫ ДОМЕНОВ ───────────────────────────────────── */
+.triad-hub-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.triad-domain-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--text-primary);
+  padding: 16px;
+  cursor: pointer;
+  border-radius: 0 !important;
+  text-align: left;
+  transition: none;
+  width: 100%;
+}
+
+.triad-domain-card:hover {
+  border-color: var(--border-hard);
+  background-color: var(--bg-hover);
+}
+
+.triad-domain-card:active {
+  background-color: var(--text-primary);
+  color: var(--bg);
+}
+
+.triad-domain-card:active .triad-domain-num,
+.triad-domain-card:active .triad-domain-title,
+.triad-domain-card:active .triad-domain-meta,
+.triad-domain-card:active .triad-domain-desc {
+  color: var(--bg) !important;
+}
+
+.triad-domain-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.triad-domain-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.triad-domain-num {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+.triad-domain-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+.triad-domain-meta {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.triad-domain-desc {
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.triad-domain-subcats-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.triad-subcat-pill {
+  font-size: 0.62rem;
+  padding: 2px 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+}
+
+/* ── ОБЛАКО ТЕГОВ (ZETTELKASTEN CLUSTERS) ──────────────────── */
+.tag-cloud-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.tag-cluster-box {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  padding: 14px;
+}
+
+.tag-cluster-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: 4px;
+}
+
+.tag-cluster-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-cloud-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  background: var(--bg);
+  border: 1px solid var(--text-primary);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 0 !important;
+  transition: none;
+}
+
+.tag-cloud-pill:hover {
+  background: var(--text-primary);
+  color: var(--bg);
+}
+
+.tag-cloud-pill-count {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+}
+
+.tag-cloud-pill:hover .tag-cloud-pill-count {
+  color: var(--bg);
+}
+
 /* ── ЭКРАН ОШИБКИ b181 ────────────────────────────────────── */
 .error-block {
   padding: var(--spacing-lg) 0;
