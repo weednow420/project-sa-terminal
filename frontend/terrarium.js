@@ -90,23 +90,26 @@
     bobOffset: 0,
   };
 
-  // Физика кибер-аксолотля в лаборатории
+  // Физика живого пиксельного кибер-аксолотля в лаборатории
   const axoLab = {
     x: 150,
-    y: 72,
-    vx: 0.36,
+    y: 75,
+    vx: 0.42,
     facing: 1,
     bobOffset: 0,
     tiltAngle: 0,
+    speedMultiplier: 1.0,
     blinkTimer: 0,
     isBlinking: false,
     reactionTimer: 0,
+    bubbleTimer: 0,
   };
 
-  // Пузырьки, флоатеры и сонарные волны лаборатории
+  // Пузырьки, флоатеры, сонарные волны и электрические искры
   const labBubbles = [];
   const labFloaters = [];
   const labSonarWaves = [];
+  const labSparks = [];
 
   function initCanvases() {
     canvasFace = document.getElementById('axolotl-canvas-face');
@@ -166,8 +169,9 @@
     saveState();
     updateUI();
 
-    axoObj.reactionTimer = 22;
-    if (Math.random() > 0.6) axoObj.vx = -axoObj.vx;
+    axoObj.reactionTimer = 32;
+    axoObj.speedMultiplier = 2.4;
+    if (Math.random() > 0.65) axoObj.vx = -axoObj.vx;
 
     let clickX = 100;
     let clickY = 20;
@@ -202,122 +206,258 @@
       speed: 1.3,
     });
 
+    // Электрические искры при тапе по кибер-симбионту
+    for (let s = 0; s < 7; s++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = 1.6 + Math.random() * 2.4;
+      labSparks.push({
+        x: clickX,
+        y: clickY,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        alpha: 1.0,
+        color: Math.random() > 0.35 ? '#38e8d8' : '#50ffb0'
+      });
+    }
+
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
     }
   }
 
-  // Отрисовка пиксельного Аксолотля
-  function drawPixelAxolotl(c, x, y, scale, facing, isHappy, isBlink, wiggle) {
+  // ── ПОЛНОРАЗМЕРНЫЙ ЖИВОЙ КИБЕР-СИМБИОНТ b181 (ЛАБОРАТОРИЯ) ─────
+  function drawLiveCyberAxolotl(c, x, y, scale, facing, isHappy, isBlink, time, reactionTimer, isLight) {
     c.save();
-    c.translate(x, y);
+    c.translate(Math.round(x), Math.round(y));
     c.scale(facing * scale, scale);
 
-    // Палитра пиксельного аксолотля (как на референсе)
-    const C_BODY = '#ffb3cb';       // Розовое тело
-    const C_BODY_SHADOW = '#f29ab5'; // Тень тела
-    const C_GILLS = '#ff548e';      // Яркие внешние жабры
-    const C_GILLS_DARK = '#cc2a64'; // Контур жабр
-    const C_OUTLINE = '#111111';    // Темный контур
-    const C_WHITE = '#ffffff';      // Блики
-    const C_MOUTH = '#991e4a';      // Ротик
+    // Палитра кибер-симбионта (в точности по референсу)
+    const C_SHELL        = '#d2d9cc'; // Светло-костяная экзо-броня
+    const C_SHELL_MID    = '#b4c2af'; // Полутень брони
+    const C_SHELL_SHADOW = '#889882'; // Глубокая тень пластин
+    const C_SEAM         = '#38483d'; // Швы и стыки брони
+    const C_GLYPH        = '#232f28'; // Антенный рунический глиф
+    const C_GILLS        = '#202e25'; // Механические ветви жабр
+    const C_GILLS_LIGHT  = '#4f6657'; // Ребра жесткости жабр
+    const C_CYAN         = '#38e8d8'; // Неоновые бирюзовые световоды
+    const C_CYAN_HOT     = '#a3fff6'; // Бело-бирюзовая вспышка импульса
+    const C_SOCKET       = '#081711'; // Черный колодец CRT-матрицы
+    const C_LED          = reactionTimer > 0 ? '#50ffb0' : '#38e892'; // Зеленые фосфорные светодиоды
+    const C_CHIP         = '#1b2620'; // Микрочип / радиатор на боку
+    const C_OUTLINE      = isLight ? '#14221b' : '#1f2e26';
 
     const p = (px, py, w, h, col) => {
       c.fillStyle = col;
-      c.fillRect(px, py, w, h);
+      c.fillRect(Math.round(px), Math.round(py), Math.round(w), Math.round(h));
     };
 
-    // Хвостик сзади (слегка покачивается)
-    const tailWiggle = Math.round(Math.sin(wiggle * 1.5) * 2);
-    p(-22, -2 + tailWiggle, 6, 7, C_BODY);
-    p(-24, -1 + tailWiggle, 2, 5, C_BODY_SHADOW);
-    p(-22, -3 + tailWiggle, 6, 1, C_OUTLINE);
-    p(-22, 5 + tailWiggle, 6, 1, C_OUTLINE);
-    p(-25, 0 + tailWiggle, 1, 3, C_OUTLINE);
+    // Скорость и фазы движения
+    const swimSpeed = reactionTimer > 0 ? 0.009 : 0.0042;
+    const wave = time * swimSpeed;
+    const isTapped = reactionTimer > 0;
 
-    // Маленькие лапки
-    p(-10, 8, 4, 3, C_BODY);
-    p(-10, 10, 4, 1, C_OUTLINE);
-    p(6, 8, 4, 3, C_BODY);
-    p(6, 10, 4, 1, C_OUTLINE);
+    // Расчет изгиба хвоста и позвоночника (многосегментная синусоида)
+    const seg1_y = Math.sin(wave - 0.4) * 2.5; // Плечи
+    const seg2_y = Math.sin(wave - 1.0) * 5.0; // Середина тела / бок
+    const seg3_y = Math.sin(wave - 1.7) * 8.5; // Таз
+    const seg4_y = Math.sin(wave - 2.5) * 13.0; // Средняя часть хвоста
+    const seg5_y = Math.sin(wave - 3.4) * 18.0; // Кончик хвоста
+    const seg6_y = Math.sin(wave - 4.2) * 23.0; // Плавниковый кончик
 
-    // Жабры-веточки (3 пары сзади головы)
+    // Бегущий световой импульс по спинному световоду (data bus packet)
+    const packetSegment = Math.floor((time * 0.008) % 6);
+
+    // ── 1. ДАЛЬНИЕ ЛАПКИ (ПРАВАЯ СТОРОНА ЗА ТЕЛОМ) ─────────────────
+    // Передняя правая лапка (гребок)
+    const paw1_angle = Math.sin(wave * 0.9 + 1.2) * 4;
+    p(-6, -10 + seg1_y * 0.5 + paw1_angle, 6, 4, C_SHELL_SHADOW);
+    p(-9, -13 + seg1_y * 0.5 + paw1_angle * 1.3, 4, 3, C_SHELL_MID);
+    p(-12, -15 + seg1_y * 0.5 + paw1_angle * 1.5, 2, 2, C_SHELL);
+    p(-10, -16 + seg1_y * 0.5 + paw1_angle * 1.5, 2, 2, C_SHELL);
+    p(-8, -15 + seg1_y * 0.5 + paw1_angle * 1.5, 2, 2, C_SHELL);
+
+    // Задняя правая лапка
+    const paw2_angle = Math.sin(wave * 0.9 + 2.8) * 5;
+    p(-28, -8 + seg3_y * 0.8 + paw2_angle, 7, 4, C_SHELL_SHADOW);
+    p(-33, -11 + seg3_y * 0.8 + paw2_angle * 1.3, 5, 3, C_SHELL_MID);
+    p(-37, -13 + seg3_y * 0.8 + paw2_angle * 1.5, 2, 2, C_SHELL);
+    p(-35, -14 + seg3_y * 0.8 + paw2_angle * 1.5, 2, 2, C_SHELL);
+    p(-33, -13 + seg3_y * 0.8 + paw2_angle * 1.5, 2, 2, C_SHELL);
+
+    // ── 2. ХВОСТ И ПЛАВНИК (ИЗВИВАЕТСЯ ВОЛНОЙ) ─────────────────────
+    // Сегмент 6 (Самый кончик хвоста)
+    p(-56, -2 + seg6_y, 8, 4, C_SHELL_MID);
+    p(-60, -1 + seg6_y, 4, 2, C_CYAN); // световод на самом острие
+    p(-58, -5 + seg6_y, 10, 3, C_GILLS); // плавник сверху
+    p(-58, 2 + seg6_y, 10, 3, C_GILLS);  // плавник снизу
+    p(-56, -6 + seg6_y, 8, 1, C_OUTLINE);
+    p(-56, 5 + seg6_y, 8, 1, C_OUTLINE);
+
+    // Сегмент 5
+    p(-48, -4 + seg5_y, 9, 8, C_SHELL_MID);
+    p(-50, -3 + seg5_y, 2, 6, C_SHELL_SHADOW);
+    p(-49, -8 + seg5_y, 11, 4, C_GILLS); // верхний плавник
+    p(-49, 4 + seg5_y, 11, 4, C_GILLS);  // нижний плавник
+    p(-47, -2 + seg5_y, 7, 2, packetSegment === 4 ? C_CYAN_HOT : C_CYAN);
+    p(-49, -9 + seg5_y, 11, 1, C_OUTLINE);
+    p(-49, 8 + seg5_y, 11, 1, C_OUTLINE);
+
+    // Сегмент 4
+    p(-39, -6 + seg4_y, 10, 12, C_SHELL);
+    p(-41, -5 + seg4_y, 3, 10, C_SHELL_SHADOW);
+    p(-40, -10 + seg4_y, 12, 4, C_GILLS); // верхний гребень
+    p(-40, 6 + seg4_y, 12, 4, C_GILLS);   // нижний гребень
+    p(-38, -2 + seg4_y, 8, 2, packetSegment === 3 ? C_CYAN_HOT : C_CYAN);
+    p(-40, -11 + seg4_y, 12, 1, C_OUTLINE);
+    p(-40, 10 + seg4_y, 12, 1, C_OUTLINE);
+
+    // Сегмент 3 (Тазовая часть)
+    p(-29, -8 + seg3_y, 11, 16, C_SHELL);
+    p(-31, -7 + seg3_y, 3, 14, C_SHELL_SHADOW);
+    p(-29, -12 + seg3_y, 11, 4, C_GILLS);
+    p(-29, 8 + seg3_y, 11, 4, C_GILLS);
+    p(-28, -2 + seg3_y, 9, 2, packetSegment === 2 ? C_CYAN_HOT : C_CYAN);
+    p(-29, -7 + seg3_y, 1, 14, C_SEAM);
+
+    // ── 3. ТУЛОВИЩЕ И ГРУДНАЯ ПЛАТА ────────────────────────────────
+    // Сегмент 2 (Середина тела)
+    p(-18, -10 + seg2_y, 12, 20, C_SHELL);
+    p(-20, -9 + seg2_y, 3, 18, C_SHELL_SHADOW);
+    p(-17, -13 + seg2_y, 10, 3, C_GILLS);
+    p(-17, -2 + seg2_y, 10, 2, packetSegment === 1 ? C_CYAN_HOT : C_CYAN);
+    // Микрочип / Радиатор на боку
+    p(-15, 0 + seg2_y, 7, 5, C_CHIP);
+    p(-14, 1 + seg2_y, 5, 3, '#2a4235');
+    p(-15, 2 + seg2_y, 1, 2, C_CYAN);
+    p(-9, 2 + seg2_y, 1, 2, C_CYAN);
+
+    // Сегмент 1 (Плечи и сочленение шеи)
+    p(-7, -11 + seg1_y, 12, 22, C_SHELL);
+    p(-9, -10 + seg1_y, 2, 20, C_SHELL_SHADOW);
+    p(-7, -2 + seg1_y, 10, 2, packetSegment === 0 ? C_CYAN_HOT : C_CYAN);
+    p(-6, -6 + seg1_y, 1, 12, C_SEAM);
+
+    // ── 4. БЛИЖНИЕ ЛАПКИ (ЛЕВАЯ СТОРОНА ПЕРЕД ТЕЛОМ) ───────────────
+    // Передняя левая лапка (активно гребет)
+    const paw3_angle = Math.sin(wave * 0.9) * 5;
+    p(-2, 10 + seg1_y * 0.7 + paw3_angle, 6, 5, C_SHELL);
+    p(-5, 14 + seg1_y * 0.7 + paw3_angle * 1.3, 5, 4, C_SHELL_MID);
+    p(-7, 18 + seg1_y * 0.7 + paw3_angle * 1.5, 2, 3, C_SHELL);
+    p(-5, 19 + seg1_y * 0.7 + paw3_angle * 1.5, 2, 3, C_SHELL);
+    p(-3, 19 + seg1_y * 0.7 + paw3_angle * 1.5, 2, 3, C_SHELL);
+    p(-1, 18 + seg1_y * 0.7 + paw3_angle * 1.5, 2, 3, C_SHELL);
+    p(-3, 12 + seg1_y * 0.7 + paw3_angle, 2, 2, C_SEAM);
+
+    // Задняя левая лапка
+    const paw4_angle = Math.sin(wave * 0.9 + 1.6) * 6;
+    p(-24, 8 + seg3_y * 0.9 + paw4_angle, 7, 5, C_SHELL);
+    p(-28, 12 + seg3_y * 0.9 + paw4_angle * 1.3, 6, 4, C_SHELL_MID);
+    p(-31, 16 + seg3_y * 0.9 + paw4_angle * 1.5, 2, 3, C_SHELL);
+    p(-29, 17 + seg3_y * 0.9 + paw4_angle * 1.5, 2, 3, C_SHELL);
+    p(-27, 17 + seg3_y * 0.9 + paw4_angle * 1.5, 2, 3, C_SHELL);
+    p(-25, 16 + seg3_y * 0.9 + paw4_angle * 1.5, 2, 3, C_SHELL);
+
+    // ── 5. МЕХАНИЧЕСКИЕ ЖАБРЫ (6 ВЕТВЕЙ С ФИЗИКОЙ ИНЕРЦИИ) ────────
+    const gFlare = isTapped ? 4 : 0;
+    const gTop1 = Math.round(Math.sin(wave * 0.8 + 0.2) * 2.5) - gFlare;
+    const gMid1 = Math.round(Math.sin(wave * 0.8 + 1.2) * 3.5) - gFlare;
+    const gBot1 = Math.round(Math.sin(wave * 0.8 + 2.2) * 2.5);
+
     // Верхние жабры
-    const gTop = Math.round(Math.sin(wiggle + 0) * 1.5);
-    p(-8, -13 + gTop, 4, 5, C_GILLS);
-    p(-10, -11 + gTop, 2, 4, C_GILLS_DARK);
-    p(-6, -14 + gTop, 3, 2, C_OUTLINE);
-    p(8, -13 - gTop, 4, 5, C_GILLS);
-    p(10, -11 - gTop, 2, 4, C_GILLS_DARK);
-    p(7, -14 - gTop, 3, 2, C_OUTLINE);
+    p(2, -14 + gTop1, 5, 5, C_GILLS);
+    p(1, -17 + gTop1 * 1.3, 4, 4, C_GILLS);
+    p(0, -21 + gTop1 * 1.6, 3, 4, C_GILLS_LIGHT);
+    p(-1, -24 + gTop1 * 1.8, 2, 3, C_CYAN);
+    p(4, -16 + gTop1, 2, 4, C_GILLS_LIGHT);
 
-    // Средние жабры (длинные)
-    const gMid = Math.round(Math.sin(wiggle + 1.2) * 2);
-    p(-14, -6 + gMid, 6, 4, C_GILLS);
-    p(-18, -5 + gMid, 4, 3, C_GILLS_DARK);
-    p(-18, -6 + gMid, 5, 1, C_OUTLINE);
-    p(-19, -4 + gMid, 1, 2, C_OUTLINE);
-    p(-18, -2 + gMid, 5, 1, C_OUTLINE);
-
-    p(12, -6 - gMid, 6, 4, C_GILLS);
-    p(16, -5 - gMid, 4, 3, C_GILLS_DARK);
-    p(15, -6 - gMid, 5, 1, C_OUTLINE);
-    p(20, -4 - gMid, 1, 2, C_OUTLINE);
-    p(15, -2 - gMid, 5, 1, C_OUTLINE);
+    // Средние жабры
+    p(0, -18 + gMid1, 6, 5, C_GILLS);
+    p(-3, -22 + gMid1 * 1.3, 5, 5, C_GILLS);
+    p(-6, -26 + gMid1 * 1.6, 4, 5, C_GILLS_LIGHT);
+    p(-8, -30 + gMid1 * 1.8, 3, 4, C_CYAN);
+    p(-1, -21 + gMid1, 2, 5, C_GILLS_LIGHT);
 
     // Нижние жабры
-    const gBot = Math.round(Math.sin(wiggle + 2.4) * 1.5);
-    p(-12, 1 + gBot, 5, 4, C_GILLS);
-    p(-15, 2 + gBot, 3, 3, C_GILLS_DARK);
-    p(10, 1 - gBot, 5, 4, C_GILLS);
-    p(14, 2 - gBot, 3, 3, C_GILLS_DARK);
+    p(-2, -12 + gBot1, 5, 4, C_GILLS);
+    p(-6, -15 + gBot1 * 1.3, 4, 4, C_GILLS_LIGHT);
+    p(-9, -18 + gBot1 * 1.6, 3, 3, C_CYAN);
 
-    // Основное тело / Голова (широкий милый овал)
-    p(-14, -8, 28, 16, C_BODY);
-    p(-16, -6, 32, 12, C_BODY);
+    // Жабры снизу головы
+    const gSubTop = Math.round(Math.sin(wave * 0.8 + 0.7) * 2) + gFlare;
+    const gSubMid = Math.round(Math.sin(wave * 0.8 + 1.7) * 3) + gFlare;
+    p(2, 10 + gSubTop, 5, 5, C_GILLS);
+    p(1, 14 + gSubTop * 1.3, 4, 4, C_GILLS_LIGHT);
+    p(0, 18 + gSubTop * 1.6, 3, 3, C_CYAN);
 
-    // Нижняя тень
-    p(-12, 6, 24, 2, C_BODY_SHADOW);
+    p(-1, 14 + gSubMid, 6, 5, C_GILLS);
+    p(-4, 18 + gSubMid * 1.3, 5, 4, C_GILLS_LIGHT);
+    p(-7, 22 + gSubMid * 1.6, 3, 4, C_CYAN);
 
-    // Внешний контур тела
-    p(-12, -9, 24, 1, C_OUTLINE); // верх
-    p(-12, 8, 24, 1, C_OUTLINE);  // низ
-    p(-17, -5, 1, 10, C_OUTLINE); // лево
-    p(16, -5, 1, 10, C_OUTLINE);  // право
-    p(-16, -7, 2, 2, C_OUTLINE);
-    p(-16, 5, 2, 2, C_OUTLINE);
-    p(14, -7, 2, 2, C_OUTLINE);
-    p(14, 5, 2, 2, C_OUTLINE);
+    // ── 6. ГОЛОВА И ЭКЗО-ШЛЕМ ──────────────────────────────────────
+    p(4, -12, 16, 24, C_SHELL);
+    p(2, -10, 20, 20, C_SHELL);
+    p(12, -7, 12, 14, C_SHELL);
 
-    // Глазки
+    // Фаски и тени пластин шлема
+    p(6, 9, 15, 3, C_SHELL_SHADOW);
+    p(16, 5, 8, 2, C_SHELL_SHADOW);
+    p(2, -1, 3, 10, C_SHELL_SHADOW);
+
+    // Внешний контур головы
+    p(4, -13, 16, 1, C_OUTLINE);
+    p(4, 12, 16, 1, C_OUTLINE);
+    p(20, -8, 4, 1, C_OUTLINE);
+    p(20, 7, 4, 1, C_OUTLINE);
+    p(24, -4, 1, 8, C_OUTLINE);
+
+    // Швы панелей на морде
+    p(7, -6, 1, 12, C_SEAM);
+    p(12, 0, 8, 1, C_SEAM);
+
+    // Рунический антенный глиф на лбу (по референсу)
+    p(14, -8, 2, 7, C_GLYPH);
+    p(11, -7, 8, 1, C_GLYPH);
+    p(12, -4, 6, 1, C_GLYPH);
+
+    // ── 7. ЦИФРОВЫЕ МАТРИЧНЫЕ CRT-ГЛАЗА ────────────────────────────
+    // Левый глаз (ближний крупный)
+    p(11, 1, 7, 6, C_SOCKET);
+    p(10, 0, 9, 1, C_OUTLINE);
+    p(10, 7, 9, 1, C_OUTLINE);
+
+    // Правый глаз (дальний чуть меньше)
+    p(12, -8, 6, 5, C_SOCKET);
+    p(11, -9, 8, 1, C_OUTLINE);
+    p(11, -3, 8, 1, C_OUTLINE);
+
+    // Светодиоды матрицы глаз
     if (isBlink) {
-      // Моргание (узкая линия)
-      p(-7, -1, 5, 1, C_OUTLINE);
-      p(4, -1, 5, 1, C_OUTLINE);
+      p(11, 4, 7, 1, C_LED);
+      p(12, -6, 6, 1, C_LED);
     } else if (isHappy) {
-      // Счастливые прищуренные глазки ^ ^
-      p(-7, -2, 2, 1, C_OUTLINE);
-      p(-5, -3, 2, 1, C_OUTLINE);
-      p(-3, -2, 2, 1, C_OUTLINE);
-      p(4, -2, 2, 1, C_OUTLINE);
-      p(6, -3, 2, 1, C_OUTLINE);
-      p(8, -2, 2, 1, C_OUTLINE);
+      p(12, 5, 2, 1, C_LED);
+      p(14, 3, 2, 1, C_LED);
+      p(16, 5, 2, 1, C_LED);
+
+      p(13, -5, 2, 1, C_LED);
+      p(15, -7, 2, 1, C_LED);
+      p(17, -5, 2, 1, C_LED);
     } else {
-      // Большие черные глазки с белым бликом
-      p(-7, -2, 5, 4, C_OUTLINE);
-      p(-6, -2, 2, 2, C_WHITE); // блик
-      p(4, -2, 5, 4, C_OUTLINE);
-      p(5, -2, 2, 2, C_WHITE);  // блик
+      // Матрица зеленых точек (Phosphor LED)
+      p(12, 2, 2, 2, C_LED);
+      p(15, 2, 2, 2, C_LED);
+      p(12, 4, 2, 2, C_LED);
+      p(15, 4, 2, 2, C_LED);
+
+      p(13, -7, 2, 1, C_LED);
+      p(16, -7, 2, 1, C_LED);
+      p(13, -5, 2, 1, C_LED);
+      p(16, -5, 2, 1, C_LED);
     }
 
-    // Ротик (улыбка)
-    p(-2, 3, 5, 1, C_MOUTH);
-    p(-3, 2, 1, 1, C_MOUTH);
-    p(3, 2, 1, 1, C_MOUTH);
-
-    // Румянец на щечках
-    p(-10, 1, 2, 1, C_GILLS);
-    p(9, 1, 2, 1, C_GILLS);
+    // Тонкий механический стык рта
+    p(18, 6, 5, 1, C_SEAM);
+    p(23, 5, 1, 1, C_SEAM);
 
     c.restore();
   }
@@ -619,11 +759,17 @@
         }
 
         // Физика плавания Кибер-Аксолотля
+        axoLab.y = logicalH * 0.52;
         axoLab.bobOffset = Math.sin(time * 0.0022) * 5;
-        axoLab.tiltAngle = Math.sin(time * 0.0028) * 0.05;
-        axoLab.x += axoLab.vx;
+        axoLab.tiltAngle = Math.sin(time * 0.0028) * 0.04;
+        
+        // Постепенное затухание ускорения от тапа
+        if (axoLab.speedMultiplier > 1.0) {
+          axoLab.speedMultiplier = Math.max(1.0, axoLab.speedMultiplier - 0.035);
+        }
+        axoLab.x += axoLab.vx * axoLab.speedMultiplier;
 
-        const labPadding = 60;
+        const labPadding = 65;
         if (axoLab.x > logicalW - labPadding) {
           axoLab.x = logicalW - labPadding;
           axoLab.vx = -Math.abs(axoLab.vx);
@@ -647,63 +793,70 @@
           axoLab.reactionTimer--;
         }
 
-        // Отрисовка Кибер-Симбионта b181
-        const targetH = 112 * dpr;
-        const targetW = (603 / 685) * targetH;
-
-        ctxLab.save();
-        ctxLab.translate(Math.round(axoLab.x * dpr), Math.round((axoLab.y + axoLab.bobOffset) * dpr));
-        ctxLab.scale(axoLab.facing, 1);
-        ctxLab.rotate(axoLab.tiltAngle * axoLab.facing);
-
-        // Неоновое био-кибернетическое свечение
-        const pulse = 0.5 + 0.5 * Math.sin(time * 0.004);
-        if (axoLab.reactionTimer > 0) {
-          ctxLab.shadowColor = '#50ffb0';
-          ctxLab.shadowBlur = 18 * dpr;
-        } else {
-          ctxLab.shadowColor = '#38e8d8';
-          ctxLab.shadowBlur = (3 + pulse * 6) * dpr;
+        // Выпуск микропузырьков из жабр при плавании
+        axoLab.bubbleTimer = (axoLab.bubbleTimer || 0) + 1;
+        if (axoLab.bubbleTimer % (axoLab.reactionTimer > 0 ? 12 : 36) === 0) {
+          labBubbles.push({
+            x: axoLab.x - (axoLab.facing * 14) + (Math.random() * 6 - 3),
+            y: axoLab.y + axoLab.bobOffset - 6 + (Math.random() * 8),
+            speed: 0.45 + Math.random() * 0.4,
+            r: 0.9 + Math.random() * 1.2
+          });
         }
 
-        if (cyberSpriteLoaded && cyberSprite.naturalWidth > 0) {
-          ctxLab.drawImage(
-            cyberSprite,
-            Math.round(-targetW / 2),
-            Math.round(-targetH / 2),
-            Math.round(targetW),
-            Math.round(targetH)
-          );
-
-          // Перекрытие глаз при моргании
-          if (axoLab.isBlinking) {
-            const eyeScale = targetH / 685;
-            const leftEyeX = (130 - 301) * eyeScale;
-            const leftEyeY = (485 - 342) * eyeScale;
-            const rightEyeX = (265 - 342) * eyeScale;
-            const rightEyeY = (490 - 342) * eyeScale;
-
-            ctxLab.fillStyle = '#081711';
-            ctxLab.fillRect(leftEyeX - 6 * dpr, leftEyeY - 2 * dpr, 18 * dpr, 6 * dpr);
-            ctxLab.fillRect(rightEyeX - 6 * dpr, rightEyeY - 2 * dpr, 18 * dpr, 6 * dpr);
-
-            ctxLab.fillStyle = '#38e892';
-            ctxLab.fillRect(leftEyeX - 4 * dpr, leftEyeY, 14 * dpr, 1.5 * dpr);
-            ctxLab.fillRect(rightEyeX - 4 * dpr, rightEyeY, 14 * dpr, 1.5 * dpr);
+        // Электрические искры био-кибернетического разряда
+        for (let i = labSparks.length - 1; i >= 0; i--) {
+          const spk = labSparks[i];
+          spk.x += spk.vx;
+          spk.y += spk.vy;
+          spk.vx *= 0.94;
+          spk.vy *= 0.94;
+          spk.alpha -= 0.035;
+          if (spk.alpha <= 0) {
+            labSparks.splice(i, 1);
+            continue;
           }
-        } else {
-          drawPixelAxolotl(
-            ctxLab,
-            0,
-            0,
-            1.45 * dpr,
-            1,
-            axoLab.reactionTimer > 0,
-            axoLab.isBlinking,
-            time * 0.004
-          );
+          ctxLab.save();
+          ctxLab.strokeStyle = spk.color;
+          ctxLab.lineWidth = 1.4 * dpr;
+          ctxLab.globalAlpha = Math.max(0, spk.alpha);
+          ctxLab.beginPath();
+          ctxLab.moveTo(spk.x * dpr, spk.y * dpr);
+          ctxLab.lineTo((spk.x - spk.vx * 2.2) * dpr, (spk.y - spk.vy * 2.2) * dpr);
+          ctxLab.stroke();
+          ctxLab.restore();
         }
-        ctxLab.restore();
+
+        // Мягкое био-кибернетическое неоновое свечение под аксолотлем
+        const glowGrad = ctxLab.createRadialGradient(
+          Math.round(axoLab.x * dpr), Math.round((axoLab.y + axoLab.bobOffset) * dpr), 2 * dpr,
+          Math.round(axoLab.x * dpr), Math.round((axoLab.y + axoLab.bobOffset) * dpr), 65 * dpr
+        );
+        const glowAlpha = axoLab.reactionTimer > 0 ? 0.32 : (0.12 + Math.sin(time * 0.004) * 0.05);
+        glowGrad.addColorStop(0, isLight ? `rgba(40, 140, 110, ${glowAlpha * 0.7})` : `rgba(56, 232, 216, ${glowAlpha})`);
+        glowGrad.addColorStop(1, 'rgba(56, 232, 216, 0)');
+        ctxLab.fillStyle = glowGrad;
+        ctxLab.beginPath();
+        ctxLab.arc(Math.round(axoLab.x * dpr), Math.round((axoLab.y + axoLab.bobOffset) * dpr), 65 * dpr, 0, Math.PI * 2);
+        ctxLab.fill();
+
+        // Отрисовка живого пиксельного кибер-аксолотля b181
+        const isDistressedLab = state.satiety < 25 || state.cleanliness < 25;
+        const isHappyLab = !isDistressedLab && (state.satiety > 70 && state.cleanliness > 70);
+        const scaleLab = 1.35 * dpr;
+
+        drawLiveCyberAxolotl(
+          ctxLab,
+          axoLab.x * dpr,
+          (axoLab.y + axoLab.bobOffset) * dpr,
+          scaleLab,
+          axoLab.facing,
+          isHappyLab,
+          axoLab.isBlinking,
+          time,
+          axoLab.reactionTimer,
+          isLight
+        );
 
         // Флоатеры в лаборатории (числовые импульсы)
         for (let i = labFloaters.length - 1; i >= 0; i--) {
