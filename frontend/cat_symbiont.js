@@ -148,11 +148,18 @@
       const reactions = ['purr', 'mischief', 'glitch'];
       const alternate = reactions[Math.floor(Math.random() * reactions.length)];
       const headerImg = document.getElementById('cat-header-sprite');
+      const headerChip = document.getElementById('cat-status-chip');
       if (headerImg && CAT_ANIMATIONS[alternate]) {
         headerImg.src = CAT_ANIMATIONS[alternate].src;
+        if (headerChip) {
+          headerChip.textContent = `[CAT181b // ${CAT_ANIMATIONS[alternate].label.replace(/[[\]]/g, '')}]`;
+        }
         clearTimeout(headerTimer);
         headerTimer = setTimeout(() => {
           headerImg.src = CAT_ANIMATIONS[baseMode].src;
+          if (headerChip) {
+            headerChip.textContent = `[CAT181b // ${CAT_ANIMATIONS[baseMode].label.replace(/[[\]]/g, '')}]`;
+          }
         }, 3500);
       }
     },
@@ -198,6 +205,11 @@
       // Обновление текстовых полей
       const badge = document.getElementById('cat-status-badge');
       if (badge) badge.textContent = anim.label;
+
+      const headerChip = document.getElementById('cat-status-chip');
+      if (headerChip) {
+        headerChip.textContent = `[CAT181b // ${anim.label.replace(/[[\]]/g, '')}]`;
+      }
 
       const desc = document.getElementById('cat-state-desc');
       if (desc) desc.textContent = anim.desc;

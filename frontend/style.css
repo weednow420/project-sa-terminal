@@ -96,21 +96,23 @@ body {
 .header-top-right {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
+  flex-wrap: nowrap;
 }
 
 .btn-theme-toggle {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   background: transparent;
   color: var(--text-dim);
   border: 1px solid var(--border);
   border-radius: 0;
-  padding: 2px 6px;
+  padding: 2px 5px;
   cursor: pointer;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   user-select: none;
   transition: all 0.12s ease;
+  white-space: nowrap;
 }
 
 .btn-theme-toggle:hover,
@@ -122,19 +124,20 @@ body {
 
 .btn-sound-toggle {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   background: transparent;
   color: var(--text-dim);
   border: 1px solid var(--border);
   border-radius: 0;
-  padding: 2px 6px;
+  padding: 2px 5px;
   cursor: pointer;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   user-select: none;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   transition: all 0.12s ease;
+  white-space: nowrap;
 }
 
 .btn-sound-toggle:hover,
@@ -161,10 +164,12 @@ body {
 }
 
 .header-label {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .header-status {
@@ -2312,11 +2317,12 @@ body.gate-active .terminal-main {
   color: var(--bg);
 }
 
-/* ── КИБЕР-КОШКА CAT181b В ВЕРХНЕМ МЕНЮ ─────────────────────── */
+/* ── КИБЕР-КОШКА CAT181b В ВЕРХНЕМ МЕНЮ (ЛЕВЫЙ УГОЛ) ────────── */
 .bio-terrarium-wrapper {
-  display: block;
-  text-align: center;
-  padding: 4px var(--spacing-md) 6px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 3px var(--spacing-md) 4px;
   background-color: var(--bg);
   user-select: none;
 }
@@ -2328,10 +2334,11 @@ body.lab-active .bio-terrarium-wrapper {
 
 .cat-header-container {
   display: inline-flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  height: 42px;
-  margin: 0 auto;
+  gap: 8px;
+  height: 36px;
+  margin: 0;
   cursor: pointer;
   user-select: none;
   transition: transform 0.15s ease, filter 0.15s ease;
@@ -2339,23 +2346,41 @@ body.lab-active .bio-terrarium-wrapper {
 }
 
 .cat-header-container:hover {
-  transform: scale(1.08);
+  transform: scale(1.03);
 }
 
 .cat-header-container:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
   filter: brightness(1.2);
 }
 
 .cat-header-sprite {
   display: block;
-  height: 42px;
+  height: 34px;
   width: auto;
-  max-width: 54px;
+  max-width: 44px;
   object-fit: contain;
   image-rendering: pixelated;
   image-rendering: -webkit-optimize-contrast;
   pointer-events: auto;
+}
+
+.cat-status-chip {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  padding: 2px 7px;
+  line-height: 1.3;
+  user-select: none;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.cat-header-container:hover .cat-status-chip {
+  color: var(--text-primary);
+  border-color: var(--border-hard);
 }
 
 .cat-lab-sprite {
