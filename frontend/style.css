@@ -2499,43 +2499,30 @@ body {
   border: 1px solid var(--border);
 }
 
-.cat-pixel-img {
+.cat-pixel-img,
+.cat-pixel-canvas {
   width: 100%;
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
   display: block;
 }
 
-/* Дыхание (микро-анимация) */
-@keyframes catBreathe {
-  0%, 100% {
-    transform: scale(1, 1);
-  }
-  50% {
-    transform: scale(1.025, 0.985);
-  }
-}
-
-@keyframes catSleepBreath {
-  0%, 100% {
-    transform: scale(1, 1);
-  }
-  50% {
-    transform: scale(1.015, 0.99);
-  }
+/* Аппаратный микро-флэш электронных чернил при смене состояния */
+.cat-eink-flash {
+  filter: invert(1) contrast(1.8) !important;
+  transition: none !important;
 }
 
 .cat-is-active .cat-avatar-frame {
-  animation: catBreathe 4s ease-in-out infinite;
-  transform-origin: bottom center;
+  transform: none;
 }
 
 .cat-is-sleeping .cat-avatar-frame {
-  animation: catSleepBreath 6s ease-in-out infinite;
-  transform-origin: bottom center;
-  opacity: 0.88;
+  transform: none;
+  opacity: 0.95;
 }
 
 /* Спящий значок "z z Z" */
