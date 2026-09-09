@@ -1789,14 +1789,15 @@ body {
   image-rendering: crisp-edges;
 }
 
-.terrarium-strip-counter {
+.terrarium-strip-emotion {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-dim);
   white-space: nowrap;
   flex-shrink: 0;
   letter-spacing: 0.05em;
+  transition: color 0.2s ease;
 }
 
 /* ── ЭКРАН ЛАБОРАТОРИИ СИМБИОНТА ─────────────────────────── */

@@ -161,11 +161,14 @@
       });
     }
 
-    // Клик по верхней полоске
+    // Клик по верхней полоске открывает Лабораторию (в полоске только эмоция, без кликера)
     const stripArea = document.getElementById('terrarium-strip-area');
     if (stripArea) {
-      stripArea.addEventListener('click', (e) => {
-        handleTap(e, canvasStrip, stripFloaters, stripBubbles, axoStrip);
+      stripArea.addEventListener('click', () => {
+        const labBtn = document.getElementById('nav-btn-lab');
+        if (labBtn) {
+          labBtn.click();
+        }
       });
     }
 
@@ -400,11 +403,10 @@
           }
         }
 
-        let isHappyStrip = false;
-        if (axoStrip.reactionTimer > 0) {
-          axoStrip.reactionTimer--;
-          isHappyStrip = true;
-        }
+        // В полоске аксолотль выражает текущую эмоцию состояния
+        const isHealthy = state.satiety > 50 && state.cleanliness > 50;
+        const isHappyStrip = isHealthy && (state.satiety > 75 || axoStrip.reactionTimer > 0);
+        if (axoStrip.reactionTimer > 0) axoStrip.reactionTimer--;
 
         // Отрисовка маленького аксолотля
         const scaleStrip = 0.68 * dpr;
@@ -418,23 +420,6 @@
           axoStrip.isBlinking,
           axoStrip.wigglePhase
         );
-
-        // Флоатеры в полоске
-        for (let i = stripFloaters.length - 1; i >= 0; i--) {
-          const f = stripFloaters[i];
-          f.y += f.vy;
-          f.alpha -= 0.03;
-          if (f.alpha <= 0) {
-            stripFloaters.splice(i, 1);
-            continue;
-          }
-          ctxStrip.save();
-          ctxStrip.fillStyle = `${textCol}${f.alpha})`;
-          ctxStrip.font = `bold ${10 * dpr}px 'Space Mono', monospace`;
-          ctxStrip.textAlign = 'center';
-          ctxStrip.fillText(f.text, f.x * dpr, f.y * dpr);
-          ctxStrip.restore();
-        }
       }
     }
 
@@ -565,10 +550,32 @@
   function updateUI() {
     const formattedImpulses = `${Math.floor(state.impulses)} ⚡`;
 
-    // 1. Полоска вверху
-    const stripCounter = document.getElementById('terrarium-strip-impulses');
-    if (stripCounter) {
-      stripCounter.textContent = formattedImpulses;
+    // 1. Полоска вверху (только эмоция питомца)
+    const stripEmotion = document.getElementById('terrarium-strip-emotion');
+    if (stripEmotion) {
+      let face = '^_^';
+      let text = 'СПОКОЙСТВИЕ';
+      let isWarn = false;
+
+      if (state.satiety < 20 && state.cleanliness < 20) {
+        face = '×_×';
+        text = 'ИСТОЩЕНИЕ';
+        isWarn = true;
+      } else if (state.satiety < 30) {
+        face = '•_•';
+        text = 'ГОЛОДЕН';
+        isWarn = true;
+      } else if (state.cleanliness < 30) {
+        face = '¬_¬';
+        text = 'ЭНТРОПИЯ';
+        isWarn = true;
+      } else if (state.satiety > 75 && state.cleanliness > 75) {
+        face = '˘◡˘';
+        text = 'ГАРМОНИЯ';
+      }
+
+      stripEmotion.textContent = `[ ${face} ${text} ]`;
+      stripEmotion.style.color = isWarn ? 'var(--text-warn, #ff5555)' : 'var(--text-dim)';
     }
 
     // 2. Экран лаборатории
