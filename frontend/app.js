@@ -189,6 +189,9 @@ function showView(viewId) {
     if (mainEl) mainEl.scrollTop = 0;
   }
 
+  // Полноэкранный моно-минималистичный шлюз (скрывает верхний/нижний хром)
+  document.body.classList.toggle('gate-active', viewId === 'view-gate');
+
   // Управление био-террариумом (скрыт до ввода пароля и авторизации)
   const terrariumEl = document.getElementById('bio-terrarium');
   if (terrariumEl) {
@@ -707,39 +710,37 @@ function appendSysLog(msg, type = 'normal') {
   }
 }
 
+let gateAttempts = 3;
+
 function updatePinSlots() {
   const MAX_LEN = 4;
+  const feedbackEl = document.getElementById('feedback-msg');
+  const attemptsEl = document.getElementById('attempts-count');
+
+  if (attemptsEl) attemptsEl.textContent = gateAttempts;
+
   for (let i = 0; i < MAX_LEN; i++) {
     const slot = document.getElementById(`slot-${i}`);
     if (!slot) continue;
-    const charSpan = slot.querySelector('.slot-char');
+    const charSpan = slot.querySelector('.pin-char') || slot.querySelector('.slot-char');
     slot.classList.remove('filled', 'active-slot', 'success', 'error');
 
     if (i < STATE.pinCode.length) {
       slot.classList.add('filled');
-      if (charSpan) charSpan.textContent = '■';
-    } else if (i === STATE.pinCode.length) {
-      slot.classList.add('active-slot');
-      if (charSpan) charSpan.textContent = '_';
+      if (charSpan) charSpan.textContent = '●';
     } else {
-      if (charSpan) charSpan.textContent = '·';
+      if (charSpan) charSpan.textContent = '_';
     }
   }
 
-  // Обновление индикатора буфера
-  const meterEl = document.getElementById('gate-buffer-meter');
-  const pctEl = document.getElementById('gate-buffer-pct');
-  const len = STATE.pinCode.length;
-  const pcts = ['0%', '25%', '50%', '75%', '100%'];
-
-  if (pctEl) pctEl.textContent = pcts[len] || '0%';
-  if (meterEl) {
-    let bar = '[ ';
-    for (let b = 0; b < 4; b++) {
-      bar += (b < len ? '■ ' : '□ ');
+  if (feedbackEl) {
+    if (STATE.pinCode.length === 0) {
+      feedbackEl.textContent = 'ОЖИДАНИЕ ВВОДА ОПЕРАТОРА';
+      feedbackEl.className = 'swiss-feedback-msg';
+    } else {
+      feedbackEl.textContent = `ВВОД: ПОЗИЦИЯ ${STATE.pinCode.length} / 4`;
+      feedbackEl.className = 'swiss-feedback-msg';
     }
-    bar += ']';
-    meterEl.textContent = bar;
   }
 }
 
@@ -748,54 +749,63 @@ function setupPinGate() {
   if (keypad) {
     keypad.addEventListener('click', (e) => {
       if (STATE.pinBusy) return;
-      const btn = e.target.closest('.gate-key-btn');
+      const btn = e.target.closest('button');
       if (!btn) return;
 
-      const digit = btn.getAttribute('data-digit');
+      const digit = btn.getAttribute('data-digit') || btn.getAttribute('data-val');
       if (digit !== null && digit !== undefined) {
         handleDigitInput(digit);
       }
     });
   }
 
-  // Кнопка [ СБРОС ]
-  const btnReset = document.getElementById('btn-pin-reset');
-  if (btnReset) {
-    btnReset.addEventListener('click', () => {
+  // Кнопка [ C ] / [ СБРОС ]
+  const btnClear = document.getElementById('btn-clear') || document.getElementById('btn-pin-reset');
+  if (btnClear) {
+    btnClear.addEventListener('click', () => {
       if (STATE.pinBusy) return;
       STATE.pinCode = '';
       if (window.SoundFX) window.SoundFX.playKeyBackspace();
       triggerHaptic('light');
       updatePinSlots();
-      appendSysLog('[GATE] Буфер ввода очищен вручную.');
+      appendSysLog('[GATE] Буфер ввода очищен.');
     });
   }
 
   // Кнопка [ ⌫ ] (Backspace)
-  const btnBackspace = document.getElementById('btn-pin-backspace');
-  if (btnBackspace) {
-    btnBackspace.addEventListener('click', () => {
+  const btnBack = document.getElementById('btn-back') || document.getElementById('btn-pin-backspace');
+  if (btnBack) {
+    btnBack.addEventListener('click', () => {
       if (STATE.pinBusy) return;
       if (STATE.pinCode.length > 0) {
         STATE.pinCode = STATE.pinCode.slice(0, -1);
         if (window.SoundFX) window.SoundFX.playKeyBackspace();
         triggerHaptic('light');
         updatePinSlots();
-        appendSysLog('[GATE] Удаление последнего символа.');
       }
     });
   }
 
-  // Кнопка [ ! ЭКСТРЕННЫЙ СБРОС СЕССИИ ! ]
-  const btnEmergency = document.getElementById('btn-emergency-reset');
-  if (btnEmergency) {
-    btnEmergency.addEventListener('click', () => {
-      if (window.SoundFX) window.SoundFX.playEmergencyAbort();
-      triggerHaptic('error');
+  // Кнопка [ СБРОС СЕССИИ ]
+  const btnResetSession = document.getElementById('btn-gate-reset') || document.getElementById('btn-reset-session');
+  if (btnResetSession) {
+    btnResetSession.addEventListener('click', () => {
+      gateAttempts = 3;
       STATE.pinCode = '';
       STATE.pinBusy = false;
+      const badge = document.getElementById('status-badge');
+      if (badge) {
+        badge.innerHTML = '<span>[ SEC_LVL: 0 ]</span>';
+        badge.className = 'swiss-gate-badge';
+      }
+      if (window.SoundFX) window.SoundFX.playKeyBackspace();
+      triggerHaptic('light');
       updatePinSlots();
-      appendSysLog('[EMERGENCY] СЕССИЯ СБРОШЕНА ОПЕРАТОРОМ. СБРОС РЕГИСТРОВ.', 'error');
+      const feedbackEl = document.getElementById('feedback-msg');
+      if (feedbackEl) {
+        feedbackEl.textContent = 'СЕССИЯ СБРОШЕНА // ОЖИДАНИЕ ВВОДА';
+        feedbackEl.className = 'swiss-feedback-msg';
+      }
     });
   }
 
@@ -812,14 +822,12 @@ function setupPinGate() {
         if (window.SoundFX) window.SoundFX.playKeyBackspace();
         triggerHaptic('light');
         updatePinSlots();
-        appendSysLog('[GATE] Удаление последнего символа.');
       }
     } else if (e.key === 'Escape' || e.key === 'Delete') {
       STATE.pinCode = '';
       if (window.SoundFX) window.SoundFX.playKeyBackspace();
       triggerHaptic('light');
       updatePinSlots();
-      appendSysLog('[GATE] Буфер ввода очищен клавишей Escape.');
     }
   });
 }
@@ -854,7 +862,14 @@ function handleDigitInput(digit) {
 
 async function submitPin(code) {
   STATE.pinBusy = true;
-  appendSysLog('[GATE] Верификация контрольной суммы ключа...');
+  const feedbackEl = document.getElementById('feedback-msg');
+  const badge = document.getElementById('status-badge');
+  const attemptsEl = document.getElementById('attempts-count');
+
+  if (feedbackEl) {
+    feedbackEl.textContent = 'ВЕРИФИКАЦИЯ КЛЮЧА...';
+    feedbackEl.className = 'swiss-feedback-msg';
+  }
 
   try {
     const res = await apiPost('/auth/verify', {
@@ -869,7 +884,15 @@ async function submitPin(code) {
     }
     if (window.SoundFX) window.SoundFX.playAccessGranted();
     triggerHaptic('success');
-    appendSysLog('[GATE] ДОСТУП РАЗРЕШЕН. РАСПЕЧАТЫВАНИЕ РЕЗЕРВУАРА...', 'success');
+
+    if (feedbackEl) {
+      feedbackEl.textContent = 'ДОСТУП РАЗРЕШЕН // СЕССИЯ АКТИВНА';
+      feedbackEl.className = 'swiss-feedback-msg feedback-success';
+    }
+    if (badge) {
+      badge.innerHTML = '<span>[ ДОПУСК РАЗРЕШЕН ]</span>';
+      badge.className = 'swiss-gate-badge badge-granted';
+    }
 
     localStorage.setItem(AUTH_STORAGE_KEY, 'synced');
     if (res.auth_version) {
@@ -878,23 +901,38 @@ async function submitPin(code) {
 
     setTimeout(async () => {
       await loadCategories();
-    }, 500);
+    }, 600);
 
   } catch (err) {
-    const errorMsg = err.message || `[${CONFIG.INCIDENT_CODE}] НЕВЕРНЫЙ ВЕКТОР`;
+    gateAttempts = Math.max(0, gateAttempts - 1);
+    if (attemptsEl) attemptsEl.textContent = gateAttempts;
+
     for (let i = 0; i < 4; i++) {
       const slot = document.getElementById(`slot-${i}`);
       if (slot) slot.classList.add('error');
     }
     if (window.SoundFX) window.SoundFX.playAccessDenied();
     triggerHaptic('error');
-    appendSysLog(`[FAIL] Неверный вектор: #${code}. Отклонено.`, 'error');
 
-    const wrapper = document.querySelector('.gate-wrapper');
-    if (wrapper) wrapper.classList.add('gate-shake');
+    if (feedbackEl) {
+      if (gateAttempts <= 0) {
+        feedbackEl.textContent = 'ТЕРМИНАЛ ЗАБЛОКИРОВАН';
+        feedbackEl.className = 'swiss-feedback-msg feedback-error';
+        if (badge) {
+          badge.innerHTML = '<span>[ БЛОКИРОВКА ]</span>';
+          badge.className = 'swiss-gate-badge badge-locked';
+        }
+      } else {
+        feedbackEl.textContent = `ОШИБКА: НЕДЕЙСТВИТЕЛЬНЫЙ КЛЮЧ (ОСТАЛОСЬ: ${gateAttempts})`;
+        feedbackEl.className = 'swiss-feedback-msg feedback-error';
+      }
+    }
 
     setTimeout(() => {
-      if (wrapper) wrapper.classList.remove('gate-shake');
+      for (let i = 0; i < 4; i++) {
+        const slot = document.getElementById(`slot-${i}`);
+        if (slot) slot.classList.remove('error');
+      }
       STATE.pinCode = '';
       STATE.pinBusy = false;
       updatePinSlots();

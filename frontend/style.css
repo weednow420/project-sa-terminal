@@ -794,470 +794,322 @@ body {
   );
 }
 
-/* ── ЭКРАН СИНХРОНИЗАЦИИ // ТЕРМИНАЛ ЗАЩИТЫ ГОСТ-КБ-181 ────── */
-.gate-wrapper {
-  max-width: 360px;
-  margin: 0 auto;
+/* Hide global header & footer when gate is active for 100% pure Swiss minimal screen */
+body:has(#view-gate.active) .terminal-header,
+body:has(#view-gate.active) .terminal-footer,
+body:has(#view-gate.active) #terminal-bottom-nav,
+body.gate-active .terminal-header,
+body.gate-active .terminal-footer,
+body.gate-active #terminal-bottom-nav {
+  display: none !important;
+}
+
+#view-gate.active {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  padding: var(--spacing-xs) 0 var(--spacing-md) 0;
+  justify-content: center;
+  padding: 0;
+}
+
+/* ── ШЛЮЗ ДОСТУПА // ШВЕЙЦАРСКИЙ МОНО-МИНИМАЛ (GATE-01) ── */
+.swiss-gate-container {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 20px 24px 20px;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  box-sizing: border-box;
   user-select: none;
 }
 
-.gate-telemetry-bay {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-hard);
-  padding: 6px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.gate-telemetry-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 3px 6px;
-  background-color: var(--bg);
-  font-size: 0.64rem;
-  font-family: var(--font-mono);
-}
-
-.gate-status-indicator {
+/* Minimal Header */
+.swiss-gate-header {
+  width: 100%;
+  height: 44px;
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.gate-status-led {
-  width: 7px;
-  height: 7px;
-  background-color: #38e892;
-  box-shadow: 0 0 6px rgba(56, 232, 146, 0.7);
-  display: inline-block;
-}
-
-.gate-status-label {
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-primary);
-}
-
-.gate-node-id {
-  color: var(--text-dim);
-}
-
-.gate-node-highlight {
-  color: var(--text-primary);
-  font-weight: 700;
-}
-
-.gate-title-block {
-  padding: 2px 4px;
-}
-
-.gate-main-title {
-  font-family: var(--font-mono);
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--text-primary);
-}
-
-.gate-sub-protocol {
-  font-size: 0.64rem;
-  color: var(--text-dim);
-  letter-spacing: 0.03em;
-  margin-top: 1px;
-}
-
-.gate-alert-strip {
-  display: flex;
   justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 28px;
+}
+
+.swiss-gate-header-left {
+  display: flex;
   align-items: center;
-  padding: 4px 6px;
-  background-color: var(--bg-hover);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  gap: 8px;
 }
 
-.gate-alert-alarm {
-  color: #ff5555;
-  animation: pulseAlarm 1.5s infinite;
-}
-
-@keyframes pulseAlarm {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
-}
-
-.gate-telemetry-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px;
-  font-size: 0.62rem;
-  font-family: var(--font-mono);
-}
-
-.gate-telem-cell {
-  display: flex;
-  justify-content: space-between;
-  padding: 3px 6px;
-  background-color: var(--bg);
-}
-
-.gate-telem-label {
-  color: var(--text-dim);
-}
-
-.gate-telem-val {
-  font-weight: 700;
+.swiss-gate-square {
+  font-size: 8px;
   color: var(--text-primary);
-}
-
-.gate-val-accent {
-  color: #38e892;
-}
-
-.gate-val-good {
-  color: var(--text-primary);
-}
-
-.gate-val-warn {
-  color: #ffaa00;
-}
-
-.gate-val-dim {
-  color: var(--text-dim);
-}
-
-.gate-divider-double,
-.gate-divider-single {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  color: var(--border-hard);
-  text-align: center;
-  overflow: hidden;
-  white-space: nowrap;
-  margin: 6px 0;
   line-height: 1;
 }
 
-.gate-pin-section {
+.swiss-gate-brand {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.swiss-gate-badge {
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  transition: all 0.15s ease;
+  border-radius: 0 !important;
+}
+
+.swiss-gate-badge.badge-granted {
+  background-color: var(--text-primary) !important;
+  color: var(--bg) !important;
+  font-weight: 700;
+  border-color: var(--text-primary) !important;
+}
+
+.swiss-gate-badge.badge-locked {
+  border-color: var(--text-primary) !important;
+  color: var(--text-primary) !important;
+  font-weight: 700;
+}
+
+/* Main Body */
+.swiss-gate-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* Top Cluster */
+.swiss-pin-info {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
+  margin-bottom: 16px;
 }
 
-.gate-prompt-title {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 0.06em;
-}
-
-.gate-prompt-sub {
-  font-size: 0.62rem;
+.swiss-pin-sub {
+  font-size: 10px;
+  letter-spacing: 0.28em;
   color: var(--text-dim);
-  letter-spacing: 0.04em;
-  margin-top: 2px;
-}
-
-.gate-slots-row {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 12px 0 8px 0;
-}
-
-.gate-slot {
-  width: 54px;
-  height: 62px;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-hard);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.7rem;
-  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  font-weight: 400;
+  margin: 0 0 10px 0;
   font-family: var(--font-mono);
+}
+
+.swiss-pin-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   color: var(--text-primary);
-  border-radius: 0;
-  transition: background-color 0.1s, border-color 0.1s, color 0.1s;
+  text-transform: uppercase;
+  text-align: center;
+  margin: 0 0 26px 0;
+  font-family: var(--font-mono);
 }
 
-.gate-slot.active-slot {
-  border-color: var(--text-primary);
+/* 4 Indicator Slots */
+.swiss-pin-slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto 16px auto;
 }
 
-.gate-slot.filled {
-  background-color: var(--bg-hover);
-  border-color: var(--border-hard);
-  color: #38e892;
-}
-
-.gate-slot.success {
-  background-color: #38e892 !important;
-  color: #071514 !important;
-  border-color: #38e892 !important;
-}
-
-.gate-slot.error {
-  background-color: #93000a !important;
-  color: #ffdad6 !important;
-  border-color: #ff5555 !important;
-}
-
-.gate-warning-bar {
+.pin-slot {
+  height: 56px;
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
-  padding: 4px 8px;
-  font-size: 0.58rem;
-  font-weight: 700;
-  color: #ff5555;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  width: 100%;
-  max-width: 310px;
-  box-sizing: border-box;
-}
-
-.gate-keypad-container {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  margin-top: 8px;
+  justify-content: center;
+  border-radius: 0 !important;
+  transition: border-color 0.08s, background-color 0.08s;
 }
 
-.gate-keypad-grid {
+.pin-slot.filled {
+  border-color: var(--text-primary) !important;
+  background-color: var(--bg-hover) !important;
+}
+
+.pin-slot.success {
+  border-color: var(--text-primary) !important;
+  background-color: var(--text-primary) !important;
+}
+
+.pin-slot.success .pin-char {
+  color: var(--bg) !important;
+}
+
+.pin-slot.error {
+  border-color: var(--text-primary) !important;
+  animation: slotShake 0.35s ease-in-out;
+}
+
+.pin-char {
+  color: var(--text-dim);
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  font-family: var(--font-mono);
+  font-weight: 300;
+  line-height: 1;
+}
+
+.pin-slot.filled .pin-char {
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+@keyframes slotShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+}
+
+/* Feedback Row */
+.swiss-feedback-row {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.swiss-feedback-msg {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  text-align: center;
+  font-family: var(--font-mono);
+  transition: color 0.1s ease;
+}
+
+.swiss-feedback-msg.feedback-success,
+.swiss-feedback-msg.feedback-error {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* 3x4 Keypad Grid (Braun / Dieter Rams Minimalist Hairline Grid) */
+.swiss-keypad-wrapper {
+  width: 100%;
+  max-width: 288px;
+  margin: 28px auto 20px auto;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.swiss-keypad-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  width: 100%;
-  max-width: 310px;
 }
 
-.gate-key-btn {
-  height: 52px;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-hard);
+.swiss-keypad-grid button {
+  height: 64px;
+  background-color: var(--bg);
+  border: none;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   color: var(--text-primary);
   font-family: var(--font-mono);
-  font-size: 1.15rem;
-  font-weight: 700;
-  border-radius: 0 !important;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   outline: none;
+  cursor: pointer;
   user-select: none;
+  border-radius: 0 !important;
+  transition: none !important;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.06s, color 0.06s;
 }
 
-.gate-key-btn:hover {
-  background-color: var(--bg-hover);
+.swiss-keypad-grid .num-key {
+  font-size: 21px;
+  font-weight: 500;
 }
 
-.gate-key-btn:active {
-  background-color: var(--text-primary);
-  color: var(--bg);
+.swiss-keypad-grid .gate-action-key {
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
 }
 
-.gate-key-reset {
-  font-size: 0.7rem !important;
-  letter-spacing: 0.06em;
-  color: #ff6b6b;
+.swiss-keypad-grid button:hover {
   background-color: var(--bg-surface);
-}
-
-.gate-key-reset:active {
-  background-color: #ff5555;
-  color: #ffffff;
-}
-
-.gate-key-backspace {
-  font-size: 0.9rem !important;
-  color: var(--text-dim);
-}
-
-.gate-haptic-notice {
-  font-size: 0.58rem;
-  color: var(--text-dim);
-  text-align: center;
-  margin-top: 6px;
-  letter-spacing: 0.03em;
-}
-
-.gate-diagnostic-bay {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.gate-log-frame {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-hard);
-  padding: 6px 8px;
-}
-
-.gate-log-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.6rem;
-  color: var(--text-dim);
-  letter-spacing: 0.06em;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 3px;
-  margin-bottom: 4px;
-}
-
-.gate-log-rec {
-  color: #38e892;
-  font-weight: 700;
-}
-
-.gate-log-terminal {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  line-height: 1.45;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-height: 60px;
-}
-
-.gate-log-entry {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.gate-log-dim {
-  color: var(--text-dim);
-}
-
-.gate-log-warn {
-  color: #ffaa00;
-}
-
-.gate-log-active {
-  color: #38e892;
-  animation: pulseLog 1.8s infinite;
-}
-
-@keyframes pulseLog {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.gate-buffer-strip {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border);
-  padding: 5px 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.64rem;
-  font-family: var(--font-mono);
-}
-
-.gate-buffer-label {
-  color: var(--text-dim);
-}
-
-.gate-buffer-meter {
-  color: #38e892;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-
-.gate-buffer-pct {
-  font-weight: 700;
   color: var(--text-primary);
 }
 
-.gate-emergency-wrap {
-  margin-top: 2px;
+.swiss-keypad-grid button:active {
+  background-color: var(--text-primary) !important;
+  color: var(--bg) !important;
 }
 
-.btn-emergency-abort {
-  width: 100%;
-  padding: 9px 8px;
-  background-color: var(--bg-surface);
-  border: 1px dashed var(--border-hard);
-  color: #ff5555;
+/* Footer: Counters and Session Reset */
+.swiss-gate-footer {
+  margin-top: 24px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.18em;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  border-radius: 0 !important;
-  transition: all 0.12s ease;
 }
 
-.btn-emergency-abort:hover,
-.btn-emergency-abort:active {
-  background-color: #ff5555;
-  color: #ffffff;
-  border-style: solid;
-  border-color: #ff5555;
-}
-
-.gate-institutional-footer {
-  font-size: 0.58rem;
+.swiss-attempts-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--text-dim);
-  text-align: center;
-  letter-spacing: 0.06em;
-  margin-top: 2px;
 }
 
-@keyframes gateShake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-6px); }
-  40%, 80% { transform: translateX(6px); }
+.swiss-attempts-val {
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
-.gate-shake {
-  animation: gateShake 0.35s ease-in-out;
+.swiss-reset-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 0 !important;
 }
 
-/* Light Theme Overrides for Security Gate */
-[data-theme="light"] .gate-status-led {
-  background-color: #007128;
-  box-shadow: 0 0 4px rgba(0, 113, 40, 0.4);
-}
-
-[data-theme="light"] .gate-val-accent,
-[data-theme="light"] .gate-log-rec,
-[data-theme="light"] .gate-log-active,
-[data-theme="light"] .gate-buffer-meter {
-  color: #007128;
-}
-
-[data-theme="light"] .gate-alert-alarm,
-[data-theme="light"] .gate-warning-bar,
-[data-theme="light"] .gate-key-reset,
-[data-theme="light"] .btn-emergency-abort {
-  color: #b00020;
-}
-
-[data-theme="light"] .gate-slot.filled {
-  color: #007128;
-}
-
-[data-theme="light"] .gate-slot.success {
-  background-color: #007128 !important;
-  color: #ffffff !important;
-}
-
-[data-theme="light"] .gate-slot.error {
-  background-color: #b00020 !important;
-  color: #ffffff !important;
+.swiss-reset-btn:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 /* ── КНОПКИ СБРОСА СЕССИИ И АДМИН-СБРОСА ────────────────────── */
