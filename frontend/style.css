@@ -2362,8 +2362,8 @@ body.gate-active .terminal-main {
 }
 
 .cat-lab-sprite {
-  width: 140px;
-  height: 140px;
+  width: 128px;
+  height: 128px;
   object-fit: contain;
   image-rendering: pixelated;
   image-rendering: -webkit-optimize-contrast;
@@ -2675,9 +2675,13 @@ body.gate-active .terminal-main {
   max-width: 100%;
 }
 
+#view-terrarium-lab {
+  padding-bottom: 96px;
+}
+
 .cat-avatar-frame {
-  width: 160px;
-  height: 160px;
+  width: 132px;
+  height: 132px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2768,11 +2772,11 @@ body.gate-active .terminal-main {
   text-align: center;
 }
 
-/* Матрица состояний (9 кнопок) */
+/* Матрица состояний CAT181b (6 режимов) */
 .cat-matrix-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  gap: 5px;
   margin-top: 10px;
 }
 
@@ -2781,12 +2785,14 @@ body.gate-active .terminal-main {
   border: 1px solid var(--border);
   color: var(--text-dim);
   font-family: var(--font-mono);
-  font-size: 0.66rem;
-  padding: 6px 2px;
+  font-size: clamp(0.60rem, 2.3vw, 0.68rem);
+  padding: 8px 2px;
   cursor: pointer;
   text-align: center;
   border-radius: 0 !important;
   transition: all 0.1s ease;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 .btn-cat-matrix:hover {

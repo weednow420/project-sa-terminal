@@ -47,7 +47,7 @@
   ══════════════════════════════════════════════ -->
   <section class="bio-terrarium-wrapper" id="bio-terrarium" style="display: none;">
     <div class="cat-header-container" id="cat-header-container" title="Кибер-кошка CAT181b // Нажмите для взаимодействия">
-      <img id="cat-header-sprite" class="cat-header-sprite" src="assets/cat/cat_sit.png" alt="CAT181b" />
+      <img id="cat-header-sprite" class="cat-header-sprite" src="assets/cat/cat_idle.png" alt="CAT181b" />
     </div>
   </section>
 
@@ -543,8 +543,8 @@
           <div class="cat-display-bay" id="cat-chip-container" title="Нажмите, чтобы погладить кошку">
             <div class="cat-ic-pins-top">||||||||||||||||||||||||||||||||||||||||||||||||</div>
             <div class="cat-ic-package">
-              <div class="cat-avatar-frame" style="min-height: 150px; display: flex; align-items: center; justify-content: center;">
-                <img id="cat-lab-sprite" class="cat-lab-sprite" src="assets/cat/cat_sit.png" alt="CAT181b" />
+              <div class="cat-avatar-frame">
+                <img id="cat-lab-sprite" class="cat-lab-sprite" src="assets/cat/cat_idle.png" alt="CAT181b" />
               </div>
             </div>
             <div class="cat-ic-pins-bottom">||||||||||||||||||||||||||||||||||||||||||||||||</div>
@@ -553,7 +553,7 @@
             <div class="cat-telemetry-strip">
               <span>СИНХРОНИЗАЦИЯ: 99.8%</span>
               <span class="cat-state-tag" id="cat-strip-state">АКТИВЕН</span>
-              <span>РЕВИЗИЯ: v1.0-alpha</span>
+              <span>РЕВИЗИЯ: v1.2-alpha</span>
             </div>
           </div>
 
@@ -570,20 +570,29 @@
             <button type="button" class="btn-cat-action" onclick="CatSymbiont.clean()">[ 🧹 САНИТАРИЯ ]</button>
           </div>
 
-          <!-- Режимы Steam-анимаций кошки -->
+          <!-- Режимы анимаций кошки (6 состояний) -->
           <div class="dot-grid-divider" style="margin-top: 12px;"></div>
           <div style="font-size: 0.68rem; color: var(--text-dim); margin-top: 8px; margin-bottom: 6px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;">
-            // РЕЖИМЫ АНИМАЦИИ КИБЕР-КОШКИ:
+            // РЕЖИМЫ АНИМАЦИИ КИБЕР-КОШКИ (CAT181b):
           </div>
-          <div class="cat-matrix-grid" style="grid-template-columns: repeat(3, 1fr);">
-            <button type="button" class="btn-cat-matrix active-cat-state" id="btn-cat-anim-sit" onclick="CatSymbiont.setSteamAnimation('sit')">
-              [ 01. НАБЛЮДЕНИЕ ]
+          <div class="cat-matrix-grid">
+            <button type="button" class="btn-cat-matrix active-cat-state" id="btn-cat-anim-idle" onclick="CatSymbiont.setAnimation('idle')">
+              [ 01. ПОКОЙ ]
             </button>
-            <button type="button" class="btn-cat-matrix" id="btn-cat-anim-peek" onclick="CatSymbiont.setSteamAnimation('peek')">
-              [ 02. ВЫГЛЯДЫВАНИЕ ]
+            <button type="button" class="btn-cat-matrix" id="btn-cat-anim-purr" onclick="CatSymbiont.setAnimation('purr')">
+              [ 02. МУРЧАНИЕ ]
             </button>
-            <button type="button" class="btn-cat-matrix" id="btn-cat-anim-action" onclick="CatSymbiont.setSteamAnimation('action')">
-              [ 03. АКТИВНОСТЬ ]
+            <button type="button" class="btn-cat-matrix" id="btn-cat-anim-mischief" onclick="CatSymbiont.setAnimation('mischief')">
+              [ 03. ШАЛОСТЬ ]
+            </button>
+            <button type="button" class="btn-cat-matrix" id="btn-cat-anim-sleep" onclick="CatSymbiont.setAnimation('sleep')">
+              [ 04. СОН ]
+            </button>
+            <button type="button" class="btn-cat-matrix" id="btn-cat-anim-alert" onclick="CatSymbiont.setAnimation('alert')">
+              [ 05. ТРЕВОГА ]
+            </button>
+            <button type="button" class="btn-cat-matrix" id="btn-cat-anim-glitch" onclick="CatSymbiont.setAnimation('glitch')">
+              [ 06. ГЛИТЧ ]
             </button>
           </div>
         </div>

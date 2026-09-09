@@ -1,47 +1,82 @@
 /**
  * =============================================================================
  * PROJECT S-A TERMINAL // СИМБИОНТ CAT181b [КИБЕР-КОШКА]
- * Модуль интеграции стикеров-анимаций Steam и интерактивного взаимодействия
- * Ревизия: v1.0-alpha // PURE STEAM APNG SYMBIONT & DUAL-DOCK ENGINE
+ * Модуль интеграции 6 пиксельных APNG-анимаций и интерактивного тамагочи-контура
+ * Ревизия: v1.2-alpha // 6-STATE CYBER-SYMBIOT ENGINE (IDLE/PURR/MISCHIEF/SLEEP/ALERT/GLITCH)
  * =============================================================================
  */
 
 (function (window) {
   'use strict';
 
-  const STEAM_ANIMATIONS = {
-    sit: {
-      id: 'sit',
-      btnId: 'btn-cat-anim-sit',
-      src: 'assets/cat/cat_sit.png',
-      label: '[НАБЛЮДЕНИЕ]',
+  const CAT_ANIMATIONS = {
+    idle: {
+      id: 'idle',
+      btnId: 'btn-cat-anim-idle',
+      src: 'assets/cat/cat_idle.png',
+      label: '[ПОКОЙ]',
       desc: 'Базовый режим наблюдения. Фоновый био-скан и удержание фокуса.',
       status: 'В ПОКОЕ',
       sound: 'playCatPurr'
     },
-    peek: {
-      id: 'peek',
-      btnId: 'btn-cat-anim-peek',
-      src: 'assets/cat/cat_peek.png',
-      label: '[ВЫГЛЯДЫВАНИЕ]',
-      desc: 'Режим скрытности. Выглядывание из укрытия, калибровка сенсоров.',
-      status: 'СКАН СЕКТОРА',
-      sound: 'playCatMeow'
+    purr: {
+      id: 'purr',
+      btnId: 'btn-cat-anim-purr',
+      src: 'assets/cat/cat_purr.png',
+      label: '[МУРЧАНИЕ]',
+      desc: 'Режим глубокой синхронизации. Низкочастотное мурчание и гармонизация контура.',
+      status: 'МУРЛЫКАНИЕ',
+      sound: 'playCatPurr'
     },
-    action: {
-      id: 'action',
-      btnId: 'btn-cat-anim-action',
-      src: 'assets/cat/cat_action.png',
-      label: '[АКТИВНОСТЬ]',
-      desc: 'Тестирование кинематики. Разминка контура и проверка сервоприводов.',
-      status: 'ИГРА / РАЗМИНКА',
+    mischief: {
+      id: 'mischief',
+      btnId: 'btn-cat-anim-mischief',
+      src: 'assets/cat/cat_mischief.png',
+      label: '[ШАЛОСТЬ]',
+      desc: 'Игровой режим. Проверка кинематики, виляние хвостом и готовность к активности.',
+      status: 'ИГРА / ШАЛОСТЬ',
       sound: 'playCatPlay'
+    },
+    sleep: {
+      id: 'sleep',
+      btnId: 'btn-cat-anim-sleep',
+      src: 'assets/cat/cat_sleep.png',
+      label: '[СОН]',
+      desc: 'Режим гибернации. Энергосбережение био-контура CAT181b и восстановление буфера.',
+      status: 'ГИБЕРНАЦИЯ',
+      sound: 'playKeyClick'
+    },
+    alert: {
+      id: 'alert',
+      btnId: 'btn-cat-anim-alert',
+      src: 'assets/cat/cat_alert.png',
+      label: '[ТРЕВОГА]',
+      desc: 'Повышенная сенсорная активность. Фиксация аномалий и тревожных сигналов.',
+      status: 'ТРЕВОГА-1',
+      sound: 'playAccessDenied'
+    },
+    glitch: {
+      id: 'glitch',
+      btnId: 'btn-cat-anim-glitch',
+      src: 'assets/cat/cat_glitch.png',
+      label: '[ГЛИТЧ]',
+      desc: 'Кибернетический сбой и помехи шины данных. Требуется калибровка или санитария.',
+      status: 'СБОЙ ДАННЫХ',
+      sound: 'playKeyBackspace'
     }
   };
 
-  let currentMode = 'sit';
-  let baseMode = 'sit';
+  // Псевдонимы обратной совместимости
+  const ALIASES = {
+    sit: 'idle',
+    peek: 'mischief',
+    action: 'purr'
+  };
+
+  let currentMode = 'idle';
+  let baseMode = 'idle';
   let tempTimer = null;
+  let headerTimer = null;
   let lastInteraction = Date.now();
 
   function triggerHaptic(type = 'light') {
@@ -51,6 +86,10 @@
           window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
         } else if (type === 'success') {
           window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        } else if (type === 'warning') {
+          window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
+        } else if (type === 'error') {
+          window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
         } else {
           window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
         }
@@ -60,14 +99,14 @@
 
   /**
    * =========================================================================
-   * МЕНЕДЖЕР СИМБИОНТА CAT181b (Steam APNG + Интерактивный контур)
+   * МЕНЕДЖЕР СИМБИОНТА CAT181b (6-состояний + Тамагочи-контур)
    * =========================================================================
    */
   const CatSymbiont = {
     init: function () {
       this.bindDOM();
       this.startIdleBehavior();
-      this.setSteamAnimation('sit');
+      this.setAnimation('idle');
     },
 
     bindDOM: function () {
@@ -98,14 +137,22 @@
         window.SoundFX.playCatMeow();
       }
 
-      // При клике в хедере CAT181b временно выглядывает или разминается
-      const alternate = Math.random() < 0.5 ? 'peek' : 'action';
+      // Если кот спал — будим его
+      if (baseMode === 'sleep' || currentMode === 'sleep') {
+        baseMode = 'idle';
+        this.setAnimation('idle');
+        return;
+      }
+
+      // Случайный интерактивный всплеск реакции
+      const reactions = ['purr', 'mischief', 'glitch'];
+      const alternate = reactions[Math.floor(Math.random() * reactions.length)];
       const headerImg = document.getElementById('cat-header-sprite');
-      if (headerImg) {
-        headerImg.src = STEAM_ANIMATIONS[alternate].src;
-        clearTimeout(this._headerTimer);
-        this._headerTimer = setTimeout(() => {
-          headerImg.src = STEAM_ANIMATIONS[baseMode].src;
+      if (headerImg && CAT_ANIMATIONS[alternate]) {
+        headerImg.src = CAT_ANIMATIONS[alternate].src;
+        clearTimeout(headerTimer);
+        headerTimer = setTimeout(() => {
+          headerImg.src = CAT_ANIMATIONS[baseMode].src;
         }, 3500);
       }
     },
@@ -114,8 +161,9 @@
       return currentMode;
     },
 
-    setSteamAnimation: function (modeKey, tempDuration = 0) {
-      if (!STEAM_ANIMATIONS[modeKey]) return;
+    setAnimation: function (rawKey, tempDuration = 0) {
+      const modeKey = ALIASES[rawKey] || rawKey;
+      if (!CAT_ANIMATIONS[modeKey]) return;
       lastInteraction = Date.now();
 
       if (tempDuration === 0) {
@@ -125,7 +173,7 @@
       currentMode = modeKey;
       clearTimeout(tempTimer);
 
-      const anim = STEAM_ANIMATIONS[modeKey];
+      const anim = CAT_ANIMATIONS[modeKey];
 
       // E-Ink Micro-Refresh визуальный эффект
       const chipContainer = document.getElementById('cat-chip-container');
@@ -158,8 +206,8 @@
       if (stripState) stripState.textContent = anim.status;
 
       // Подсветка кнопок режимов
-      Object.keys(STEAM_ANIMATIONS).forEach(k => {
-        const btn = document.getElementById(STEAM_ANIMATIONS[k].btnId);
+      Object.keys(CAT_ANIMATIONS).forEach(k => {
+        const btn = document.getElementById(CAT_ANIMATIONS[k].btnId);
         if (btn) {
           btn.classList.toggle('active-cat-state', k === baseMode);
         }
@@ -170,19 +218,24 @@
       // Если временная анимация (реакция)
       if (tempDuration > 0) {
         tempTimer = setTimeout(() => {
-          this.setSteamAnimation(baseMode);
+          this.setAnimation(baseMode);
         }, tempDuration);
       }
     },
 
-    // Действия взаимодействия
+    // Псевдоним для сохранения совместимости с HTML
+    setSteamAnimation: function (modeKey, tempDuration = 0) {
+      this.setAnimation(modeKey, tempDuration);
+    },
+
+    // Действия взаимодействия (Тамагочи)
     petCat: function () {
       lastInteraction = Date.now();
       triggerHaptic('medium');
       if (window.SoundFX && window.SoundFX.playCatPurr) {
         window.SoundFX.playCatPurr();
       }
-      this.setSteamAnimation('peek', 3500);
+      this.setAnimation('purr', 4000);
       const desc = document.getElementById('cat-state-desc');
       if (desc) desc.textContent = 'Контакт с CAT181b установлен. Снижение энтропии контура и мурлыкание.';
     },
@@ -193,7 +246,7 @@
       if (window.SoundFX && window.SoundFX.playCatCrunch) {
         window.SoundFX.playCatCrunch();
       }
-      this.setSteamAnimation('action', 4000);
+      this.setAnimation('purr', 4500);
       const desc = document.getElementById('cat-state-desc');
       if (desc) desc.textContent = 'Прием нутриентов. Био-ресурс CAT181b восполнен (+30%).';
     },
@@ -204,9 +257,9 @@
       if (window.SoundFX && window.SoundFX.playCatPlay) {
         window.SoundFX.playCatPlay();
       }
-      this.setSteamAnimation('action', 4500);
+      this.setAnimation('mischief', 4500);
       const desc = document.getElementById('cat-state-desc');
-      if (desc) desc.textContent = 'Тестирование кинематики лап CAT181b. Игра с клубком импульсов.';
+      if (desc) desc.textContent = 'Тестирование кинематики лап CAT181b. Озорная игра с импульсами.';
     },
 
     clean: function () {
@@ -215,22 +268,40 @@
       if (window.SoundFX && window.SoundFX.playKeyClick) {
         window.SoundFX.playKeyClick(960);
       }
-      this.setSteamAnimation('sit', 2500);
+      this.setAnimation('idle', 3000);
       const desc = document.getElementById('cat-state-desc');
-      if (desc) desc.textContent = 'Продувка оптических сенсоров CAT181b. Санитарный цикл завершен.';
+      if (desc) desc.textContent = 'Продувка оптических сенсоров CAT181b. Санитарный цикл завершен, сбои устранены.';
     },
 
-    // Фоновые живые реакции
+    triggerAlert: function (duration = 4000) {
+      triggerHaptic('warning');
+      if (window.SoundFX && window.SoundFX.playAccessDenied) {
+        window.SoundFX.playAccessDenied();
+      }
+      this.setAnimation('alert', duration);
+      const desc = document.getElementById('cat-state-desc');
+      if (desc) desc.textContent = 'ТРЕВОГА: Зафиксирована аномалия или отказ доступа.';
+    },
+
+    triggerGlitch: function (duration = 4000) {
+      triggerHaptic('error');
+      if (window.SoundFX && window.SoundFX.playKeyBackspace) {
+        window.SoundFX.playKeyBackspace();
+      }
+      this.setAnimation('glitch', duration);
+      const desc = document.getElementById('cat-state-desc');
+      if (desc) desc.textContent = 'СБОЙ: Помехи шины данных. Запустите санитарию для калибровки.';
+    },
+
+    // Фоновые живые реакции и авто-гибернация
     startIdleBehavior: function () {
       setInterval(() => {
         const idleSec = (Date.now() - lastInteraction) / 1000;
-        if (idleSec > 22 && baseMode === 'sit' && currentMode === 'sit') {
-          const r = Math.random();
-          if (r < 0.35) {
-            this.setSteamAnimation('peek', 3500);
-          }
+        // Если бездействие > 50 секунд — кот плавно засыпает
+        if (idleSec > 50 && baseMode === 'idle' && currentMode === 'idle') {
+          this.setAnimation('sleep');
         }
-      }, 8000);
+      }, 10000);
     }
   };
 
