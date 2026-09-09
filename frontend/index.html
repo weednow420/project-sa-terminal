@@ -14,9 +14,31 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=0.1a" />
+  <link rel="stylesheet" href="style.css?v=0.2a" />
 </head>
 <body>
+
+  <!-- ══════════════════════════════════════════════
+       БИО-ТЕРРАРИУМ АКСОЛОТЛЯ (ТАМАГОЧИ + КЛИКЕР)
+  ══════════════════════════════════════════════ -->
+  <section class="bio-terrarium-wrapper" id="bio-terrarium">
+    <div class="terrarium-glass">
+      <div class="terrarium-header-row">
+        <span class="terrarium-tag">[ БИО-КАМЕРА // b181 ]</span>
+        <div class="terrarium-stats-badge">
+          <span class="terrarium-impulses-val" id="terrarium-impulses-display">0 ⚡</span>
+          <button type="button" class="btn-terrarium-lab" id="btn-open-terrarium-lab" title="Лаборатория симбионта">[ 🧪 ЛАБОРАТОРИЯ ]</button>
+        </div>
+      </div>
+      <div class="terrarium-tank-area" id="terrarium-tank" title="Тап по террариуму генерирует импульсы">
+        <canvas id="axolotl-canvas"></canvas>
+      </div>
+      <div class="terrarium-sub-bar">
+        <span class="terrarium-sub-stat" id="terrarium-mood-label">СТАТУС: СПОКОЙСТВИЕ</span>
+        <span class="terrarium-sub-stat" id="terrarium-sync-label">СИНХР: 100%</span>
+      </div>
+    </div>
+  </section>
 
   <!-- ══════════════════════════════════════════════
        ШАПКА ТЕРМИНАЛА
@@ -501,6 +523,61 @@
     </div>
   </div>
 
+  <!-- МОДАЛЬНОЕ ОКНО // ЛАБОРАТОРИЯ АКСОЛОТЛЯ -->
+  <div class="terminal-modal-overlay" id="modal-terrarium-lab" style="display:none;" role="dialog" aria-modal="true">
+    <div class="terminal-modal-box" style="max-width: 360px; padding: 14px;">
+      <div class="modal-header" style="margin-bottom: 6px;">
+        <span class="modal-badge">[ ЛАБОРАТОРИЯ // АКСОЛОТЛЬ ]</span>
+        <button type="button" class="btn-modal-close" id="btn-close-terrarium-lab" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-divider">══════════════════════════════</div>
+      
+      <!-- Показатели -->
+      <div class="lab-stats-group" style="margin: 10px 0; display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+          <span style="color: var(--text-dim);">НЕЙРО-ИМПУЛЬСЫ:</span>
+          <strong style="color: var(--text-primary);" id="lab-impulses-val">0 ⚡</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+          <span style="color: var(--text-dim);">СЫТОСТЬ (БИО-ТОНУС):</span>
+          <span id="lab-satiety-val">100%</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+          <span style="color: var(--text-dim);">ЧИСТОТА КОНТУРА:</span>
+          <span id="lab-cleanliness-val">100%</span>
+        </div>
+      </div>
+
+      <!-- Действия ухода -->
+      <div class="modal-divider" style="margin: 4px 0;">──────────────────────────────</div>
+      <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 6px;">ПРОТОКОЛЫ УХОДА</div>
+      <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+        <button type="button" class="btn-action" id="btn-feed-axolotl" style="flex: 1; padding: 8px 4px; font-size: 0.72rem;">[ 🧪 ТАЛАЯ ВОДА ]<br><span style="font-size:0.65rem; color:var(--text-dim);">+30% Сытости</span></button>
+        <button type="button" class="btn-action" id="btn-clean-axolotl" style="flex: 1; padding: 8px 4px; font-size: 0.72rem;">[ 🛠 ОЧИСТКА ]<br><span style="font-size:0.65rem; color:var(--text-dim);">Сброс энтропии</span></button>
+      </div>
+
+      <!-- Прокачка кликера -->
+      <div class="modal-divider" style="margin: 4px 0;">──────────────────────────────</div>
+      <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 6px;">МЕДЛЕННАЯ ПРОКАЧКА КОНТУРА</div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <button type="button" class="btn-action" id="btn-upgrade-click" style="text-align: left; padding: 8px 10px;">
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.75rem;">
+            <span>УСИЛИТЕЛЬ ИМПУЛЬСА</span>
+            <span id="upgrade-click-cost">20 ⚡</span>
+          </div>
+          <div style="font-size: 0.68rem; color: var(--text-dim);">Сила клика: <span id="upgrade-click-val">+1</span> к тапу</div>
+        </button>
+        <button type="button" class="btn-action" id="btn-upgrade-auto" style="text-align: left; padding: 8px 10px;">
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.75rem;">
+            <span>ГЕНЕРАТОР ПУЗЫРЬКОВ</span>
+            <span id="upgrade-auto-cost">50 ⚡</span>
+          </div>
+          <div style="font-size: 0.68rem; color: var(--text-dim);">Авто-приток: <span id="upgrade-auto-val">+0.5</span> ⚡/сек</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════════════
        НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (DOCK)
   ══════════════════════════════════════════════ -->
@@ -518,10 +595,11 @@
     <div class="footer-divider">════════════════════════════════════════</div>
     <div class="footer-content">
       <span class="footer-label">БИО-ДАТЧИК: АКТИВЕН</span>
-      <span class="footer-version" style="font-weight:700; color:var(--text-primary);">v0.1a</span>
+      <span class="footer-version" style="font-weight:700; color:var(--text-primary);">v0.2a</span>
     </div>
   </footer>
 
-  <script src="app.js?v=0.1a"></script>
+  <script src="app.js?v=0.2a"></script>
+  <script src="terrarium.js?v=0.2a"></script>
 </body>
 </html>
