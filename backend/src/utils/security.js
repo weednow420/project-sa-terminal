@@ -81,7 +81,8 @@ export function getAdminSecretKey(db = null) {
     } catch (_) {}
   }
 
-  return 'PROJECT_SA_MASTER_DEFAULT';
+  // Если БД недоступна и нет в env — генерируем одноразовый стойкий случайный ключ
+  return crypto.randomBytes(24).toString('hex');
 }
 
 // ── Валидация криптографической подписи Telegram WebApp initData ──
@@ -107,7 +108,9 @@ export function verifyTelegramInitData(initData, botToken = null) {
     const secretKey = crypto.createHmac('sha256', 'WebAppData').update(token).digest();
     const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
 
-    if (calculatedHash === hash) {
+    const bufCalc = Buffer.from(calculatedHash, 'utf8');
+    const bufHash = Buffer.from(hash, 'utf8');
+    if (bufCalc.length === bufHash.length && crypto.timingSafeEqual(bufCalc, bufHash)) {
       const userJson = params.get('user');
       if (userJson) {
         return JSON.parse(userJson);

@@ -119,11 +119,30 @@ export default async function operatorsRoutes(fastify) {
   });
 
   // ── GET /api/operator/:identifier ───────────────────────────
-  // Получить карточку Оператора
+  // Получить карточку Оператора (доступно только Администратору или самому Оператору)
   fastify.get('/operator/:identifier', async (request, reply) => {
     const { identifier } = request.params;
     const db = await getDb();
     const idNum = Number(identifier);
+
+    // Проверка прав: запрос разрешен только Администратору или самому Оператору через initData
+    const isAdmin = isUserAdminVerified(request, db);
+    let isSelf = false;
+    const rawInitData = request.headers['x-telegram-init-data'];
+    if (rawInitData) {
+      const verified = verifyTelegramInitData(rawInitData);
+      if (verified && Number(verified.id) === idNum) {
+        isSelf = true;
+      }
+    }
+
+    if (!isAdmin && !isSelf) {
+      return reply.status(403).send({
+        status: 'b181',
+        error: 'AUTH_REQUIRED',
+        message: 'Доступ к профилю Оператора ограничен.',
+      });
+    }
 
     try {
       const operator = queryOne(
